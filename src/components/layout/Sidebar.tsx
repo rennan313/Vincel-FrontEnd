@@ -64,7 +64,7 @@ function SidebarNavItem({ item, collapsed, onNavigate }: SidebarNavItemProps) {
           {collapsed && (
             <span
               role="tooltip"
-              className="pointer-events-none absolute left-full z-50 ml-3 rounded-md border border-(--sidebar-border) bg-(--sidebar-hover-bg) px-2.5 py-1.5 text-xs font-medium whitespace-nowrap text-(--sidebar-text) opacity-0 shadow-lg transition-opacity delay-150 duration-150 group-hover:opacity-100"
+              className="pointer-events-none absolute left-full z-50 ml-3 rounded-md border border-(--sidebar-border) bg-(--sidebar-hover-bg) px-2.5 py-1.5 text-xs font-medium whitespace-nowrap text-(--sidebar-text) opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100"
             >
               {label}
             </span>
@@ -146,10 +146,7 @@ export function Sidebar() {
           </div>
         )}
 
-        <nav
-          aria-label={t('nav.main')}
-          className={`flex-1 space-y-1 overflow-y-auto py-3 ${rail ? 'px-3' : 'px-3'}`}
-        >
+        <nav aria-label={t('nav.main')} className="flex-1 space-y-1 px-3 py-3">
           {!rail && (
             <p className="mb-2 px-3 text-[10px] font-semibold tracking-[0.16em] text-(--sidebar-text-muted)/80 uppercase">
               {t('nav.main')}
