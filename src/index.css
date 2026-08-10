@@ -7,64 +7,75 @@
   --font-heading: "Space Grotesk Variable", "Inter Variable", sans-serif;
 }
 
-/*
- * Fixed brand-chrome tokens — intentionally NOT redeclared inside
- * [data-theme="light"], so the sidebar keeps a constant dark treatment
- * regardless of the app's light/dark theme (same idea as the login
- * screen's always-dark left panel).
- */
+/* Brand wordmark accent — fixed on purpose: the "Studio" half of the
+   logo should read the same regardless of light/dark or sidebar theme. */
 :root {
-  --sidebar-bg: #0f0f10;
-  --sidebar-border: #222221;
-  --sidebar-hover-bg: #1a1b1e;
-  --sidebar-text: #ffffff;
-  --sidebar-text-sub: #b5b7bc;
-  --sidebar-text-muted: #6f7278;
-  --sidebar-accent: #d4a05f;
+  --brand-accent: #d6a566;
+}
+
+/* Sidebar — intentionally fixed, NOT redeclared under [data-theme="light"],
+   so it always keeps the dark treatment regardless of the app's theme. */
+:root {
+  --sidebar-bg: #151719;
+  --sidebar-border: #292c30;
+  --sidebar-hover-bg: #202328;
+  --sidebar-text: #f4f2ee;
+  --sidebar-text-sub: #b8babe;
+  --sidebar-text-muted: #85888e;
+  --sidebar-accent: #d6a566;
 }
 
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
 
-  --bg-app: #0a0a0a;
-  --surface-hover: #1a1b1e;
+  --bg-app: #111214;
+  --surface-card: #17191c;
+  --surface-hover: #202328;
+  --surface-elevated: #24272b;
 
-  --accent-gold: #d4a05f;
-  --accent-gold-light: #e0b67c;
-  --accent-gold-dark: #a8763e;
+  --accent-gold: #d6a566;
+  --accent-gold-hover: #e4b97d;
+  --accent-gold-active: #b07c43;
 
-  --text-primary: #ffffff;
-  --text-secondary: #b5b7bc;
-  --text-muted: #6f7278;
+  --text-primary: #f4f2ee;
+  --text-secondary: #b8babe;
+  --text-muted: #85888e;
 
-  --border-card: #222221;
+  --border-card: #292c30;
+  --border-focus: #d6a566;
 
   --th-bg: var(--bg-app);
-  --th-bg-card: transparent;
-  --th-bg-elevated: var(--surface-hover);
+  --th-bg-card: var(--surface-card);
+  --th-bg-elevated: var(--surface-elevated);
 
   --th-text: var(--text-primary);
   --th-text-sub: var(--text-secondary);
   --th-text-muted: var(--text-muted);
 
   --th-accent: var(--accent-gold);
-  --th-accent-hover: var(--accent-gold-light);
-  --th-accent-active: var(--accent-gold-dark);
+  --th-accent-hover: var(--accent-gold-hover);
+  --th-accent-active: var(--accent-gold-active);
 
   --th-border: var(--border-card);
-  --th-border-focus: var(--accent-gold);
+  --th-border-focus: var(--border-focus);
 }
 
 [data-theme="light"] {
   color-scheme: light;
 
   --bg-app: #ffffff;
+  --surface-card: #ffffff;
+  /* No separate elevated tone designed for light yet — reuses the same
+     subtle gray as surface-hover so hover feedback (Button secondary/ghost,
+     UserMenu items) stays visible against white cards instead of going
+     invisible. Revisit if light mode gets a dedicated popover/elevated look. */
   --surface-hover: #eceef6;
+  --surface-elevated: #eceef6;
 
   --accent-gold: #a8722a;
-  --accent-gold-light: #be8a40;
-  --accent-gold-dark: #7d521c;
+  --accent-gold-hover: #be8a40;
+  --accent-gold-active: #7d521c;
 
   --text-primary: #18150e;
   --text-secondary: #5a5549;
@@ -73,21 +84,22 @@
   --text-muted: #756f65;
 
   --border-card: #e8eaf0;
+  --border-focus: #a8722a;
 
-  --th-bg: #ffffff;
-  --th-bg-card: #ffffff;
-  --th-bg-elevated: var(--surface-hover);
+  --th-bg: var(--bg-app);
+  --th-bg-card: var(--surface-card);
+  --th-bg-elevated: var(--surface-elevated);
 
   --th-text: var(--text-primary);
   --th-text-sub: var(--text-secondary);
   --th-text-muted: var(--text-muted);
 
   --th-accent: var(--accent-gold);
-  --th-accent-hover: var(--accent-gold-light);
-  --th-accent-active: var(--accent-gold-dark);
+  --th-accent-hover: var(--accent-gold-hover);
+  --th-accent-active: var(--accent-gold-active);
 
   --th-border: var(--border-card);
-  --th-border-focus: var(--accent-gold);
+  --th-border-focus: var(--border-focus);
 }
 
 @layer base {

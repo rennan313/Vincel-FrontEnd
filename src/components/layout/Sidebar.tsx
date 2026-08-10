@@ -112,7 +112,7 @@ export function Sidebar() {
       >
         {rail ? (
           <div className="flex flex-col items-center gap-3 py-5">
-            <Logo size={26} color="white" hideWordmark />
+            <Logo size={26} hideWordmark />
             <button
               type="button"
               onClick={toggleCollapsed}
@@ -124,7 +124,7 @@ export function Sidebar() {
           </div>
         ) : (
           <div className="flex items-center justify-between px-4 py-5">
-            <Logo size={30} color="white" />
+            <Logo size={30} textColorVar="--sidebar-text" />
             <div className="flex items-center gap-1">
               <button
                 type="button"
