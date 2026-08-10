@@ -12,6 +12,11 @@
     "clients": "Clientes",
     "projects": "Projetos"
   },
+  "sidebar": {
+    "collapse": "Recolher menu",
+    "expand": "Expandir menu",
+    "close": "Fechar menu"
+  },
   "header": {
     "search": "Buscar"
   },

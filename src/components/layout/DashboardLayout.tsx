@@ -4,20 +4,17 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { Header } from '@/components/layout/Header'
 import { useAuthStore } from '@/store/authStore'
 import { useSidebarStore } from '@/store/sidebarStore'
+import { useMediaQuery } from '@/lib/useMediaQuery'
 
 export function DashboardLayout() {
   const user = useAuthStore((state) => state.user)
   const sidebarOpen = useSidebarStore((state) => state.open)
   const closeSidebar = useSidebarStore((state) => state.close)
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
 
   useEffect(() => {
-    const desktop = window.matchMedia('(min-width: 1024px)')
-    function handleChange(event: MediaQueryListEvent) {
-      if (event.matches) closeSidebar()
-    }
-    desktop.addEventListener('change', handleChange)
-    return () => desktop.removeEventListener('change', handleChange)
-  }, [closeSidebar])
+    if (isDesktop) closeSidebar()
+  }, [isDesktop, closeSidebar])
 
   useEffect(() => {
     document.body.style.overflow = sidebarOpen ? 'hidden' : ''

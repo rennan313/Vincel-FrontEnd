@@ -3,10 +3,16 @@ const MARK = '/brand/app-icon-solid-512-transparent.png'
 interface LogoProps {
   size?: number
   color?: 'themed' | 'white'
+  /** Shows only the mark, no wordmark — for icon-only / collapsed layouts. */
+  hideWordmark?: boolean
 }
 
-export function Logo({ size = 36, color = 'themed' }: LogoProps) {
+export function Logo({ size = 36, color = 'themed', hideWordmark }: LogoProps) {
   const wordmarkColor = color === 'white' ? '#ffffff' : 'var(--th-text)'
+
+  if (hideWordmark) {
+    return <img src={MARK} alt="Vincel Studio" width={size} height={size} />
+  }
 
   return (
     <div className="flex items-center gap-2">
