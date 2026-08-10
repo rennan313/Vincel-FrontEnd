@@ -1,1 +1,88 @@
 @import "tailwindcss";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/space-grotesk";
+
+@theme {
+  --font-sans: "Inter Variable", "system-ui", sans-serif;
+  --font-heading: "Space Grotesk Variable", "Inter Variable", sans-serif;
+}
+
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg-app: #0a0a0a;
+  --surface-hover: #1a1b1e;
+
+  --accent-gold: #d4a05f;
+  --accent-gold-light: #e0b67c;
+  --accent-gold-dark: #a8763e;
+
+  --text-primary: #ffffff;
+  --text-secondary: #b5b7bc;
+  --text-muted: #6f7278;
+
+  --border-card: #222221;
+
+  --th-bg: var(--bg-app);
+  --th-bg-card: transparent;
+  --th-bg-elevated: var(--surface-hover);
+
+  --th-text: var(--text-primary);
+  --th-text-sub: var(--text-secondary);
+  --th-text-muted: var(--text-muted);
+
+  --th-accent: var(--accent-gold);
+  --th-accent-hover: var(--accent-gold-light);
+  --th-accent-active: var(--accent-gold-dark);
+
+  --th-border: var(--border-card);
+  --th-border-focus: var(--accent-gold);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg-app: #ffffff;
+  --surface-hover: #eceef6;
+
+  --accent-gold: #a8722a;
+  --accent-gold-light: #be8a40;
+  --accent-gold-dark: #7d521c;
+
+  --text-primary: #18150e;
+  --text-secondary: #5a5549;
+  --text-muted: #948e86;
+
+  --border-card: #e8eaf0;
+
+  --th-bg: #dde1ec;
+  --th-bg-card: #ffffff;
+  --th-bg-elevated: var(--surface-hover);
+
+  --th-text: var(--text-primary);
+  --th-text-sub: var(--text-secondary);
+  --th-text-muted: var(--text-muted);
+
+  --th-accent: var(--accent-gold);
+  --th-accent-hover: var(--accent-gold-light);
+  --th-accent-active: var(--accent-gold-dark);
+
+  --th-border: var(--border-card);
+  --th-border-focus: var(--accent-gold);
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--th-bg);
+    color: var(--th-text);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.02em;
+  }
+}

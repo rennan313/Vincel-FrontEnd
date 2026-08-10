@@ -1,5 +1,38 @@
 {
   "app": {
     "title": "Vincel"
+  },
+  "common": {
+    "or": "OU",
+    "backToSite": "Voltar para o site"
+  },
+  "auth": {
+    "login": {
+      "title": "Bem-vindo de volta",
+      "subtitle": "Acesse o painel do seu escritório de arquitetura",
+      "email": "E-mail",
+      "emailPlaceholder": "voce@exemplo.com",
+      "password": "Senha",
+      "passwordPlaceholder": "••••••••",
+      "forgotPassword": "Esqueci minha senha",
+      "submit": "Entrar com e-mail",
+      "submitting": "Entrando...",
+      "google": "Continuar com Google",
+      "googleLoading": "Entrando...",
+      "noAccount": "Não tem uma conta?",
+      "createFree": "Criar conta grátis",
+      "leftBadge": "Plataforma para Escritórios de Arquitetura",
+      "leftTitlePrefix": "Seu escritório, em ",
+      "leftHighlight": "uma plataforma",
+      "leftSubtitle": "Projetos, clientes, propostas, reuniões e financeiro — tudo em uma plataforma para escritórios de arquitetura.",
+      "trustSignalCount": "340+",
+      "trustSignalText": "escritórios de arquitetura no Brasil",
+      "mockGoogleToast": "Mock: login com Google não implementado",
+      "mockSuccessToast": "Mock: login efetuado com sucesso",
+      "errors": {
+        "invalid_credentials": "E-mail ou senha incorretos.",
+        "default": "Ocorreu um erro ao entrar. Tente novamente."
+      }
+    }
   }
 }
