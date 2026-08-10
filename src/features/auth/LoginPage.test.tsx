@@ -1,18 +1,35 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { MemoryRouter, Route, Routes } from 'react-router'
+import { afterEach, describe, expect, it } from 'vitest'
 import { LoginPage } from '@/features/auth/LoginPage'
+import { useAuthStore } from '@/store/authStore'
 import '@/lib/i18n'
+
+function renderLoginPage() {
+  return render(
+    <MemoryRouter initialEntries={['/']}>
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/dashboard" element={<p>Dashboard mock</p>} />
+      </Routes>
+    </MemoryRouter>,
+  )
+}
+
+afterEach(() => {
+  useAuthStore.setState({ user: null })
+})
 
 describe('LoginPage', () => {
   it('renders the login form', () => {
-    render(<LoginPage />)
+    renderLoginPage()
     expect(screen.getByText('Bem-vindo de volta')).toBeInTheDocument()
     expect(screen.getByLabelText('E-mail')).toBeInTheDocument()
     expect(screen.getByLabelText('Senha')).toBeInTheDocument()
   })
 
   it('shows an error banner for wrong mock credentials', async () => {
-    render(<LoginPage />)
+    renderLoginPage()
     fireEvent.change(screen.getByLabelText('E-mail'), {
       target: { value: 'wrong@example.com' },
     })
@@ -24,5 +41,24 @@ describe('LoginPage', () => {
     await waitFor(() =>
       expect(screen.getByText('E-mail ou senha incorretos.')).toBeInTheDocument(),
     )
+  })
+
+  it('logs in and navigates to the dashboard with the mock credentials', async () => {
+    renderLoginPage()
+    fireEvent.change(screen.getByLabelText('E-mail'), {
+      target: { value: 'demo@vincel.studio' },
+    })
+    fireEvent.change(screen.getByLabelText('Senha'), {
+      target: { value: 'demo1234' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Entrar com e-mail' }))
+
+    await waitFor(() =>
+      expect(screen.getByText('Dashboard mock')).toBeInTheDocument(),
+    )
+    expect(useAuthStore.getState().user).toEqual({
+      name: 'Alexandre Soares',
+      email: 'demo@vincel.studio',
+    })
   })
 })

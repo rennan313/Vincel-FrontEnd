@@ -1,4 +1,5 @@
 import { useState, type SubmitEvent } from 'react'
+import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { z } from 'zod'
@@ -10,8 +11,10 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { PasswordInput } from '@/components/ui/PasswordInput'
 import { loginSchema } from '@/features/auth/loginSchema'
+import { useAuthStore } from '@/store/authStore'
 
 const MOCK_CREDENTIALS = { email: 'demo@vincel.studio', password: 'demo1234' }
+const MOCK_USER = { name: 'Alexandre Soares', email: MOCK_CREDENTIALS.email }
 
 interface FieldErrors {
   email?: string
@@ -20,6 +23,8 @@ interface FieldErrors {
 
 export function LoginPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
+  const login = useAuthStore((state) => state.login)
   const [loadingEmail, setLoadingEmail] = useState(false)
   const [loadingGoogle, setLoadingGoogle] = useState(false)
   const [bannerError, setBannerError] = useState<string | null>(null)
@@ -63,6 +68,8 @@ export function LoginPage() {
       parsed.data.password === MOCK_CREDENTIALS.password
     ) {
       toast.success(t('auth.login.mockSuccessToast'))
+      login(MOCK_USER)
+      navigate('/dashboard')
     } else {
       setBannerError('invalid_credentials')
     }

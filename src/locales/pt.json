@@ -6,6 +6,28 @@
     "or": "OU",
     "backToSite": "Voltar para o site"
   },
+  "nav": {
+    "main": "Principal",
+    "dashboard": "Dashboard",
+    "clients": "Clientes",
+    "projects": "Projetos"
+  },
+  "header": {
+    "search": "Buscar"
+  },
+  "userMenu": {
+    "logout": "Sair"
+  },
+  "dashboard": {
+    "greeting": "Olá, {{name}}",
+    "subtitle": "Aqui está um resumo do seu escritório.",
+    "activeProjects": "Projetos ativos",
+    "activeClients": "Clientes ativos",
+    "monthRevenue": "Faturamento do mês"
+  },
+  "comingSoon": {
+    "message": "Essa tela ainda está em construção."
+  },
   "auth": {
     "login": {
       "title": "Bem-vindo de volta",

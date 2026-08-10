@@ -7,6 +7,22 @@
   --font-heading: "Space Grotesk Variable", "Inter Variable", sans-serif;
 }
 
+/*
+ * Fixed brand-chrome tokens — intentionally NOT redeclared inside
+ * [data-theme="light"], so the sidebar keeps a constant dark treatment
+ * regardless of the app's light/dark theme (same idea as the login
+ * screen's always-dark left panel).
+ */
+:root {
+  --sidebar-bg: #0f0f10;
+  --sidebar-border: #222221;
+  --sidebar-hover-bg: #1a1b1e;
+  --sidebar-text: #ffffff;
+  --sidebar-text-sub: #b5b7bc;
+  --sidebar-text-muted: #6f7278;
+  --sidebar-accent: #d4a05f;
+}
+
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
