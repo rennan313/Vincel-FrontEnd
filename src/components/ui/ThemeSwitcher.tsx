@@ -10,7 +10,7 @@ export function ThemeSwitcher() {
       type="button"
       onClick={toggleTheme}
       aria-label="Alternar tema"
-      className="flex size-8 items-center justify-center rounded-lg border border-zinc-800 text-[var(--th-text-sub)] transition-colors hover:text-[var(--th-text)]"
+      className="flex size-8 items-center justify-center rounded-lg border border-[var(--th-border)] text-[var(--th-text-sub)] transition-colors hover:text-[var(--th-text)]"
     >
       {theme === 'dark' ? (
         <Sun className="size-4" />

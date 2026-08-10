@@ -52,11 +52,13 @@
 
   --text-primary: #18150e;
   --text-secondary: #5a5549;
-  --text-muted: #948e86;
+  /* Darkened from the guide's #948e86 (~3.2:1 on white) to meet WCAG AA
+     (4.5:1) for muted body copy like subtitles and footer text. */
+  --text-muted: #756f65;
 
   --border-card: #e8eaf0;
 
-  --th-bg: #dde1ec;
+  --th-bg: #fbfbfb;
   --th-bg-card: #ffffff;
   --th-bg-elevated: var(--surface-hover);
 

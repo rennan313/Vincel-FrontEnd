@@ -136,7 +136,7 @@ export function LoginPage() {
             type="button"
             onClick={handleGoogleClick}
             disabled={isBusy}
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-zinc-800 bg-[var(--th-bg-card)] text-sm font-medium shadow-sm transition-colors hover:border-zinc-700 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--th-border)] bg-[var(--th-bg-card)] text-sm font-medium shadow-sm transition-colors hover:border-[var(--th-accent)]/40 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {loadingGoogle ? (
               <Loader2 className="size-4 animate-spin" />
@@ -149,7 +149,7 @@ export function LoginPage() {
           </button>
 
           <div className="relative my-5 flex items-center justify-center">
-            <div className="absolute inset-x-0 border-t border-zinc-800" />
+            <div className="absolute inset-x-0 border-t border-[var(--th-border)]" />
             <span className="relative bg-[var(--th-bg)] px-3 text-xs text-[var(--th-text-muted)]">
               {t('common.or')}
             </span>
@@ -168,7 +168,7 @@ export function LoginPage() {
                 autoComplete="email"
                 placeholder={t('auth.login.emailPlaceholder')}
                 disabled={isBusy}
-                className="h-10 w-full rounded-lg border border-zinc-800 bg-[var(--th-bg-card)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--th-border-focus)] disabled:opacity-40"
+                className="h-10 w-full rounded-lg border border-[var(--th-border)] bg-[var(--th-bg-card)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--th-border-focus)] disabled:opacity-40"
               />
             </div>
 
@@ -194,7 +194,7 @@ export function LoginPage() {
                   autoComplete="current-password"
                   placeholder={t('auth.login.passwordPlaceholder')}
                   disabled={isBusy}
-                  className="h-10 w-full rounded-lg border border-zinc-800 bg-[var(--th-bg-card)] px-3 pr-10 text-sm outline-none focus:ring-2 focus:ring-[var(--th-border-focus)] disabled:opacity-40"
+                  className="h-10 w-full rounded-lg border border-[var(--th-border)] bg-[var(--th-bg-card)] px-3 pr-10 text-sm outline-none focus:ring-2 focus:ring-[var(--th-border-focus)] disabled:opacity-40"
                 />
                 <button
                   type="button"
@@ -222,7 +222,7 @@ export function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-5 border-t border-zinc-800 pt-4 text-center text-sm text-[var(--th-text-muted)]">
+          <div className="mt-5 border-t border-[var(--th-border)] pt-4 text-center text-sm text-[var(--th-text-muted)]">
             <strong className="text-[var(--th-text-sub)]">
               {t('auth.login.trustSignalCount')}
             </strong>{' '}
