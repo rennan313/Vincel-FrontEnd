@@ -59,12 +59,17 @@
 
   --th-border: var(--border-card);
   --th-border-focus: var(--border-focus);
+
+  /* Dedicated row-hover tone for lists/tables — decoupled from
+     --th-bg-elevated (shared by Button/UserMenu) so tuning one doesn't
+     affect the other. */
+  --th-row-hover: var(--surface-elevated);
 }
 
 [data-theme="light"] {
   color-scheme: light;
 
-  --bg-app: #ffffff;
+  --bg-app: #fcfcfc;
   --surface-card: #ffffff;
   /* No separate elevated tone designed for light yet — reuses the same
      subtle gray as surface-hover so hover feedback (Button secondary/ghost,
@@ -100,6 +105,10 @@
 
   --th-border: var(--border-card);
   --th-border-focus: var(--border-focus);
+
+  /* Lighter than --surface-elevated (#eceef6) on purpose — table row hover
+     specifically, kept independent from Button/UserMenu's elevated tone. */
+  --th-row-hover: #f5f6f9;
 }
 
 @layer base {

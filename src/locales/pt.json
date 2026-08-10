@@ -33,6 +33,33 @@
   "comingSoon": {
     "message": "Essa tela ainda está em construção."
   },
+  "clients": {
+    "subtitle": "Gerencie os clientes do seu escritório.",
+    "empty": "Nenhum cliente encontrado.",
+    "edit": "Editar",
+    "editAction": "Editar {{name}}",
+    "mockEditToast": "Mock: edição de cliente não implementada",
+    "searchPlaceholder": "Buscar por nome ou e-mail",
+    "new": "Novo cliente",
+    "mockNewToast": "Mock: cadastro de cliente não implementado",
+    "columns": {
+      "name": "Nome",
+      "contact": "Contato",
+      "status": "Status"
+    },
+    "status": {
+      "active": "Ativo",
+      "inactive": "Inativo"
+    }
+  },
+  "table": {
+    "pagination": {
+      "range": "Mostrando {{from}}–{{to}} de {{total}}",
+      "page": "Página {{page}} de {{pageCount}}",
+      "previous": "Página anterior",
+      "next": "Próxima página"
+    }
+  },
   "auth": {
     "login": {
       "title": "Bem-vindo de volta",
