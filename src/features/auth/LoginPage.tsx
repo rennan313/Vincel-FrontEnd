@@ -1,33 +1,43 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type SubmitEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { z } from 'zod'
+import { ArrowLeft } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
 import { GoogleIcon } from '@/components/ui/GoogleIcon'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { PasswordInput } from '@/components/ui/PasswordInput'
 import { loginSchema } from '@/features/auth/loginSchema'
 
 const MOCK_CREDENTIALS = { email: 'demo@vincel.studio', password: 'demo1234' }
 
+interface FieldErrors {
+  email?: string
+  password?: string
+}
+
 export function LoginPage() {
   const { t } = useTranslation()
-  const [showPassword, setShowPassword] = useState(false)
   const [loadingEmail, setLoadingEmail] = useState(false)
   const [loadingGoogle, setLoadingGoogle] = useState(false)
-  const [errorKey, setErrorKey] = useState<string | null>(null)
+  const [bannerError, setBannerError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const isBusy = loadingEmail || loadingGoogle
 
   async function handleGoogleClick() {
-    setErrorKey(null)
+    setBannerError(null)
     setLoadingGoogle(true)
     await new Promise((resolve) => setTimeout(resolve, 900))
     setLoadingGoogle(false)
     toast.info(t('auth.login.mockGoogleToast'))
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
-    setErrorKey(null)
+    setBannerError(null)
+    setFieldErrors({})
 
     const formData = new FormData(event.currentTarget)
     const parsed = loginSchema.safeParse({
@@ -36,7 +46,11 @@ export function LoginPage() {
     })
 
     if (!parsed.success) {
-      setErrorKey('default')
+      const { fieldErrors: errors } = z.flattenError(parsed.error)
+      setFieldErrors({
+        email: errors.email?.[0],
+        password: errors.password?.[0],
+      })
       return
     }
 
@@ -50,12 +64,12 @@ export function LoginPage() {
     ) {
       toast.success(t('auth.login.mockSuccessToast'))
     } else {
-      setErrorKey('invalid_credentials')
+      setBannerError('invalid_credentials')
     }
   }
 
   return (
-    <div className="flex min-h-screen bg-[var(--th-bg)]">
+    <div className="flex min-h-screen bg-(--th-bg)">
       <div className="relative hidden overflow-hidden bg-[#111110] p-12 lg:flex lg:w-1/2 lg:flex-col lg:justify-between">
         <svg
           className="absolute inset-0 h-full w-full opacity-5"
@@ -111,7 +125,7 @@ export function LoginPage() {
           <div className="mb-6 flex items-center justify-between">
             <a
               href="/"
-              className="flex items-center gap-1.5 text-sm text-[var(--th-text-muted)] transition-colors hover:text-[var(--th-text)]"
+              className="flex items-center gap-1.5 text-sm text-(--th-text-muted) transition-colors hover:text-(--th-text)"
             >
               <ArrowLeft className="size-4" />
               {t('common.backToSite')}
@@ -121,123 +135,104 @@ export function LoginPage() {
 
           <div className="mb-7">
             <h2 className="text-2xl font-bold">{t('auth.login.title')}</h2>
-            <p className="text-sm text-[var(--th-text-muted)]">
+            <p className="text-sm text-(--th-text-muted)">
               {t('auth.login.subtitle')}
             </p>
           </div>
 
-          {errorKey && (
+          {bannerError && (
             <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
-              {t(`auth.login.errors.${errorKey}`)}
+              {t(`auth.login.errors.${bannerError}`)}
             </div>
           )}
 
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="lg"
+            className="w-full rounded-xl shadow-sm"
             onClick={handleGoogleClick}
+            loading={loadingGoogle}
             disabled={isBusy}
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--th-border)] bg-[var(--th-bg-card)] text-sm font-medium shadow-sm transition-colors hover:border-[var(--th-accent)]/40 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {loadingGoogle ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <GoogleIcon />
-            )}
+            {!loadingGoogle && <GoogleIcon />}
             {loadingGoogle
               ? t('auth.login.googleLoading')
               : t('auth.login.google')}
-          </button>
+          </Button>
 
           <div className="relative my-5 flex items-center justify-center">
-            <div className="absolute inset-x-0 border-t border-[var(--th-border)]" />
-            <span className="relative bg-[var(--th-bg)] px-3 text-xs text-[var(--th-text-muted)]">
+            <div className="absolute inset-x-0 border-t border-(--th-border)" />
+            <span className="relative bg-(--th-bg) px-3 text-xs text-(--th-text-muted)">
               {t('common.or')}
             </span>
           </div>
 
-          <form className="space-y-3" onSubmit={handleSubmit}>
-            <div>
-              <label className="mb-1 block text-sm" htmlFor="email">
-                {t('auth.login.email')}
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                autoComplete="email"
-                placeholder={t('auth.login.emailPlaceholder')}
-                disabled={isBusy}
-                className="h-10 w-full rounded-lg border border-[var(--th-border)] bg-[var(--th-bg-card)] px-3 text-sm outline-none focus:ring-2 focus:ring-[var(--th-border-focus)] disabled:opacity-40"
-              />
-            </div>
+          <form className="space-y-3" onSubmit={handleSubmit} noValidate>
+            <Input
+              label={t('auth.login.email')}
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              placeholder={t('auth.login.emailPlaceholder')}
+              disabled={isBusy}
+              error={fieldErrors.email}
+            />
 
             <div>
               <div className="mb-1 flex items-center justify-between">
                 <label className="text-sm" htmlFor="password">
                   {t('auth.login.password')}
                 </label>
-                <a
-                  href="/forgot-password"
+                <Button
+                  type="button"
+                  variant="link"
                   className="text-sm"
-                  style={{ color: 'var(--th-accent)' }}
+                  onClick={() => toast.info(t('auth.login.mockForgotPasswordToast'))}
                 >
                   {t('auth.login.forgotPassword')}
-                </a>
+                </Button>
               </div>
-              <div className="relative">
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  autoComplete="current-password"
-                  placeholder={t('auth.login.passwordPlaceholder')}
-                  disabled={isBusy}
-                  className="h-10 w-full rounded-lg border border-[var(--th-border)] bg-[var(--th-bg-card)] px-3 pr-10 text-sm outline-none focus:ring-2 focus:ring-[var(--th-border-focus)] disabled:opacity-40"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((value) => !value)}
-                  className="absolute inset-y-0 right-3 flex items-center text-[var(--th-text-muted)]"
-                  aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-                >
-                  {showPassword ? (
-                    <EyeOff className="size-4" />
-                  ) : (
-                    <Eye className="size-4" />
-                  )}
-                </button>
-              </div>
+              <PasswordInput
+                id="password"
+                name="password"
+                autoComplete="current-password"
+                placeholder={t('auth.login.passwordPlaceholder')}
+                disabled={isBusy}
+                error={fieldErrors.password}
+              />
             </div>
 
-            <button
+            <Button
               type="submit"
+              variant="primary"
+              size="md"
+              className="w-full"
+              loading={loadingEmail}
               disabled={isBusy}
-              style={{ background: 'var(--th-accent)' }}
-              className="flex h-10 w-full items-center justify-center gap-2 rounded-md text-sm font-medium text-white transition-opacity hover:opacity-90 active:opacity-80 disabled:opacity-40"
             >
-              {loadingEmail && <Loader2 className="size-4 animate-spin" />}
               {loadingEmail ? t('auth.login.submitting') : t('auth.login.submit')}
-            </button>
+            </Button>
           </form>
 
-          <div className="mt-5 border-t border-[var(--th-border)] pt-4 text-center text-sm text-[var(--th-text-muted)]">
-            <strong className="text-[var(--th-text-sub)]">
+          <div className="mt-5 border-t border-(--th-border) pt-4 text-center text-sm text-(--th-text-muted)">
+            <strong className="text-(--th-text-sub)">
               {t('auth.login.trustSignalCount')}
             </strong>{' '}
             {t('auth.login.trustSignalText')}
           </div>
 
-          <p className="mt-4 text-center text-sm text-[var(--th-text-muted)]">
+          <p className="mt-4 text-center text-sm text-(--th-text-muted)">
             {t('auth.login.noAccount')}{' '}
-            <a
-              href="/register"
+            <Button
+              type="button"
+              variant="link"
               className="font-medium"
-              style={{ color: 'var(--th-accent)' }}
+              onClick={() => toast.info(t('auth.login.mockRegisterToast'))}
             >
               {t('auth.login.createFree')}
-            </a>
+            </Button>
           </p>
         </div>
       </div>
