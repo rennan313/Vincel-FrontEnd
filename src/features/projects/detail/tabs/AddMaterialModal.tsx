@@ -1,17 +1,14 @@
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ArrowLeft, ChevronDown, Search } from 'lucide-react'
+import { ArrowLeft, Search } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { SelectableCard } from '@/components/ui/SelectableCard'
-import { cn } from '@/lib/cn'
-import { formatBRLAmount } from '@/lib/masks'
-import {
-  MATERIAL_CATEGORIES,
-  searchMaterialCatalog,
-  type MaterialCatalogItem,
-} from '@/features/projects/detail/materialCatalog'
+import { formatBRLAmount, formatCurrencyBRL, parseCurrencyBRL } from '@/lib/masks'
+import { useDebouncedValue } from '@/lib/useDebouncedValue'
+import { fetchProducts } from '@/features/projects/detail/productsApi'
 
 interface MaterialComponentOption {
   id: string
@@ -42,35 +39,19 @@ const EMPTY_FORM: MaterialFormState = {
 
 type ModalMode = 'picker' | 'details'
 
-function CatalogButton({
-  item,
-  onSelect,
-}: {
-  item: MaterialCatalogItem
-  onSelect: (item: MaterialCatalogItem) => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => onSelect(item)}
-      className="flex flex-col items-start gap-0.5 rounded-lg border border-(--th-border) px-3 py-2 text-left text-sm text-(--th-text) transition-colors hover:border-(--th-accent)/40 hover:bg-(--th-bg-elevated)"
-    >
-      {item.name}
-      <span className="text-xs text-(--th-text-muted)">
-        {formatBRLAmount(item.unitPrice)} / {item.unit}
-      </span>
-    </button>
-  )
-}
-
 export function AddMaterialModal({ open, onClose, components }: AddMaterialModalProps) {
   const [mode, setMode] = useState<ModalMode>('picker')
   const [form, setForm] = useState<MaterialFormState>(EMPTY_FORM)
   const [errors, setErrors] = useState<{ name?: string; component?: string }>({})
   const [query, setQuery] = useState('')
-  const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
+  const debouncedQuery = useDebouncedValue(query, 300)
 
-  const searchResults = searchMaterialCatalog(query)
+  const { data, isLoading } = useQuery({
+    queryKey: ['materials-catalog', debouncedQuery],
+    queryFn: () => fetchProducts(debouncedQuery),
+    enabled: open,
+  })
+  const catalogItems = data?.data ?? []
   const isSearching = query.trim().length > 0
 
   function reset() {
@@ -78,7 +59,6 @@ export function AddMaterialModal({ open, onClose, components }: AddMaterialModal
     setForm(EMPTY_FORM)
     setErrors({})
     setQuery('')
-    setExpandedCategory(null)
   }
 
   function handleClose() {
@@ -195,10 +175,19 @@ export function AddMaterialModal({ open, onClose, components }: AddMaterialModal
             />
           </div>
           <Input
+            label="Valor unitário"
+            value={form.unitPrice != null ? formatBRLAmount(form.unitPrice) : ''}
+            placeholder="R$ 0,00"
+            onChange={(event) =>
+              setForm((f) => ({ ...f, unitPrice: parseCurrencyBRL(formatCurrencyBRL(event.target.value)) }))
+            }
+            hint="Definido no cadastro do material — pode ser alterado aqui"
+          />
+          <Input
             label="Custo estimado"
             value={estimatedCost != null ? formatBRLAmount(estimatedCost) : '—'}
             disabled
-            hint="Calculado a partir do valor unitário cadastrado do material"
+            hint="Calculado a partir do valor unitário"
           />
         </div>
       ) : (
@@ -211,73 +200,35 @@ export function AddMaterialModal({ open, onClose, components }: AddMaterialModal
             autoFocus
           />
 
-          {isSearching ? (
-            <ul className="divide-y divide-(--th-border) rounded-lg border border-(--th-border)">
-              {searchResults.length === 0 ? (
-                <li className="px-3 py-2.5 text-sm text-(--th-text-muted)">
-                  Nenhum resultado — clique em "Continuar" para criar "{query.trim()}".
+          <ul className="max-h-72 divide-y divide-(--th-border) overflow-y-auto rounded-lg border border-(--th-border)">
+            {isLoading ? (
+              <li className="px-3 py-2.5 text-sm text-(--th-text-muted)">Carregando...</li>
+            ) : catalogItems.length === 0 ? (
+              <li className="px-3 py-2.5 text-sm text-(--th-text-muted)">
+                {isSearching ? (
+                  <>Nenhum resultado — clique em "Continuar" para criar "{query.trim()}".</>
+                ) : (
+                  'Nenhum material cadastrado.'
+                )}
+              </li>
+            ) : (
+              catalogItems.map((item) => (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    onClick={() => choose(item.name, item.unit)}
+                    className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm text-(--th-text) hover:bg-(--th-bg-elevated)"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Search className="size-3.5 text-(--th-text-muted)" />
+                      {item.name}
+                    </span>
+                    <span className="text-xs text-(--th-text-muted)">{item.unit}</span>
+                  </button>
                 </li>
-              ) : (
-                searchResults.map((item) => (
-                  <li key={item.id}>
-                    <button
-                      type="button"
-                      onClick={() => choose(item.name, item.unit, item.unitPrice)}
-                      className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm text-(--th-text) hover:bg-(--th-bg-elevated)"
-                    >
-                      <span className="flex items-center gap-2">
-                        <Search className="size-3.5 text-(--th-text-muted)" />
-                        {item.name}
-                      </span>
-                      <span className="text-xs text-(--th-text-muted)">
-                        {item.categoryLabel}
-                      </span>
-                    </button>
-                  </li>
-                ))
-              )}
-            </ul>
-          ) : (
-            <div className="space-y-1">
-              {MATERIAL_CATEGORIES.map((category) => {
-                const expanded = expandedCategory === category.id
-                return (
-                  <div key={category.id}>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setExpandedCategory((current) =>
-                          current === category.id ? null : category.id,
-                        )
-                      }
-                      className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-medium text-(--th-text) transition-colors hover:bg-(--th-bg-elevated)"
-                    >
-                      {category.label}
-                      <ChevronDown
-                        className={cn(
-                          'size-4 text-(--th-text-muted) transition-transform duration-150',
-                          expanded && 'rotate-180',
-                        )}
-                      />
-                    </button>
-                    {expanded && (
-                      <div className="grid grid-cols-2 gap-2 px-3 pb-2">
-                        {category.items.map((item) => (
-                          <CatalogButton
-                            key={item.id}
-                            item={item}
-                            onSelect={(selected) =>
-                              choose(selected.name, selected.unit, selected.unitPrice)
-                            }
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
+              ))
+            )}
+          </ul>
         </div>
       )}
     </Modal>

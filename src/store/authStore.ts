@@ -1,18 +1,25 @@
 import { create } from 'zustand'
-
-export interface MockUser {
-  name: string
-  email: string
-}
+import { persist } from 'zustand/middleware'
+import type { AuthUser } from '@/features/auth/authApi'
 
 interface AuthState {
-  user: MockUser | null
-  login: (user: MockUser) => void
+  user: AuthUser | null
+  accessToken: string | null
+  login: (user: AuthUser, accessToken?: string) => void
   logout: () => void
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  login: (user) => set({ user }),
-  logout: () => set({ user: null }),
-}))
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      accessToken: null,
+      login: (user, accessToken) => set({ user, accessToken: accessToken ?? null }),
+      logout: () => set({ user: null, accessToken: null }),
+    }),
+    {
+      name: 'vincel-auth',
+      partialize: (state) => ({ user: state.user, accessToken: state.accessToken }),
+    },
+  ),
+)

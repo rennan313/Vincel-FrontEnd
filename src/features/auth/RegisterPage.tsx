@@ -5,6 +5,8 @@ import { toast } from 'sonner'
 import { z } from 'zod'
 import { ArrowLeft, Check, Circle } from 'lucide-react'
 import { cn } from '@/lib/cn'
+import { formatCNPJ, formatCPF } from '@/lib/masks'
+import { API_URL, ApiError } from '@/lib/apiClient'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
 import { GoogleIcon } from '@/components/ui/GoogleIcon'
@@ -13,13 +15,23 @@ import { Input } from '@/components/ui/Input'
 import { PasswordInput } from '@/components/ui/PasswordInput'
 import { registerSchema } from '@/features/auth/registerSchema'
 import { PASSWORD_CRITERIA } from '@/features/auth/passwordCriteria'
+import { registerAccount, type CompanyDocumentType } from '@/features/auth/authApi'
 import { useAuthStore } from '@/store/authStore'
+
+const COMPANY_TYPES = ['PF', 'PJ'] as const
+type CompanyType = (typeof COMPANY_TYPES)[number]
+
+const DOCUMENT_TYPE_MAP: Record<CompanyType, CompanyDocumentType> = {
+  PF: 'CPF',
+  PJ: 'CNPJ',
+}
 
 interface FieldErrors {
   name?: string
   email?: string
   password?: string
   confirmPassword?: string
+  companyDocument?: string
 }
 
 export function RegisterPage() {
@@ -29,22 +41,24 @@ export function RegisterPage() {
   const [loadingEmail, setLoadingEmail] = useState(false)
   const [loadingGoogle, setLoadingGoogle] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
+  const [bannerError, setBannerError] = useState<string | null>(null)
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [companyType, setCompanyType] = useState<CompanyType>('PJ')
+  const [companyDocument, setCompanyDocument] = useState('')
   const isBusy = loadingEmail || loadingGoogle
   const passwordsMismatch =
     confirmPassword.length > 0 && password !== confirmPassword
 
-  async function handleGoogleClick() {
+  function handleGoogleClick() {
     setLoadingGoogle(true)
-    await new Promise((resolve) => setTimeout(resolve, 900))
-    setLoadingGoogle(false)
-    toast.info(t('auth.register.mockGoogleToast'))
+    window.location.href = `${API_URL}/auth/google`
   }
 
   async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     setFieldErrors({})
+    setBannerError(null)
 
     const formData = new FormData(event.currentTarget)
     const parsed = registerSchema.safeParse({
@@ -52,6 +66,8 @@ export function RegisterPage() {
       email: formData.get('email'),
       password,
       confirmPassword,
+      companyType,
+      companyDocument,
     })
 
     if (!parsed.success) {
@@ -61,17 +77,31 @@ export function RegisterPage() {
         email: errors.email?.[0],
         password: errors.password?.[0],
         confirmPassword: errors.confirmPassword?.[0],
+        companyDocument: errors.companyDocument?.[0],
       })
       return
     }
 
     setLoadingEmail(true)
-    await new Promise((resolve) => setTimeout(resolve, 700))
-    setLoadingEmail(false)
+    try {
+      const response = await registerAccount({
+        name: parsed.data.name,
+        email: parsed.data.email,
+        password: parsed.data.password,
+        companyDocument: parsed.data.companyDocument,
+        companyDocumentType: DOCUMENT_TYPE_MAP[parsed.data.companyType],
+      })
 
-    toast.success(t('auth.register.mockSuccessToast'))
-    login({ name: parsed.data.name, email: parsed.data.email })
-    navigate('/dashboard')
+      toast.success(t('auth.register.successToast'))
+      login(response.user, response.accessToken)
+      navigate('/dashboard')
+    } catch (error) {
+      setBannerError(
+        error instanceof ApiError ? error.message : 'Não foi possível criar a conta. Tente novamente.',
+      )
+    } finally {
+      setLoadingEmail(false)
+    }
   }
 
   return (
@@ -144,6 +174,49 @@ export function RegisterPage() {
             <p className="text-sm text-(--th-text-muted)">
               {t('auth.register.subtitle')}
             </p>
+          </div>
+
+          {bannerError && (
+            <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+              {bannerError}
+            </div>
+          )}
+
+          <div className="mb-5">
+            <p className="mb-2 text-sm font-medium text-(--th-text)">
+              {t('auth.register.companySection')}
+            </p>
+            <div className="mb-3 flex gap-2">
+              {COMPANY_TYPES.map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setCompanyType(type)}
+                  disabled={isBusy}
+                  className={cn(
+                    'flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
+                    companyType === type
+                      ? 'border-(--th-accent) bg-(--th-accent)/8 text-(--th-accent)'
+                      : 'border-(--th-border) text-(--th-text-sub) hover:bg-(--th-bg-elevated)',
+                  )}
+                >
+                  {t(`auth.register.companyType.${type}`)}
+                </button>
+              ))}
+            </div>
+            <Input
+              label={t(`auth.register.companyDocument.${companyType}`)}
+              value={companyDocument}
+              onChange={(event) =>
+                setCompanyDocument(
+                  companyType === 'PF'
+                    ? formatCPF(event.target.value)
+                    : formatCNPJ(event.target.value),
+                )
+              }
+              disabled={isBusy}
+              error={fieldErrors.companyDocument}
+            />
           </div>
 
           <Button

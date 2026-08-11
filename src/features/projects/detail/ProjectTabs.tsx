@@ -18,7 +18,7 @@ interface ProjectTabsProps {
 
 export function ProjectTabs({ active, onChange }: ProjectTabsProps) {
   return (
-    <div className="overflow-x-auto border-b border-(--th-border)">
+    <div className="overflow-x-auto overflow-y-hidden border-b border-(--th-border)">
       <nav className="flex w-max min-w-full gap-1" aria-label="Seções do projeto">
         {PROJECT_TAB_KEYS.map((key) => {
           const isActive = key === active

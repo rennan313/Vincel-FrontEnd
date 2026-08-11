@@ -10,7 +10,9 @@
     "main": "Principal",
     "dashboard": "Dashboard",
     "clients": "Clientes",
-    "projects": "Projetos"
+    "projects": "Projetos",
+    "users": "Usuários",
+    "subscription": "Assinatura"
   },
   "sidebar": {
     "collapse": "Recolher menu",
@@ -77,8 +79,48 @@
       "state": "Estado",
       "cancel": "Cancelar",
       "save": "Salvar",
-      "mockCreateToast": "Mock: cliente cadastrado (não persistido)",
-      "mockUpdateToast": "Mock: cliente atualizado (não persistido)"
+      "mockCreateToast": "Cliente cadastrado com sucesso!",
+      "mockUpdateToast": "Cliente atualizado com sucesso!"
+    }
+  },
+  "users": {
+    "subtitle": "Gerencie os usuários do seu escritório.",
+    "empty": "Nenhum usuário encontrado.",
+    "edit": "Editar",
+    "editAction": "Editar {{name}}",
+    "activate": "Reativar",
+    "activateAction": "Reativar {{name}}",
+    "deactivate": "Desativar",
+    "deactivateAction": "Desativar {{name}}",
+    "searchPlaceholder": "Buscar por nome ou e-mail",
+    "allRoles": "Todos os perfis",
+    "new": "Novo usuário",
+    "columns": {
+      "name": "Nome",
+      "email": "E-mail",
+      "role": "Perfil",
+      "status": "Status"
+    },
+    "status": {
+      "active": "Ativo",
+      "inactive": "Inativo"
+    },
+    "role": {
+      "ADMIN": "Administrador",
+      "ARCHITECT": "Arquiteto(a)",
+      "FINANCE": "Financeiro",
+      "CUSTOMER": "Cliente"
+    },
+    "form": {
+      "createTitle": "Novo usuário",
+      "editTitle": "Editar usuário",
+      "email": "E-mail",
+      "role": "Perfil",
+      "password": "Senha",
+      "cancel": "Cancelar",
+      "save": "Salvar",
+      "createToast": "Usuário cadastrado com sucesso!",
+      "updateToast": "Usuário atualizado com sucesso!"
     }
   },
   "projects": {
@@ -88,7 +130,12 @@
     "editAction": "Editar {{name}}",
     "searchPlaceholder": "Buscar por projeto ou cliente",
     "new": "Novo projeto",
-    "notFound": "Projeto não encontrado.",
+    "notFound": {
+      "title": "Projeto não encontrado",
+      "description": "Ele pode ter sido removido ou o link que você acessou está incorreto.",
+      "action": "Voltar para projetos"
+    },
+    "allStatuses": "Todos os status",
     "columns": {
       "name": "Projeto",
       "client": "Cliente",
@@ -157,6 +204,15 @@
         "lowercase": "Uma letra minúscula",
         "number": "Um número"
       },
+      "companySection": "Dados do escritório",
+      "companyType": {
+        "PF": "Pessoa física",
+        "PJ": "Pessoa jurídica"
+      },
+      "companyDocument": {
+        "PF": "CPF",
+        "PJ": "CNPJ"
+      },
       "submit": "Criar conta grátis",
       "submitting": "Criando conta...",
       "google": "Continuar com Google",
@@ -168,10 +224,23 @@
       "leftHighlight": "uma plataforma",
       "leftSubtitle": "Projetos, clientes, propostas, reuniões e financeiro — centralize a operação do seu escritório de arquitetura.",
       "mockGoogleToast": "Mock: cadastro com Google não implementado",
-      "mockSuccessToast": "Mock: escritório criado com sucesso",
+      "successToast": "Escritório criado com sucesso!",
       "errors": {
-        "passwordMismatch": "As senhas não coincidem."
+        "passwordMismatch": "As senhas não coincidem.",
+        "companyDocument": "Informe o documento do escritório."
       }
+    },
+    "googleComplete": {
+      "title": "Só mais um passo",
+      "subtitle": "Bem-vindo(a), {{name}}! Para concluir, informe o documento do seu escritório.",
+      "submit": "Concluir cadastro",
+      "submitting": "Concluindo...",
+      "successToast": "Escritório criado com sucesso!",
+      "expiredError": "Sessão do Google expirada. Volte e tente novamente.",
+      "backToLogin": "Voltar para o login"
     }
+  },
+  "subscription": {
+    "subtitle": "Gerencie o plano de assinatura do seu escritório."
   }
 }

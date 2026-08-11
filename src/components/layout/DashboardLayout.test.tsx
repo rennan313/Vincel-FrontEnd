@@ -31,7 +31,13 @@ describe('DashboardLayout', () => {
 
   it('renders the sidebar, header and content when authenticated', () => {
     useAuthStore.setState({
-      user: { name: 'Alexandre Soares', email: 'demo@vincel.studio' },
+      user: {
+        id: 'user-1',
+        name: 'Alexandre Soares',
+        email: 'demo@vincel.studio',
+        role: 'ADMIN',
+        companyId: null,
+      },
     })
     renderDashboard()
     expect(screen.getByText('Dashboard content')).toBeInTheDocument()

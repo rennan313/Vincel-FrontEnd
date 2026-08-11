@@ -1,16 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
 import { Archive, Copy, Download, Send } from 'lucide-react'
 import { Badge, type BadgeVariant } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
+import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
 import type { ProjectDraft } from '@/features/projects/create/types'
 import { resolveProjectTypeLabel } from '@/features/projects/detail/projectDerivations'
+import { fetchProjectPdf } from '@/features/projects/projectsApi'
 
 interface ProjectHeaderProps {
   draft: ProjectDraft
   statusLabel: string
   statusVariant: BadgeVariant
   onEdit: () => void
+  onArchive: () => void
 }
 
 const ACTIONS = [
@@ -20,8 +24,16 @@ const ACTIONS = [
   { key: 'send', label: 'Enviar para o cliente', icon: Send },
 ] as const
 
-function ActionsMenu() {
+interface ActionsMenuProps {
+  draft: ProjectDraft
+  onArchive: () => void
+}
+
+function ActionsMenu({ draft, onArchive }: ActionsMenuProps) {
+  const navigate = useNavigate()
+  const initDuplicate = useProjectWizardStore((state) => state.initDuplicate)
   const [open, setOpen] = useState(false)
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -33,6 +45,30 @@ function ActionsMenu() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  async function handleExportPdf() {
+    setDownloadingPdf(true)
+    try {
+      const blob = await fetchProjectPdf(draft.id)
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${draft.info.name || 'projeto'}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error('Não foi possível gerar o PDF do projeto.')
+    } finally {
+      setDownloadingPdf(false)
+    }
+  }
+
+  function handleDuplicate() {
+    initDuplicate(draft)
+    navigate('/projects/new')
+  }
 
   return (
     <div className="relative" ref={ref}>
@@ -51,14 +87,27 @@ function ActionsMenu() {
             <button
               key={action.key}
               type="button"
+              disabled={action.key === 'pdf' && downloadingPdf}
               onClick={() => {
                 setOpen(false)
+                if (action.key === 'pdf') {
+                  void handleExportPdf()
+                  return
+                }
+                if (action.key === 'duplicate') {
+                  handleDuplicate()
+                  return
+                }
+                if (action.key === 'archive') {
+                  onArchive()
+                  return
+                }
                 toast.info(`Mock: ${action.label.toLowerCase()} não implementado`)
               }}
-              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-(--th-text-sub) hover:bg-(--th-bg-elevated) hover:text-(--th-text)"
+              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-(--th-text-sub) hover:bg-(--th-bg-elevated) hover:text-(--th-text) disabled:opacity-50"
             >
               <action.icon className="size-3.5 text-(--th-text-muted)" />
-              {action.label}
+              {action.key === 'pdf' && downloadingPdf ? 'Gerando PDF...' : action.label}
             </button>
           ))}
         </div>
@@ -72,6 +121,7 @@ export function ProjectHeader({
   statusLabel,
   statusVariant,
   onEdit,
+  onArchive,
 }: ProjectHeaderProps) {
   return (
     <div>
@@ -94,7 +144,7 @@ export function ProjectHeader({
           <Button type="button" variant="outline" icon="Pencil" onClick={onEdit}>
             Editar projeto
           </Button>
-          <ActionsMenu />
+          <ActionsMenu draft={draft} onArchive={onArchive} />
         </div>
       </div>
     </div>

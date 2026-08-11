@@ -1,11 +1,78 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CreateProjectPage } from '@/features/projects/create/CreateProjectPage'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
 import { createEmptyDraft } from '@/features/projects/create/types'
+import type { Project } from '@/features/projects/projectsApi'
 import '@/lib/i18n'
+
+// Same project shape the old MOCK_PROJECTS fixture in projectsApi.ts used to
+// carry for id "1".
+const MOCK_PROJECTS: Project[] = [
+  { id: '1', name: 'Residência Alto da Serra', clientName: 'Ana Beatriz Ferreira', type: 'Residencial', status: 'in_progress', active: true, createdAt: '2026-01-12' },
+]
+
+let nextCreatedId = 100
+
+const PROJECT_TYPE_CATALOG = [
+  { id: 'pt_residencial', name: 'Residencial', icon: 'Home', active: true },
+  { id: 'pt_comercial', name: 'Comercial', icon: 'Building2', active: true },
+  { id: 'pt_industrial', name: 'Industrial', icon: 'Factory', active: true },
+  { id: 'pt_interiores', name: 'Interiores', icon: 'Sofa', active: true },
+  { id: 'pt_paisagismo', name: 'Paisagismo', icon: 'Trees', active: true },
+  { id: 'pt_urbanismo', name: 'Urbanismo', icon: 'Map', active: true },
+  { id: 'pt_outro', name: 'Outro', icon: 'Sparkles', active: true },
+]
+
+const SERVICE_CATALOG = [
+  { id: 'sv_estudo_preliminar', name: 'Estudo preliminar', active: true },
+  { id: 'sv_anteprojeto', name: 'Anteprojeto', active: true },
+  { id: 'sv_projeto_legal', name: 'Projeto legal', active: true },
+  { id: 'sv_projeto_executivo', name: 'Projeto executivo', active: true },
+  { id: 'sv_projeto_estrutural', name: 'Projeto estrutural', active: true },
+  { id: 'sv_compatibilizacao', name: 'Compatibilização', active: true },
+]
+
+const PROJECT_COMPONENT_CATALOG = [
+  { id: 'pc_area_estimada', name: 'Área estimada', category: null, mostUsed: true, active: true },
+  { id: 'pc_quartos', name: 'Quartos', category: null, mostUsed: true, active: true },
+  { id: 'pc_sala_estar', name: 'Sala de estar', category: 'Características do imóvel', mostUsed: false, active: true },
+  { id: 'pc_cozinha', name: 'Cozinha', category: 'Características do imóvel', mostUsed: false, active: true },
+]
+
+vi.mock('@/features/projects/create/catalogApi', () => ({
+  fetchProjectTypeCatalog: vi.fn(async () => PROJECT_TYPE_CATALOG),
+  fetchServiceCatalog: vi.fn(async () => SERVICE_CATALOG),
+  fetchProjectComponentCatalog: vi.fn(async () => PROJECT_COMPONENT_CATALOG),
+}))
+
+vi.mock('@/features/projects/projectsApi', async () => {
+  const actual = await vi.importActual('@/features/projects/projectsApi')
+  return {
+    ...actual,
+    fetchProjectById: vi.fn(async (id: string) => {
+      const project = MOCK_PROJECTS.find((item) => item.id === id)
+      if (!project) throw new Error('Not found')
+      return project
+    }),
+    createProject: vi.fn(async (payload: Partial<Project>) => ({
+      id: String(nextCreatedId++),
+      status: 'in_progress',
+      active: true,
+      createdAt: new Date().toISOString(),
+      clientName: '',
+      type: '',
+      name: '',
+      ...payload,
+    })),
+    updateProject: vi.fn(async (id: string, payload: Partial<Project>) => {
+      const existing = MOCK_PROJECTS.find((item) => item.id === id)
+      return { ...(existing ?? MOCK_PROJECTS[0]), ...payload, id }
+    }),
+  }
+})
 
 function renderWizard() {
   const queryClient = new QueryClient()
@@ -46,7 +113,7 @@ describe('CreateProjectPage', () => {
 
     // Step 1 — Projeto (nome is auto-generated from tipo + área, not typed)
     expect(screen.getByText('Vamos começar pelo projeto')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Residencial' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Residencial' }))
     fireEvent.change(screen.getByLabelText('Área do projeto'), {
       target: { value: '250' },
     })
@@ -154,7 +221,7 @@ describe('CreateProjectPage', () => {
   it('lets the user jump back to a previously completed step via the stepper', async () => {
     renderWizard()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Comercial' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Comercial' }))
     fireEvent.change(screen.getByLabelText('Área do projeto'), {
       target: { value: '120' },
     })

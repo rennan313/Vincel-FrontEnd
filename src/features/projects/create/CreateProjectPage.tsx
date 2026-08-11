@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { ApiError } from '@/lib/apiClient'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
 import { ProjectWizardStepper } from '@/features/projects/create/ProjectWizardStepper'
 import { StepProjectInfo } from '@/features/projects/create/StepProjectInfo'
@@ -27,6 +28,7 @@ export function CreateProjectPage() {
   const confirm = useProjectWizardStore((state) => state.confirm)
   const [furthestReached, setFurthestReached] = useState<WizardStep>(1)
   const [canContinue, setCanContinue] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   const { data: editingProject, isLoading: loadingProject } = useQuery({
     queryKey: ['project', projectId],
@@ -55,12 +57,20 @@ export function CreateProjectPage() {
     goToStep((draft.step - 1) as WizardStep)
   }
 
-  function handleContinue() {
+  async function handleContinue() {
     if (draft.step === 6) {
-      const targetId = isEditing ? projectId! : draft.id
-      confirm()
-      toast.success(isEditing ? 'Alterações salvas.' : 'Projeto criado a partir do rascunho.')
-      navigate(`/projects/${targetId}`)
+      setSaving(true)
+      try {
+        const project = await confirm()
+        toast.success(isEditing ? 'Alterações salvas.' : 'Projeto criado com sucesso!')
+        navigate(`/projects/${project.id}`)
+      } catch (error) {
+        toast.error(
+          error instanceof ApiError ? error.message : 'Não foi possível salvar o projeto.',
+        )
+      } finally {
+        setSaving(false)
+      }
       return
     }
     goToStep((draft.step + 1) as WizardStep)
@@ -104,7 +114,8 @@ export function CreateProjectPage() {
           type="button"
           variant="primary"
           onClick={handleContinue}
-          disabled={draft.step !== 6 && !canContinue}
+          disabled={(draft.step !== 6 && !canContinue) || saving}
+          loading={draft.step === 6 && saving}
         >
           {draft.step === 6 ? (isEditing ? 'Salvar alterações' : 'Criar projeto') : 'Continuar'}
         </Button>
