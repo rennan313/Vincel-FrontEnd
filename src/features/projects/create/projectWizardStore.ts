@@ -79,6 +79,9 @@ interface ProjectWizardState {
   /** Resumes an in-progress edit for this project, or builds a fresh draft
    * from the real project data returned by the API. */
   initEdit: (projectId: string, project: Project) => void
+  /** Seeds a brand-new draft (a real POST on confirm, not an edit) from
+   * another project's fields — for the "Duplicar projeto" action. */
+  initDuplicate: (source: ProjectDraft) => void
   goToStep: (step: WizardStep) => void
   updateInfo: (patch: Partial<ProjectInfo>) => void
   updateScope: (patch: Partial<ScopeData>) => void
@@ -115,6 +118,22 @@ export const useProjectWizardStore = create<ProjectWizardState>((set, get) => ({
     const draftId = `edit-${projectId}`
     const existing = repository.load(draftId)
     const draft = existing ?? projectToDraft(draftId, project)
+    persist(draft)
+    set({ draft })
+  },
+
+  initDuplicate: (source) => {
+    const draftId = generateDraftId()
+    const timestamp = nowIso()
+    const draft: ProjectDraft = {
+      ...source,
+      id: draftId,
+      status: 'draft',
+      step: 1,
+      info: { ...source.info, name: `${source.info.name} (cópia)`.trim() },
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    }
     persist(draft)
     set({ draft })
   },

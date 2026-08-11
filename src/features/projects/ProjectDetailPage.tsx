@@ -1,14 +1,16 @@
 import { useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useQueryState, parseAsStringLiteral } from 'nuqs'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import type { BadgeVariant } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { ApiError } from '@/lib/apiClient'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
 import { useBreadcrumbStore } from '@/store/breadcrumbStore'
 import { projectToDraft } from '@/features/projects/create/projectToDraft'
-import { fetchProjectById } from '@/features/projects/projectsApi'
+import { fetchProjectById, setProjectActive } from '@/features/projects/projectsApi'
 import { PROJECT_STATUS_VARIANT } from '@/features/projects/projectStatusStyles'
 import { ProjectHeader } from '@/features/projects/detail/ProjectHeader'
 import { ProjectSummaryCards } from '@/features/projects/detail/ProjectSummaryCards'
@@ -26,6 +28,7 @@ import { DocumentsTab } from '@/features/projects/detail/tabs/DocumentsTab'
 export function ProjectDetailPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { projectId } = useParams()
   const [tab, setTab] = useQueryState(
     'tab',
@@ -52,6 +55,20 @@ export function ProjectDetailPage() {
     : sourceProject
       ? projectToDraft(projectId!, sourceProject)
       : null
+
+  const archiveMutation = useMutation({
+    mutationFn: () => setProjectActive(projectId!, false),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] })
+      toast.success('Projeto arquivado.')
+      navigate('/projects')
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof ApiError ? error.message : 'Não foi possível arquivar o projeto.',
+      )
+    },
+  })
 
   // The toolbar's breadcrumb is otherwise a static route->title map (see
   // Header.tsx) that has no way to know a dynamic project's name — this
@@ -99,6 +116,7 @@ export function ProjectDetailPage() {
         statusLabel={status.label}
         statusVariant={status.variant}
         onEdit={() => navigate(`/projects/${projectId}/edit`)}
+        onArchive={() => archiveMutation.mutate()}
       />
 
       <div className="mt-6">
