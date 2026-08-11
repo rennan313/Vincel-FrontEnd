@@ -236,7 +236,7 @@ export function LoginPage() {
               type="button"
               variant="link"
               className="font-medium"
-              onClick={() => toast.info(t('auth.login.mockRegisterToast'))}
+              onClick={() => navigate('/register')}
             >
               {t('auth.login.createFree')}
             </Button>

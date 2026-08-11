@@ -11,6 +11,7 @@ function renderLoginPage() {
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route path="/dashboard" element={<p>Dashboard mock</p>} />
+        <Route path="/register" element={<p>Register mock</p>} />
       </Routes>
     </MemoryRouter>,
   )
@@ -60,5 +61,11 @@ describe('LoginPage', () => {
       name: 'Alexandre Soares',
       email: 'demo@vincel.studio',
     })
+  })
+
+  it('navigates to /register when clicking "Criar conta grátis"', () => {
+    renderLoginPage()
+    fireEvent.click(screen.getByRole('button', { name: 'Criar conta grátis' }))
+    expect(screen.getByText('Register mock')).toBeInTheDocument()
   })
 })
