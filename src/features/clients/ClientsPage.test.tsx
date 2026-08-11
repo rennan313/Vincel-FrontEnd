@@ -27,11 +27,10 @@ function renderClientsPage() {
 }
 
 describe('ClientsPage', () => {
-  it('renders the breadcrumb, header and table shell immediately, then real rows once loaded', async () => {
+  it('renders the table shell immediately, then real rows once loaded', async () => {
     renderClientsPage()
 
     expect(screen.getByText('Contato')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument()
     expect(screen.queryByText('Ana Beatriz Ferreira')).not.toBeInTheDocument()
 
     await waitFor(

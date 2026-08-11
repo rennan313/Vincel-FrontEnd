@@ -69,7 +69,7 @@
 [data-theme="light"] {
   color-scheme: light;
 
-  --bg-app: #fcfcfc;
+  --bg-app: #F9FAFC;
   --surface-card: #ffffff;
   /* No separate elevated tone designed for light yet — reuses the same
      subtle gray as surface-hover so hover feedback (Button secondary/ghost,

@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query'
 import { useQueryStates, parseAsInteger, parseAsString } from 'nuqs'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Breadcrumb } from '@/components/ui/Breadcrumb'
 import { PageTitle } from '@/components/ui/PageTitle'
 import { PageSubtitle } from '@/components/ui/PageSubtitle'
 import { Table, type TableColumn } from '@/components/ui/Table'
@@ -87,14 +86,7 @@ export function ClientsPage() {
 
   return (
     <div className="p-6">
-      <Breadcrumb
-        items={[
-          { label: t('nav.dashboard'), to: '/dashboard' },
-          { label: t('nav.clients') },
-        ]}
-      />
-
-      <div className="mt-4 mb-6 flex items-start justify-between gap-4">
+      <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <PageTitle>{t('nav.clients')}</PageTitle>
           <PageSubtitle>{t('clients.subtitle')}</PageSubtitle>
