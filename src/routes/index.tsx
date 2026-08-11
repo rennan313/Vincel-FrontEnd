@@ -12,6 +12,7 @@ import { ProjectsPage } from '@/features/projects/ProjectsPage'
 import { ProjectDetailPage } from '@/features/projects/ProjectDetailPage'
 import { CreateProjectPage } from '@/features/projects/create/CreateProjectPage'
 import { UsersPage } from '@/features/users/UsersPage'
+import { SubscriptionPage } from '@/features/subscription/SubscriptionPage'
 
 export const router = createBrowserRouter([
   {
@@ -27,6 +28,7 @@ export const router = createBrowserRouter([
         children: [
           { path: '/dashboard', element: <DashboardPage /> },
           { path: '/users', element: <UsersPage /> },
+          { path: '/assinatura', element: <SubscriptionPage /> },
           { path: '/clients', element: <ClientsPage /> },
           { path: '/projects', element: <ProjectsPage /> },
           { path: '/projects/new', element: <CreateProjectPage /> },

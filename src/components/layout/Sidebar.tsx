@@ -22,6 +22,7 @@ const BASE_NAV_ITEMS: NavItem[] = [
 ]
 
 const USERS_NAV_ITEM: NavItem = { labelKey: 'nav.users', to: '/users', icon: 'UserPlus' }
+const SUBSCRIPTION_NAV_ITEM: NavItem = { labelKey: 'nav.subscription', to: '/assinatura', icon: 'Wallet' }
 
 interface SidebarNavItemProps {
   item: NavItem
@@ -89,7 +90,7 @@ export function Sidebar() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const rail = collapsed && isDesktop
   const navItems = canManageUsers(role)
-    ? [...BASE_NAV_ITEMS, USERS_NAV_ITEM]
+    ? [...BASE_NAV_ITEMS, USERS_NAV_ITEM, SUBSCRIPTION_NAV_ITEM]
     : BASE_NAV_ITEMS
 
   useEffect(() => {

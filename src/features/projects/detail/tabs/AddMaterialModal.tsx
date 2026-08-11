@@ -6,7 +6,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { SelectableCard } from '@/components/ui/SelectableCard'
-import { formatBRLAmount } from '@/lib/masks'
+import { formatBRLAmount, formatCurrencyBRL, parseCurrencyBRL } from '@/lib/masks'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { fetchProducts } from '@/features/projects/detail/productsApi'
 
@@ -175,10 +175,19 @@ export function AddMaterialModal({ open, onClose, components }: AddMaterialModal
             />
           </div>
           <Input
+            label="Valor unitário"
+            value={form.unitPrice != null ? formatBRLAmount(form.unitPrice) : ''}
+            placeholder="R$ 0,00"
+            onChange={(event) =>
+              setForm((f) => ({ ...f, unitPrice: parseCurrencyBRL(formatCurrencyBRL(event.target.value)) }))
+            }
+            hint="Definido no cadastro do material — pode ser alterado aqui"
+          />
+          <Input
             label="Custo estimado"
             value={estimatedCost != null ? formatBRLAmount(estimatedCost) : '—'}
             disabled
-            hint="Calculado a partir do valor unitário cadastrado do material"
+            hint="Calculado a partir do valor unitário"
           />
         </div>
       ) : (

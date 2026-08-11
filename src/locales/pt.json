@@ -11,7 +11,8 @@
     "dashboard": "Dashboard",
     "clients": "Clientes",
     "projects": "Projetos",
-    "users": "Usuários"
+    "users": "Usuários",
+    "subscription": "Assinatura"
   },
   "sidebar": {
     "collapse": "Recolher menu",
@@ -238,5 +239,8 @@
       "expiredError": "Sessão do Google expirada. Volte e tente novamente.",
       "backToLogin": "Voltar para o login"
     }
+  },
+  "subscription": {
+    "subtitle": "Gerencie o plano de assinatura do seu escritório."
   }
 }
