@@ -1,9 +1,11 @@
+import { useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useQueryState, parseAsStringLiteral } from 'nuqs'
 import { useTranslation } from 'react-i18next'
 import type { BadgeVariant } from '@/components/ui/Badge'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
+import { useBreadcrumbStore } from '@/store/breadcrumbStore'
 import { seedDraftFromProject } from '@/features/projects/create/seedDraftFromProject'
 import { fetchProjectById } from '@/features/projects/projectsApi'
 import { PROJECT_STATUS_VARIANT } from '@/features/projects/projectStatusStyles'
@@ -28,6 +30,7 @@ export function ProjectDetailPage() {
     'tab',
     parseAsStringLiteral(PROJECT_TAB_KEYS).withDefault('overview'),
   )
+  const setBreadcrumbOverride = useBreadcrumbStore((state) => state.setOverride)
 
   const storeDraft = useProjectWizardStore((state) => state.draft)
   // A confirmed draft still in the wizard store is the richest, most
@@ -43,24 +46,34 @@ export function ProjectDetailPage() {
     enabled: Boolean(projectId) && !isCurrentDraft,
   })
 
+  const draft = isCurrentDraft
+    ? storeDraft
+    : sourceProject
+      ? seedDraftFromProject(projectId!, sourceProject)
+      : null
+
+  // The toolbar's breadcrumb is otherwise a static route->title map (see
+  // Header.tsx) that has no way to know a dynamic project's name — this
+  // page registers the real trailing segments once resolved, and clears
+  // them on unmount so other routes fall back to their normal breadcrumb.
+  const projectName = draft?.info.name
+  useEffect(() => {
+    if (!projectName) return
+    setBreadcrumbOverride([{ label: 'Projetos', to: '/projects' }, { label: projectName }])
+    return () => setBreadcrumbOverride(null)
+  }, [projectName, setBreadcrumbOverride])
+
   if (!isCurrentDraft && isLoading) {
     return <ProjectDetailSkeleton />
   }
 
-  if (!isCurrentDraft && !sourceProject) {
+  if (!draft) {
     return (
       <div className="mx-auto max-w-2xl p-6 text-center text-sm text-(--th-text-muted)">
         {t('projects.notFound')}
       </div>
     )
   }
-
-  // Fallback path (navigated in from the list rather than the wizard):
-  // best-effort ProjectDraft derived from the mocked list entry — most
-  // sections start empty since the list only carries a handful of fields.
-  const draft = isCurrentDraft
-    ? storeDraft
-    : seedDraftFromProject(projectId!, sourceProject!)
 
   const status: { variant: BadgeVariant; label: string } = sourceProject
     ? {
@@ -93,7 +106,7 @@ export function ProjectDetailPage() {
         {tab === 'scope' && <ScopeTab draft={draft} />}
         {tab === 'schedule' && <ScheduleTab draft={draft} />}
         {tab === 'team' && <TeamTab />}
-        {tab === 'materials' && <MaterialsTab />}
+        {tab === 'materials' && <MaterialsTab draft={draft} />}
         {tab === 'financial' && <FinancialTab draft={draft} />}
         {tab === 'documents' && <DocumentsTab />}
       </div>

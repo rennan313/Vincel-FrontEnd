@@ -45,9 +45,35 @@ describe('ProjectDetailPage', () => {
       ).toBeInTheDocument(),
     )
     expect(screen.getByText('Em andamento')).toBeInTheDocument()
+    // Área is generated deterministically from the project id (seedFromId
+    // in seedDraftFromProject.ts) — id "1" always resolves to 119 m².
     expect(
-      screen.getByText('Ana Beatriz Ferreira · Residencial'),
+      screen.getByText('Ana Beatriz Ferreira · Residencial · 119 m²'),
     ).toBeInTheDocument()
+  })
+
+  it('generates a non-empty escopo (serviços + componentes) for a mocked project', async () => {
+    renderDetailPage('/projects/1')
+    await waitFor(() =>
+      expect(
+        screen.getByRole('heading', { name: 'Residência Alto da Serra' }),
+      ).toBeInTheDocument(),
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Escopo' }))
+
+    await waitFor(() =>
+      expect(screen.getByText('Serviços contratados')).toBeInTheDocument(),
+    )
+    expect(
+      screen.queryByText('Nenhum serviço contratado ainda.'),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Nenhum componente adicionado ainda.'),
+    ).not.toBeInTheDocument()
+    // Deterministic component pool for "residencial" always includes these.
+    expect(screen.getByText('Sala de estar')).toBeInTheDocument()
+    expect(screen.getByText('Cozinha')).toBeInTheDocument()
   })
 
   it('shows a not-found message for an unknown project id', async () => {
@@ -119,7 +145,10 @@ describe('ProjectDetailPage', () => {
     await waitFor(() =>
       expect(screen.getByText('Resumo financeiro')).toBeInTheDocument(),
     )
-    expect(screen.getByText('Nenhuma parcela configurada.')).toBeInTheDocument()
+    // Installments are generated too (id "1" -> 4 parcelas summing to
+    // R$ 20.111,00) — no longer the "nenhuma parcela" empty state.
+    expect(screen.getByText('Entrada')).toBeInTheDocument()
+    expect(screen.getByText('Total: R$ 20.111,00')).toBeInTheDocument()
   })
 
   it('navigates to the edit route when "Editar projeto" is clicked', async () => {

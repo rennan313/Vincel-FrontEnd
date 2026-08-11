@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { Archive, Copy, Download, Send } from 'lucide-react'
-import { Breadcrumb } from '@/components/ui/Breadcrumb'
 import { Badge, type BadgeVariant } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import type { ProjectDraft } from '@/features/projects/create/types'
@@ -76,11 +75,7 @@ export function ProjectHeader({
 }: ProjectHeaderProps) {
   return (
     <div>
-      <Breadcrumb
-        items={[{ label: 'Projetos', to: '/projects' }, { label: draft.info.name }]}
-      />
-
-      <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="text-2xl font-semibold text-(--th-text)">
