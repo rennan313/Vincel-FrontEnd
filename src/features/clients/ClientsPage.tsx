@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useQueryStates, parseAsInteger, parseAsString } from 'nuqs'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
 import { PageTitle } from '@/components/ui/PageTitle'
 import { PageSubtitle } from '@/components/ui/PageSubtitle'
 import { Table, type TableColumn } from '@/components/ui/Table'
@@ -12,8 +11,14 @@ import { Input } from '@/components/ui/Input'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { fetchClients, type Client } from '@/features/clients/clientsApi'
+import { ClientFormModal } from '@/features/clients/ClientFormModal'
 
 const PAGE_SIZE = 8
+
+interface ModalState {
+  open: boolean
+  client?: Client
+}
 
 export function ClientsPage() {
   const { t } = useTranslation()
@@ -23,6 +28,7 @@ export function ClientsPage() {
   })
   const [searchInput, setSearchInput] = useState(search)
   const debouncedSearch = useDebouncedValue(searchInput, 300)
+  const [modalState, setModalState] = useState<ModalState>({ open: false })
 
   useEffect(() => {
     if (debouncedSearch !== search) {
@@ -77,7 +83,7 @@ export function ClientsPage() {
             size="icon"
             icon="Pencil"
             aria-label={t('clients.editAction', { name: client.name })}
-            onClick={() => toast.info(t('clients.mockEditToast'))}
+            onClick={() => setModalState({ open: true, client })}
           />
         </Tooltip>
       ),
@@ -95,7 +101,7 @@ export function ClientsPage() {
           type="button"
           variant="primary"
           icon="Plus"
-          onClick={() => toast.info(t('clients.mockNewToast'))}
+          onClick={() => setModalState({ open: true })}
         >
           {t('clients.new')}
         </Button>
@@ -123,6 +129,12 @@ export function ClientsPage() {
         pageSize={PAGE_SIZE}
         total={data?.total ?? 0}
         onPageChange={(nextPage) => setQuery({ page: nextPage })}
+      />
+
+      <ClientFormModal
+        open={modalState.open}
+        client={modalState.client}
+        onClose={() => setModalState({ open: false })}
       />
     </div>
   )

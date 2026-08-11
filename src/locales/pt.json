@@ -38,10 +38,8 @@
     "empty": "Nenhum cliente encontrado.",
     "edit": "Editar",
     "editAction": "Editar {{name}}",
-    "mockEditToast": "Mock: edição de cliente não implementada",
     "searchPlaceholder": "Buscar por nome ou e-mail",
     "new": "Novo cliente",
-    "mockNewToast": "Mock: cadastro de cliente não implementado",
     "columns": {
       "name": "Nome",
       "contact": "Contato",
@@ -50,6 +48,35 @@
     "status": {
       "active": "Ativo",
       "inactive": "Inativo"
+    },
+    "form": {
+      "createTitle": "Novo cliente",
+      "editTitle": "Editar cliente",
+      "basicInfo": "Informações básicas",
+      "email": "E-mail",
+      "phone": "Telefone",
+      "document": {
+        "PF": "CPF",
+        "PJ": "CNPJ"
+      },
+      "optional": "Opcional",
+      "type": {
+        "PF": "Pessoa física",
+        "PJ": "Pessoa jurídica"
+      },
+      "addAddress": "Adicionar endereço",
+      "address": "Endereço",
+      "zip": "CEP",
+      "street": "Rua",
+      "number": "Número",
+      "complement": "Complemento",
+      "neighborhood": "Bairro",
+      "city": "Cidade",
+      "state": "Estado",
+      "cancel": "Cancelar",
+      "save": "Salvar",
+      "mockCreateToast": "Mock: cliente cadastrado (não persistido)",
+      "mockUpdateToast": "Mock: cliente atualizado (não persistido)"
     }
   },
   "projects": {

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
+import { formatDate } from '@/lib/formatDate'
 import {
   fetchProjects,
   type Project,
@@ -25,8 +26,6 @@ const STATUS_VARIANT: Record<ProjectStatus, BadgeVariant> = {
   paused: 'warning',
   canceled: 'danger',
 }
-
-const dateFormatter = new Intl.DateTimeFormat('pt-BR')
 
 export function ProjectsPage() {
   const { t } = useTranslation()
@@ -79,7 +78,7 @@ export function ProjectsPage() {
     {
       key: 'createdAt',
       header: t('projects.columns.createdAt'),
-      render: (project) => dateFormatter.format(new Date(project.createdAt)),
+      render: (project) => formatDate(project.createdAt),
     },
     {
       key: 'actions',
