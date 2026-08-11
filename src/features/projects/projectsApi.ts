@@ -1,4 +1,5 @@
-import { apiFetch } from '@/lib/apiClient'
+import { API_URL, ApiError, apiFetch } from '@/lib/apiClient'
+import { useAuthStore } from '@/store/authStore'
 import type {
   AddressData,
   Complexity,
@@ -114,4 +115,16 @@ export function setProjectActive(id: string, active: boolean): Promise<Project> 
 
 export function deleteProject(id: string): Promise<Project> {
   return apiFetch<Project>(`/projects/${id}`, { method: 'DELETE' })
+}
+
+// Not apiFetch: the response is a PDF stream, not JSON.
+export async function fetchProjectPdf(id: string): Promise<Blob> {
+  const token = useAuthStore.getState().accessToken
+  const response = await fetch(`${API_URL}/projects/${id}/pdf`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
+  if (!response.ok) {
+    throw new ApiError(response.status, 'Não foi possível gerar o PDF do projeto.')
+  }
+  return response.blob()
 }

@@ -5,6 +5,7 @@ import { Badge, type BadgeVariant } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import type { ProjectDraft } from '@/features/projects/create/types'
 import { resolveProjectTypeLabel } from '@/features/projects/detail/projectDerivations'
+import { fetchProjectPdf } from '@/features/projects/projectsApi'
 
 interface ProjectHeaderProps {
   draft: ProjectDraft
@@ -20,8 +21,14 @@ const ACTIONS = [
   { key: 'send', label: 'Enviar para o cliente', icon: Send },
 ] as const
 
-function ActionsMenu() {
+interface ActionsMenuProps {
+  projectId: string
+  projectName: string
+}
+
+function ActionsMenu({ projectId, projectName }: ActionsMenuProps) {
   const [open, setOpen] = useState(false)
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -33,6 +40,25 @@ function ActionsMenu() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  async function handleExportPdf() {
+    setDownloadingPdf(true)
+    try {
+      const blob = await fetchProjectPdf(projectId)
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${projectName || 'projeto'}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error('Não foi possível gerar o PDF do projeto.')
+    } finally {
+      setDownloadingPdf(false)
+    }
+  }
 
   return (
     <div className="relative" ref={ref}>
@@ -51,14 +77,19 @@ function ActionsMenu() {
             <button
               key={action.key}
               type="button"
+              disabled={action.key === 'pdf' && downloadingPdf}
               onClick={() => {
                 setOpen(false)
+                if (action.key === 'pdf') {
+                  void handleExportPdf()
+                  return
+                }
                 toast.info(`Mock: ${action.label.toLowerCase()} não implementado`)
               }}
-              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-(--th-text-sub) hover:bg-(--th-bg-elevated) hover:text-(--th-text)"
+              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-(--th-text-sub) hover:bg-(--th-bg-elevated) hover:text-(--th-text) disabled:opacity-50"
             >
               <action.icon className="size-3.5 text-(--th-text-muted)" />
-              {action.label}
+              {action.key === 'pdf' && downloadingPdf ? 'Gerando PDF...' : action.label}
             </button>
           ))}
         </div>
@@ -94,7 +125,7 @@ export function ProjectHeader({
           <Button type="button" variant="outline" icon="Pencil" onClick={onEdit}>
             Editar projeto
           </Button>
-          <ActionsMenu />
+          <ActionsMenu projectId={draft.id} projectName={draft.info.name} />
         </div>
       </div>
     </div>
