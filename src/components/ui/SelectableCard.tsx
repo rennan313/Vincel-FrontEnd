@@ -27,7 +27,7 @@ export function SelectableCard({
       aria-pressed={selected}
       onClick={onToggle}
       className={cn(
-        'relative flex flex-col items-start gap-2 rounded-xl border p-4 text-left transition-colors duration-150',
+        'flex w-full flex-col items-start gap-2 rounded-xl border p-4 text-left transition-colors duration-150',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--th-border-focus)',
         selected
           ? 'border-(--th-accent) bg-(--th-accent)/6'
@@ -35,17 +35,22 @@ export function SelectableCard({
         className,
       )}
     >
-      {selected && (
-        <Check className="absolute top-3 right-3 size-4 text-(--th-accent)" />
-      )}
-      {Icon && (
-        <Icon
-          className={cn(
-            'size-5',
-            selected ? 'text-(--th-accent)' : 'text-(--th-text-muted)',
-          )}
-        />
-      )}
+      {/* Fixed-height slot for icon/check — never shares a line with the
+          label, so a long label can never overlap the check mark, and every
+          card in the grid stays the same height regardless of selection. */}
+      <div className="flex h-5 w-full items-center justify-between">
+        {Icon ? (
+          <Icon
+            className={cn(
+              'size-5',
+              selected ? 'text-(--th-accent)' : 'text-(--th-text-muted)',
+            )}
+          />
+        ) : (
+          <span />
+        )}
+        {selected && <Check className="size-4 shrink-0 text-(--th-accent)" />}
+      </div>
       <span
         className={cn(
           'text-sm font-medium',
