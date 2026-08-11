@@ -1,6 +1,6 @@
 import { forwardRef, useId } from 'react'
 import type { InputHTMLAttributes } from 'react'
-import clsx from 'clsx'
+import { cn } from '@/lib/cn'
 import { ICONS, type IconName } from '@/components/ui/icons'
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -40,7 +40,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           id={inputId}
           aria-invalid={!!error}
           aria-describedby={error ? `${inputId}-error` : undefined}
-          className={clsx(
+          className={cn(
             'h-10 w-full rounded-lg border bg-(--th-bg-card) px-3 text-sm outline-none transition-colors',
             'placeholder:text-(--th-text-muted)',
             'disabled:cursor-not-allowed disabled:opacity-40',

@@ -86,29 +86,30 @@ export function ClientsPage() {
 
   return (
     <div className="p-6">
-      <div className="mb-6 flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <PageTitle>{t('nav.clients')}</PageTitle>
           <PageSubtitle>{t('clients.subtitle')}</PageSubtitle>
         </div>
-        <div className="flex items-center gap-3">
-          <Input
-            icon="Search"
-            placeholder={t('clients.searchPlaceholder')}
-            aria-label={t('clients.searchPlaceholder')}
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-            className="w-96"
-          />
-          <Button
-            type="button"
-            variant="primary"
-            icon="Plus"
-            onClick={() => toast.info(t('clients.mockNewToast'))}
-          >
-            {t('clients.new')}
-          </Button>
-        </div>
+        <Button
+          type="button"
+          variant="primary"
+          icon="Plus"
+          onClick={() => toast.info(t('clients.mockNewToast'))}
+        >
+          {t('clients.new')}
+        </Button>
+      </div>
+
+      <div className="mt-4 mb-6">
+        <Input
+          icon="Search"
+          placeholder={t('clients.searchPlaceholder')}
+          aria-label={t('clients.searchPlaceholder')}
+          value={searchInput}
+          onChange={(event) => setSearchInput(event.target.value)}
+          className="w-96"
+        />
       </div>
 
       <Table

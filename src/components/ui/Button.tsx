@@ -1,6 +1,6 @@
 import { forwardRef } from 'react'
 import type { ButtonHTMLAttributes } from 'react'
-import clsx from 'clsx'
+import { cn } from '@/lib/cn'
 import { Loader2 } from 'lucide-react'
 import { ICONS, type IconName } from '@/components/ui/icons'
 
@@ -72,7 +72,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const iconSize = iconSizeClasses[size]
 
     const content = loading ? (
-      <Loader2 className={clsx(iconSize, 'animate-spin')} />
+      <Loader2 className={cn(iconSize, 'animate-spin')} />
     ) : (
       Icon && <Icon className={iconSize} />
     )
@@ -81,7 +81,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         disabled={disabled || loading}
-        className={clsx(
+        className={cn(
           base,
           variant !== 'link' && sizeClasses[size],
           variantClasses[variant],

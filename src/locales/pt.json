@@ -52,6 +52,29 @@
       "inactive": "Inativo"
     }
   },
+  "projects": {
+    "subtitle": "Acompanhe os projetos do seu escritório.",
+    "empty": "Nenhum projeto encontrado.",
+    "edit": "Editar",
+    "editAction": "Editar {{name}}",
+    "mockEditToast": "Mock: edição de projeto não implementada",
+    "searchPlaceholder": "Buscar por projeto ou cliente",
+    "new": "Novo projeto",
+    "mockNewToast": "Mock: cadastro de projeto não implementado",
+    "columns": {
+      "name": "Projeto",
+      "client": "Cliente",
+      "type": "Tipo",
+      "status": "Status",
+      "createdAt": "Criado"
+    },
+    "status": {
+      "in_progress": "Em andamento",
+      "completed": "Concluído",
+      "paused": "Pausado",
+      "canceled": "Cancelado"
+    }
+  },
   "table": {
     "pagination": {
       "range": "Mostrando {{from}}–{{to}} de {{total}}",
