@@ -15,6 +15,7 @@ export const SERVICE_ORDER: ServiceKey[] = [
   'compatibilizacao',
   'acompanhamento_obra',
   'consultoria',
+  'outro',
 ]
 
 export const SERVICE_LABELS: Record<ServiceKey, string> = {
@@ -25,12 +26,20 @@ export const SERVICE_LABELS: Record<ServiceKey, string> = {
   projeto_estrutural: 'Projeto estrutural',
   projeto_eletrico: 'Projeto elétrico',
   projeto_hidraulico: 'Projeto hidráulico',
-  projeto_luminotecnico: 'Projeto luminotécnico',
+  projeto_luminotecnico: 'Luminotécnico',
   projeto_interiores: 'Projeto de interiores',
   paisagismo: 'Paisagismo',
   compatibilizacao: 'Compatibilização',
-  acompanhamento_obra: 'Acompanhamento de obra',
+  acompanhamento_obra: 'Acomp. de obra',
   consultoria: 'Consultoria',
+  outro: 'Outro',
+}
+
+/** Resolves the display label for a service — "outro" reads the user's
+ * free-text description instead of the generic catalog label. */
+export function resolveServiceLabel(key: ServiceKey, customLabel: string): string {
+  if (key !== 'outro') return SERVICE_LABELS[key]
+  return customLabel.trim() || SERVICE_LABELS.outro
 }
 
 export const PROJECT_TYPE_LABELS: Record<ProjectType, string> = {

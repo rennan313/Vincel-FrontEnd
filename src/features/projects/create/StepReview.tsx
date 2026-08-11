@@ -4,7 +4,10 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
-import { PROJECT_TYPE_LABELS, SERVICE_LABELS } from '@/features/projects/create/serviceCatalog'
+import {
+  PROJECT_TYPE_LABELS,
+  resolveServiceLabel,
+} from '@/features/projects/create/serviceCatalog'
 import { formatBRLAmount } from '@/lib/masks'
 import type { Complexity, PaymentMethod, WizardStep } from '@/features/projects/create/types'
 
@@ -93,7 +96,9 @@ export function StepReview({ onEditStep }: StepReviewProps) {
             <ul className="mt-2 flex flex-wrap gap-1.5">
               {visibleServices.map((service) => (
                 <li key={service}>
-                  <Badge variant="neutral">{SERVICE_LABELS[service]}</Badge>
+                  <Badge variant="neutral">
+                    {resolveServiceLabel(service, scope.customServiceLabel)}
+                  </Badge>
                 </li>
               ))}
             </ul>

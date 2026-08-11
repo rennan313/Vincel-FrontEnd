@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, Search } from 'lucide-react'
+import { ArrowLeft, ChevronDown, Search } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -32,6 +32,8 @@ const EMPTY_FORM: ComponentFormState = {
   note: '',
 }
 
+type ModalMode = 'picker' | 'details'
+
 function CatalogButton({
   item,
   onSelect,
@@ -58,27 +60,19 @@ export function ComponentsEditor() {
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [mode, setMode] = useState<ModalMode>('picker')
   const [form, setForm] = useState<ComponentFormState>(EMPTY_FORM)
   const [nameError, setNameError] = useState<string>()
   const [catalogQuery, setCatalogQuery] = useState('')
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
+  const [pendingRemove, setPendingRemove] = useState<ProjectComponentItem | null>(null)
 
   const searchResults = searchComponentCatalog(catalogQuery)
   const isSearching = catalogQuery.trim().length > 0
 
-  function addComponent(name: string, extra: Partial<ProjectComponentItem> = {}) {
-    const item: ProjectComponentItem = {
-      id: generateComponentId(),
-      name,
-      quantity: 1,
-      ...extra,
-    }
-    updateScope({ components: [...components, item] })
-    setModalOpen(false)
-  }
-
   function openCreate() {
     setEditingId(null)
+    setMode('picker')
     setCatalogQuery('')
     setExpandedCategory(null)
     setModalOpen(true)
@@ -86,6 +80,7 @@ export function ComponentsEditor() {
 
   function openEdit(component: ProjectComponentItem) {
     setEditingId(component.id)
+    setMode('details')
     setForm({
       name: component.name,
       quantity: String(component.quantity),
@@ -96,8 +91,10 @@ export function ComponentsEditor() {
     setModalOpen(true)
   }
 
-  function handleRemove(id: string) {
-    updateScope({ components: components.filter((component) => component.id !== id) })
+  function chooseName(name: string) {
+    setForm({ ...EMPTY_FORM, name })
+    setNameError(undefined)
+    setMode('details')
   }
 
   function handleSaveDetails() {
@@ -120,6 +117,14 @@ export function ComponentsEditor() {
         : [...components, item],
     })
     setModalOpen(false)
+  }
+
+  function confirmRemove() {
+    if (!pendingRemove) return
+    updateScope({
+      components: components.filter((component) => component.id !== pendingRemove.id),
+    })
+    setPendingRemove(null)
   }
 
   return (
@@ -180,7 +185,7 @@ export function ComponentsEditor() {
                   size="icon"
                   icon="Trash2"
                   aria-label={`Remover ${component.name}`}
-                  onClick={() => handleRemove(component.id)}
+                  onClick={() => setPendingRemove(component)}
                 />
               </div>
             </li>
@@ -188,23 +193,55 @@ export function ComponentsEditor() {
         </ul>
       )}
 
-      {editingId ? (
-        <Modal
-          open={modalOpen}
-          onClose={() => setModalOpen(false)}
-          title="Editar componente"
-          footer={
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={
+          mode === 'details'
+            ? editingId
+              ? 'Editar componente'
+              : 'Detalhes do componente'
+            : 'Adicionar componente'
+        }
+        footer={
+          mode === 'details' ? (
             <>
               <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
                 Cancelar
               </Button>
               <Button type="button" variant="primary" onClick={handleSaveDetails}>
-                Salvar
+                {editingId ? 'Salvar' : 'Adicionar'}
               </Button>
             </>
-          }
-        >
+          ) : (
+            <>
+              <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                disabled={!catalogQuery.trim()}
+                onClick={() => chooseName(catalogQuery.trim())}
+              >
+                Continuar
+              </Button>
+            </>
+          )
+        }
+      >
+        {mode === 'details' ? (
           <div className="space-y-3">
+            {!editingId && (
+              <button
+                type="button"
+                onClick={() => setMode('picker')}
+                className="mb-1 flex items-center gap-1.5 text-xs font-medium text-(--th-text-muted) hover:text-(--th-text)"
+              >
+                <ArrowLeft className="size-3.5" />
+                Voltar à busca
+              </button>
+            )}
             <Input
               label="Nome"
               placeholder="Suíte"
@@ -242,28 +279,7 @@ export function ComponentsEditor() {
               onChange={(event) => setForm((f) => ({ ...f, note: event.target.value }))}
             />
           </div>
-        </Modal>
-      ) : (
-        <Modal
-          open={modalOpen}
-          onClose={() => setModalOpen(false)}
-          title="Adicionar componente"
-          footer={
-            <>
-              <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
-                Cancelar
-              </Button>
-              <Button
-                type="button"
-                variant="primary"
-                disabled={!catalogQuery.trim()}
-                onClick={() => addComponent(catalogQuery.trim())}
-              >
-                Adicionar
-              </Button>
-            </>
-          }
-        >
+        ) : (
           <div className="space-y-4">
             <Input
               icon="Search"
@@ -277,7 +293,7 @@ export function ComponentsEditor() {
               <ul className="divide-y divide-(--th-border) rounded-lg border border-(--th-border)">
                 {searchResults.length === 0 ? (
                   <li className="px-3 py-2.5 text-sm text-(--th-text-muted)">
-                    Nenhum resultado — clique em "Adicionar" para criar "
+                    Nenhum resultado — clique em "Continuar" para criar "
                     {catalogQuery.trim()}".
                   </li>
                 ) : (
@@ -285,7 +301,7 @@ export function ComponentsEditor() {
                     <li key={item.id}>
                       <button
                         type="button"
-                        onClick={() => addComponent(item.name)}
+                        onClick={() => chooseName(item.name)}
                         className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-(--th-text) hover:bg-(--th-bg-elevated)"
                       >
                         <Search className="size-3.5 text-(--th-text-muted)" />
@@ -306,7 +322,7 @@ export function ComponentsEditor() {
                       <CatalogButton
                         key={item.id}
                         item={item}
-                        onSelect={(selected) => addComponent(selected.name)}
+                        onSelect={(selected) => chooseName(selected.name)}
                       />
                     ))}
                   </div>
@@ -340,7 +356,7 @@ export function ComponentsEditor() {
                               <CatalogButton
                                 key={item.id}
                                 item={item}
-                                onSelect={(selected) => addComponent(selected.name)}
+                                onSelect={(selected) => chooseName(selected.name)}
                               />
                             ))}
                           </div>
@@ -352,8 +368,30 @@ export function ComponentsEditor() {
               </>
             )}
           </div>
-        </Modal>
-      )}
+        )}
+      </Modal>
+
+      <Modal
+        open={pendingRemove !== null}
+        onClose={() => setPendingRemove(null)}
+        title="Remover componente"
+        footer={
+          <>
+            <Button type="button" variant="outline" onClick={() => setPendingRemove(null)}>
+              Cancelar
+            </Button>
+            <Button type="button" variant="danger" onClick={confirmRemove}>
+              Remover
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-(--th-text-sub)">
+          Remover{' '}
+          <span className="font-medium text-(--th-text)">{pendingRemove?.name}</span>{' '}
+          deste projeto? Essa ação não pode ser desfeita.
+        </p>
+      </Modal>
     </div>
   )
 }

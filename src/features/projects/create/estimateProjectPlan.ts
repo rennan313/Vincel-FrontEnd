@@ -4,7 +4,7 @@ import type {
   ProjectType,
   ServiceKey,
 } from '@/features/projects/create/types'
-import { SERVICE_LABELS, SERVICE_ORDER } from '@/features/projects/create/serviceCatalog'
+import { SERVICE_ORDER, resolveServiceLabel } from '@/features/projects/create/serviceCatalog'
 
 const BASE_DAYS: Record<ServiceKey, number> = {
   estudo_preliminar: 7,
@@ -20,12 +20,16 @@ const BASE_DAYS: Record<ServiceKey, number> = {
   compatibilizacao: 5,
   acompanhamento_obra: 20,
   consultoria: 5,
+  // No catalog data for a free-text "outro" service — fall back to a
+  // middling default rather than guessing.
+  outro: 7,
 }
 
 export interface EstimateInput {
   type: ProjectType | null
   areaSqm: number | null
   services: ServiceKey[]
+  customServiceLabel?: string
   componentCount: number
 }
 
@@ -68,7 +72,7 @@ export function estimateProjectPlan(input: EstimateInput): ProjectPlanEstimate {
 
   const phases: PlanningPhase[] = orderedServices.map((service) => ({
     key: service,
-    name: SERVICE_LABELS[service],
+    name: resolveServiceLabel(service, input.customServiceLabel ?? ''),
     estimatedDays: Math.max(1, Math.round(BASE_DAYS[service] * factor)),
   }))
 

@@ -21,6 +21,7 @@ export type ServiceKey =
   | 'compatibilizacao'
   | 'acompanhamento_obra'
   | 'consultoria'
+  | 'outro'
 
 export interface ProjectComponentItem {
   id: string
@@ -39,6 +40,7 @@ export interface ProjectInfo {
 
 export interface ScopeData {
   services: ServiceKey[]
+  customServiceLabel: string
   components: ProjectComponentItem[]
 }
 
@@ -94,7 +96,7 @@ export function createEmptyDraft(id: string, timestamp: string): ProjectDraft {
     status: 'draft',
     step: 1,
     info: { type: null, customType: '', name: '', areaSqm: null },
-    scope: { services: [], components: [] },
+    scope: { services: [], customServiceLabel: '', components: [] },
     planning: { phases: [], complexity: null, isCustomized: false },
     financial: {
       constructionBudget: null,

@@ -28,6 +28,7 @@ export function StepPlanning({ onValidityChange }: StepPlanningProps) {
         type: info.type,
         areaSqm: info.areaSqm,
         services: scope.services,
+        customServiceLabel: scope.customServiceLabel,
         componentCount: scope.components.length,
       })
       updatePlanning({

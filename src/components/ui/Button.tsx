@@ -10,6 +10,7 @@ export type ButtonVariant =
   | 'outline'
   | 'ghost'
   | 'link'
+  | 'danger'
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon'
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -37,6 +38,7 @@ const variantClasses: Record<ButtonVariant, string> = {
   ghost:
     'bg-transparent text-(--th-text-sub) hover:bg-(--th-bg-elevated) hover:text-(--th-text)',
   link: 'bg-transparent text-(--th-accent) underline-offset-4 hover:underline p-0 h-auto',
+  danger: 'bg-red-500 text-white hover:bg-red-600 active:bg-red-700',
 }
 
 const sizeClasses: Record<ButtonSize, string> = {

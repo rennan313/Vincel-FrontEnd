@@ -35,30 +35,33 @@ export function SelectableCard({
         className,
       )}
     >
-      {/* Fixed-height slot for icon/check — never shares a line with the
-          label, so a long label can never overlap the check mark, and every
-          card in the grid stays the same height regardless of selection. */}
-      <div className="flex h-5 w-full items-center justify-between">
-        {Icon ? (
+      {/* Icon + check only reserve their own row when there's an icon to
+          show — cards without one (most option lists) stay compact, with
+          the check sitting inline next to the label instead. */}
+      {Icon && (
+        <div className="flex h-5 w-full items-center justify-between">
           <Icon
             className={cn(
               'size-5',
               selected ? 'text-(--th-accent)' : 'text-(--th-text-muted)',
             )}
           />
-        ) : (
-          <span />
+          {selected && <Check className="size-4 shrink-0 text-(--th-accent)" />}
+        </div>
+      )}
+      <div className="flex w-full items-center justify-between gap-2">
+        <span
+          className={cn(
+            'min-w-0 text-sm font-medium',
+            selected ? 'text-(--th-accent)' : 'text-(--th-text)',
+          )}
+        >
+          {label}
+        </span>
+        {selected && !Icon && (
+          <Check className="size-4 shrink-0 text-(--th-accent)" />
         )}
-        {selected && <Check className="size-4 shrink-0 text-(--th-accent)" />}
       </div>
-      <span
-        className={cn(
-          'text-sm font-medium',
-          selected ? 'text-(--th-accent)' : 'text-(--th-text)',
-        )}
-      >
-        {label}
-      </span>
       {description && (
         <span className="text-xs text-(--th-text-muted)">{description}</span>
       )}

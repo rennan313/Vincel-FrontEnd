@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { SelectableCard } from '@/components/ui/SelectableCard'
+import { Input } from '@/components/ui/Input'
 import { ComponentsEditor } from '@/features/projects/create/ComponentsEditor'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
 import {
@@ -76,6 +77,17 @@ export function StepScope({ onValidityChange }: StepScopeProps) {
             )
           })}
         </div>
+        {scope.services.includes('outro') && (
+          <div className="mt-3">
+            <Input
+              label="Qual outro serviço?"
+              value={scope.customServiceLabel}
+              onChange={(event) =>
+                updateScope({ customServiceLabel: event.target.value })
+              }
+            />
+          </div>
+        )}
       </div>
 
       <ComponentsEditor />
