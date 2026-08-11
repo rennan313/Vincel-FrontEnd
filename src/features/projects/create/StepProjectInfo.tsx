@@ -28,10 +28,21 @@ interface FieldErrors {
   customType?: string
 }
 
+type TouchedField = 'areaSqm' | 'customType'
+
 export function StepProjectInfo({ onValidityChange }: StepProjectInfoProps) {
   const info = useProjectWizardStore((state) => state.draft.info)
   const updateInfo = useProjectWizardStore((state) => state.updateInfo)
-  const [touched, setTouched] = useState(false)
+  // Per-field touched tracking — selecting the project type must not mark
+  // unrelated fields (like área) as touched and light up their errors.
+  const [touchedFields, setTouchedFields] = useState<Record<TouchedField, boolean>>({
+    areaSqm: false,
+    customType: false,
+  })
+
+  function markTouched(field: TouchedField) {
+    setTouchedFields((current) => ({ ...current, [field]: true }))
+  }
 
   // The project name is derived from type + área (and, once available, the
   // client) rather than typed here — it stays editable later, in Revisão.
@@ -80,10 +91,7 @@ export function StepProjectInfo({ onValidityChange }: StepProjectInfoProps) {
               icon={PROJECT_TYPE_ICONS[type]}
               label={PROJECT_TYPE_LABELS[type]}
               selected={info.type === type}
-              onToggle={() => {
-                setTouched(true)
-                updateInfo({ type })
-              }}
+              onToggle={() => updateInfo({ type })}
             />
           ))}
         </div>
@@ -93,8 +101,8 @@ export function StepProjectInfo({ onValidityChange }: StepProjectInfoProps) {
               label="Qual tipo de projeto?"
               value={info.customType}
               onChange={(event) => updateInfo({ customType: event.target.value })}
-              onBlur={() => setTouched(true)}
-              error={touched ? errors.customType : undefined}
+              onBlur={() => markTouched('customType')}
+              error={touchedFields.customType ? errors.customType : undefined}
             />
           </div>
         )}
@@ -112,8 +120,8 @@ export function StepProjectInfo({ onValidityChange }: StepProjectInfoProps) {
             areaSqm: event.target.value === '' ? null : Number(event.target.value),
           })
         }
-        onBlur={() => setTouched(true)}
-        error={touched ? errors.areaSqm : undefined}
+        onBlur={() => markTouched('areaSqm')}
+        error={touchedFields.areaSqm ? errors.areaSqm : undefined}
         rightSlot={<span className="text-sm text-(--th-text-muted)">m²</span>}
       />
     </div>
