@@ -1,12 +1,14 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { z } from 'zod'
+import fetchCep from 'cep-promise'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
-import { formatCNPJ, formatCPF, formatPhone } from '@/lib/masks'
+import { formatCEP, formatCNPJ, formatCPF, formatPhone } from '@/lib/masks'
 import {
   clientFormSchema,
   emptyClientFormValues,
@@ -66,6 +68,34 @@ export function ClientFormModal({ open, onClose, client }: ClientFormModalProps)
       address: { ...current.address, [field]: value },
     }))
   }
+
+  const zipDigits = (values.address.zip ?? '').replace(/\D/g, '')
+  const {
+    data: cepResult,
+    isFetching: cepLoading,
+    isError: cepNotFound,
+  } = useQuery({
+    queryKey: ['cep', zipDigits],
+    queryFn: () => fetchCep(zipDigits),
+    enabled: showAddress && zipDigits.length === 8,
+    retry: false,
+    staleTime: Infinity,
+  })
+
+  useEffect(() => {
+    if (!cepResult) return
+    setValues((current) => ({
+      ...current,
+      address: {
+        ...current.address,
+        street: cepResult.street || current.address.street,
+        neighborhood: cepResult.neighborhood || current.address.neighborhood,
+        city: cepResult.city,
+        state: cepResult.state,
+      },
+    }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cepResult])
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -190,7 +220,14 @@ export function ClientFormModal({ open, onClose, client }: ClientFormModalProps)
               <Input
                 label={t('clients.form.zip')}
                 value={values.address.zip}
-                onChange={(event) => updateAddressField('zip', event.target.value)}
+                onChange={(event) =>
+                  updateAddressField('zip', formatCEP(event.target.value))
+                }
+                placeholder="00000-000"
+                hint={cepLoading ? t('clients.form.zipLoading') : undefined}
+                error={
+                  cepNotFound ? t('clients.form.zipNotFound') : undefined
+                }
               />
               <Input
                 label={t('clients.form.number')}

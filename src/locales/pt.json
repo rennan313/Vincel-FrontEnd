@@ -67,6 +67,8 @@
       "addAddress": "Adicionar endereço",
       "address": "Endereço",
       "zip": "CEP",
+      "zipLoading": "Buscando endereço...",
+      "zipNotFound": "CEP não encontrado.",
       "street": "Rua",
       "number": "Número",
       "complement": "Complemento",
