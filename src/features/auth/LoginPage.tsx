@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/Input'
 import { PasswordInput } from '@/components/ui/PasswordInput'
 import { loginSchema } from '@/features/auth/loginSchema'
 import { useAuthStore } from '@/store/authStore'
+import { API_URL } from '@/lib/apiClient'
 
 const MOCK_CREDENTIALS = { email: 'demo@vincel.studio', password: 'demo1234' }
 const MOCK_USER = {
@@ -37,12 +38,10 @@ export function LoginPage() {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const isBusy = loadingEmail || loadingGoogle
 
-  async function handleGoogleClick() {
+  function handleGoogleClick() {
     setBannerError(null)
     setLoadingGoogle(true)
-    await new Promise((resolve) => setTimeout(resolve, 900))
-    setLoadingGoogle(false)
-    toast.info(t('auth.login.mockGoogleToast'))
+    window.location.href = `${API_URL}/auth/google`
   }
 
   async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
