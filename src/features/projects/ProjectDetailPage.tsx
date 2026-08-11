@@ -7,7 +7,7 @@ import type { BadgeVariant } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
 import { useBreadcrumbStore } from '@/store/breadcrumbStore'
-import { seedDraftFromProject } from '@/features/projects/create/seedDraftFromProject'
+import { projectToDraft } from '@/features/projects/create/projectToDraft'
 import { fetchProjectById } from '@/features/projects/projectsApi'
 import { PROJECT_STATUS_VARIANT } from '@/features/projects/projectStatusStyles'
 import { ProjectHeader } from '@/features/projects/detail/ProjectHeader'
@@ -50,7 +50,7 @@ export function ProjectDetailPage() {
   const draft = isCurrentDraft
     ? storeDraft
     : sourceProject
-      ? seedDraftFromProject(projectId!, sourceProject)
+      ? projectToDraft(projectId!, sourceProject)
       : null
 
   // The toolbar's breadcrumb is otherwise a static route->title map (see

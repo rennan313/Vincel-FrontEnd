@@ -29,6 +29,11 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
   const body = await response.json().catch(() => null)
 
   if (!response.ok) {
+    // Stale/expired token — clear it so the route guard sends the user back
+    // to login instead of leaving them "stuck" with every request 401ing.
+    if (response.status === 401) {
+      useAuthStore.getState().logout()
+    }
     throw new ApiError(response.status, body?.message ?? 'Erro inesperado.')
   }
 

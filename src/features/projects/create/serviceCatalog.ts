@@ -43,7 +43,7 @@ export function resolveServiceLabel(key: ServiceKey, customLabel: string): strin
 }
 
 /** Maps a backend Service catalog item's name back to the front's fixed
- * ServiceKey union (same label-matching approach seedDraftFromProject.ts
+ * ServiceKey union (same label-matching approach projectToDraft.ts
  * uses for ProjectType) — returns null for a name with no known match. */
 export function resolveServiceKeyByName(name: string): ServiceKey | null {
   const match = (Object.entries(SERVICE_LABELS) as [ServiceKey, string][]).find(

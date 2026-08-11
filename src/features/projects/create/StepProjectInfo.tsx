@@ -40,7 +40,7 @@ export function StepProjectInfo({ onValidityChange }: StepProjectInfoProps) {
   })
 
   // Backend catalog entries are name-matched back to the front's fixed
-  // ProjectType keys (same approach seedDraftFromProject.ts uses) — an
+  // ProjectType keys (same approach projectToDraft.ts uses) — an
   // entry the admin renamed to something unrecognized is simply skipped,
   // since the wizard's downstream logic (estimateProjectPlan, recommended
   // services) is still keyed by these fixed values.

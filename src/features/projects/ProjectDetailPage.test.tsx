@@ -9,12 +9,45 @@ import { createEmptyDraft } from '@/features/projects/create/types'
 import type { Project } from '@/features/projects/projectsApi'
 import '@/lib/i18n'
 
-// Same project shape the old MOCK_PROJECTS fixture in projectsApi.ts used to
-// carry for id "1" — kept identical so the deterministic mock enrichment in
-// seedDraftFromProject.ts (seeded from the id) still yields the same área/
-// financeiro/etc the assertions below rely on.
+// A realistic full API response — projectToDraft.ts no longer fabricates
+// anything, it just maps whatever the backend actually returns, so the
+// fixture needs the real shape (escopo/planejamento/financeiro) for the
+// assertions below to have anything non-empty to check.
 const MOCK_PROJECTS: Project[] = [
-  { id: '1', name: 'Residência Alto da Serra', clientName: 'Ana Beatriz Ferreira', type: 'Residencial', status: 'in_progress', active: true, createdAt: '2026-01-12' },
+  {
+    id: '1',
+    name: 'Residência Alto da Serra',
+    clientName: 'Ana Beatriz Ferreira',
+    clientId: 'client-1',
+    type: 'Residencial',
+    status: 'in_progress',
+    active: true,
+    createdAt: '2026-01-12',
+    areaSqm: 119,
+    services: ['estudo_preliminar', 'anteprojeto', 'projeto_executivo'],
+    components: [
+      { id: 'comp_1', name: 'Sala de estar', quantity: 1, areaSqm: 25 },
+      { id: 'comp_2', name: 'Cozinha', quantity: 1, areaSqm: 18 },
+    ],
+    planningPhases: [
+      { key: 'estudo_preliminar', name: 'Estudo preliminar', estimatedDays: 9 },
+      { key: 'anteprojeto', name: 'Anteprojeto', estimatedDays: 13 },
+    ],
+    complexity: 'MEDIUM',
+    constructionBudget: 315231,
+    feeModel: 'per_sqm',
+    feeRate: 169,
+    feeAmount: 20111,
+    paymentMethod: 'installments',
+    installments: [
+      { id: 'inst_1', label: 'Entrada', amount: 5027 },
+      { id: 'inst_2', label: 'Parcela 1', amount: 5027 },
+      { id: 'inst_3', label: 'Parcela 2', amount: 5027 },
+      { id: 'inst_4', label: 'Parcela 3', amount: 5030 },
+    ],
+    startDate: '2026-01-12T00:00:00.000Z',
+    endDate: '2026-05-15T00:00:00.000Z',
+  },
 ]
 
 vi.mock('@/features/projects/projectsApi', async () => {
@@ -69,14 +102,12 @@ describe('ProjectDetailPage', () => {
       ).toBeInTheDocument(),
     )
     expect(screen.getByText('Em andamento')).toBeInTheDocument()
-    // Área is generated deterministically from the project id (seedFromId
-    // in seedDraftFromProject.ts) — id "1" always resolves to 119 m².
     expect(
       screen.getByText('Ana Beatriz Ferreira · Residencial · 119 m²'),
     ).toBeInTheDocument()
   })
 
-  it('generates a non-empty escopo (serviços + componentes) for a mocked project', async () => {
+  it('renders the real escopo (serviços + componentes) from the API response', async () => {
     renderDetailPage('/projects/1')
     await waitFor(() =>
       expect(
@@ -95,7 +126,6 @@ describe('ProjectDetailPage', () => {
     expect(
       screen.queryByText('Nenhum componente adicionado ainda.'),
     ).not.toBeInTheDocument()
-    // Deterministic component pool for "residencial" always includes these.
     expect(screen.getByText('Sala de estar')).toBeInTheDocument()
     expect(screen.getByText('Cozinha')).toBeInTheDocument()
   })
@@ -169,8 +199,6 @@ describe('ProjectDetailPage', () => {
     await waitFor(() =>
       expect(screen.getByText('Resumo financeiro')).toBeInTheDocument(),
     )
-    // Installments are generated too (id "1" -> 4 parcelas summing to
-    // R$ 20.111,00) — no longer the "nenhuma parcela" empty state.
     expect(screen.getByText('Entrada')).toBeInTheDocument()
     expect(screen.getByText('Total: R$ 20.111,00')).toBeInTheDocument()
   })

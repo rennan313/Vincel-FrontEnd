@@ -12,7 +12,7 @@ import {
   type WizardStep,
 } from '@/features/projects/create/types'
 import { localStorageProjectDraftRepository as repository } from '@/features/projects/create/draftRepository'
-import { seedDraftFromProject } from '@/features/projects/create/seedDraftFromProject'
+import { projectToDraft } from '@/features/projects/create/projectToDraft'
 import { PROJECT_TYPE_LABELS } from '@/features/projects/create/serviceCatalog'
 import {
   createProject,
@@ -76,9 +76,8 @@ interface ProjectWizardState {
   draft: ProjectDraft
   /** Resumes an open draft (explicit id, or the latest one found) or starts a new one. */
   init: (draftId?: string) => void
-  /** Resumes an in-progress edit for this project, or seeds a fresh draft
-   * from its (mocked) list data — best-effort, since the list only carries
-   * a handful of display fields. */
+  /** Resumes an in-progress edit for this project, or builds a fresh draft
+   * from the real project data returned by the API. */
   initEdit: (projectId: string, project: Project) => void
   goToStep: (step: WizardStep) => void
   updateInfo: (patch: Partial<ProjectInfo>) => void
@@ -115,7 +114,7 @@ export const useProjectWizardStore = create<ProjectWizardState>((set, get) => ({
   initEdit: (projectId, project) => {
     const draftId = `edit-${projectId}`
     const existing = repository.load(draftId)
-    const draft = existing ?? seedDraftFromProject(draftId, project)
+    const draft = existing ?? projectToDraft(draftId, project)
     persist(draft)
     set({ draft })
   },
