@@ -29,9 +29,48 @@ describe('RegisterPage', () => {
     expect(screen.getByLabelText('Nome completo')).toBeInTheDocument()
     expect(screen.getByLabelText('E-mail')).toBeInTheDocument()
     expect(screen.getByLabelText('Senha')).toBeInTheDocument()
+    expect(screen.getByLabelText('Confirmar senha')).toBeInTheDocument()
   })
 
-  it('shows a field error for a password shorter than 8 characters', async () => {
+  it('shows the password criteria checklist turning green as it is met', () => {
+    renderRegisterPage()
+    const passwordInput = screen.getByLabelText('Senha')
+
+    expect(screen.getByText('Mínimo de 8 caracteres').closest('li')).toHaveClass(
+      'text-(--th-text-muted)',
+    )
+
+    fireEvent.change(passwordInput, { target: { value: 'Senha1234' } })
+
+    expect(screen.getByText('Mínimo de 8 caracteres').closest('li')).toHaveClass(
+      'text-green-500',
+    )
+    expect(screen.getByText('Uma letra maiúscula').closest('li')).toHaveClass(
+      'text-green-500',
+    )
+    expect(screen.getByText('Uma letra minúscula').closest('li')).toHaveClass(
+      'text-green-500',
+    )
+    expect(screen.getByText('Um número').closest('li')).toHaveClass(
+      'text-green-500',
+    )
+  })
+
+  it('shows a live error when the confirmation does not match the password', () => {
+    renderRegisterPage()
+    fireEvent.change(screen.getByLabelText('Senha'), {
+      target: { value: 'Senha1234' },
+    })
+    fireEvent.change(screen.getByLabelText('Confirmar senha'), {
+      target: { value: 'Senha4321' },
+    })
+
+    expect(
+      screen.getByText('As senhas não coincidem.'),
+    ).toBeInTheDocument()
+  })
+
+  it('shows a field error when the password does not meet the criteria', async () => {
     renderRegisterPage()
     fireEvent.change(screen.getByLabelText('Nome completo'), {
       target: { value: 'Ana Souza' },
@@ -42,13 +81,16 @@ describe('RegisterPage', () => {
     fireEvent.change(screen.getByLabelText('Senha'), {
       target: { value: 'short1' },
     })
+    fireEvent.change(screen.getByLabelText('Confirmar senha'), {
+      target: { value: 'short1' },
+    })
     fireEvent.click(
       screen.getByRole('button', { name: 'Criar conta grátis' }),
     )
 
     await waitFor(() =>
       expect(
-        screen.getByText('A senha deve ter pelo menos 8 caracteres.'),
+        screen.getByText('A senha não atende aos critérios de segurança.'),
       ).toBeInTheDocument(),
     )
   })
@@ -62,7 +104,10 @@ describe('RegisterPage', () => {
       target: { value: 'ana@example.com' },
     })
     fireEvent.change(screen.getByLabelText('Senha'), {
-      target: { value: 'senha1234' },
+      target: { value: 'Senha1234' },
+    })
+    fireEvent.change(screen.getByLabelText('Confirmar senha'), {
+      target: { value: 'Senha1234' },
     })
     fireEvent.click(
       screen.getByRole('button', { name: 'Criar conta grátis' }),

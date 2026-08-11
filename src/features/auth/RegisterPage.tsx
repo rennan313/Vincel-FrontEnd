@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { z } from 'zod'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Check, Circle } from 'lucide-react'
+import { cn } from '@/lib/cn'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
 import { GoogleIcon } from '@/components/ui/GoogleIcon'
@@ -11,12 +12,14 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { PasswordInput } from '@/components/ui/PasswordInput'
 import { registerSchema } from '@/features/auth/registerSchema'
+import { PASSWORD_CRITERIA } from '@/features/auth/passwordCriteria'
 import { useAuthStore } from '@/store/authStore'
 
 interface FieldErrors {
   name?: string
   email?: string
   password?: string
+  confirmPassword?: string
 }
 
 export function RegisterPage() {
@@ -26,7 +29,11 @@ export function RegisterPage() {
   const [loadingEmail, setLoadingEmail] = useState(false)
   const [loadingGoogle, setLoadingGoogle] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const isBusy = loadingEmail || loadingGoogle
+  const passwordsMismatch =
+    confirmPassword.length > 0 && password !== confirmPassword
 
   async function handleGoogleClick() {
     setLoadingGoogle(true)
@@ -43,7 +50,8 @@ export function RegisterPage() {
     const parsed = registerSchema.safeParse({
       name: formData.get('name'),
       email: formData.get('email'),
-      password: formData.get('password'),
+      password,
+      confirmPassword,
     })
 
     if (!parsed.success) {
@@ -52,6 +60,7 @@ export function RegisterPage() {
         name: errors.name?.[0],
         email: errors.email?.[0],
         password: errors.password?.[0],
+        confirmPassword: errors.confirmPassword?.[0],
       })
       return
     }
@@ -182,15 +191,56 @@ export function RegisterPage() {
               error={fieldErrors.email}
             />
 
+            <div>
+              <PasswordInput
+                label={t('auth.register.password')}
+                id="password"
+                name="password"
+                autoComplete="new-password"
+                placeholder={t('auth.register.passwordPlaceholder')}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isBusy}
+                error={fieldErrors.password}
+              />
+              <ul className="mt-1.5 space-y-1">
+                {PASSWORD_CRITERIA.map((criterion) => {
+                  const met = criterion.test(password)
+                  return (
+                    <li
+                      key={criterion.id}
+                      className={cn(
+                        'flex items-center gap-1.5 text-xs',
+                        met ? 'text-green-500' : 'text-(--th-text-muted)',
+                      )}
+                    >
+                      {met ? (
+                        <Check className="size-3.5 shrink-0" />
+                      ) : (
+                        <Circle className="size-3.5 shrink-0" />
+                      )}
+                      {t(criterion.labelKey)}
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+
             <PasswordInput
-              label={t('auth.register.password')}
-              id="password"
-              name="password"
+              label={t('auth.register.confirmPassword')}
+              id="confirmPassword"
+              name="confirmPassword"
               autoComplete="new-password"
-              placeholder={t('auth.register.passwordPlaceholder')}
-              hint={fieldErrors.password ? undefined : t('auth.register.passwordHint')}
+              placeholder={t('auth.register.confirmPasswordPlaceholder')}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={isBusy}
-              error={fieldErrors.password}
+              error={
+                fieldErrors.confirmPassword ??
+                (passwordsMismatch
+                  ? t('auth.register.errors.passwordMismatch')
+                  : undefined)
+              }
             />
 
             <Button

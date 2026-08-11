@@ -150,7 +150,14 @@
       "emailPlaceholder": "voce@exemplo.com",
       "password": "Senha",
       "passwordPlaceholder": "Mínimo 8 caracteres",
-      "passwordHint": "Mínimo 8 caracteres com letras e números",
+      "confirmPassword": "Confirmar senha",
+      "confirmPasswordPlaceholder": "Repita a senha",
+      "passwordCriteria": {
+        "minLength": "Mínimo de 8 caracteres",
+        "uppercase": "Uma letra maiúscula",
+        "lowercase": "Uma letra minúscula",
+        "number": "Um número"
+      },
       "submit": "Criar conta grátis",
       "submitting": "Criando conta...",
       "google": "Continuar com Google",
@@ -164,7 +171,7 @@
       "mockGoogleToast": "Mock: cadastro com Google não implementado",
       "mockSuccessToast": "Mock: escritório criado com sucesso",
       "errors": {
-        "weakPassword": "A senha deve ter pelo menos 8 caracteres."
+        "passwordMismatch": "As senhas não coincidem."
       }
     }
   }
