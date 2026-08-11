@@ -35,3 +35,9 @@ export function registerAccount(payload: RegisterPayload): Promise<RegisterRespo
     body: JSON.stringify(payload),
   })
 }
+
+export function fetchMe(accessToken: string): Promise<AuthUser> {
+  return apiFetch<AuthUser>('/auth/me', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+}

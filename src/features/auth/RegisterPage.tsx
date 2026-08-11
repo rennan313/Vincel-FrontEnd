@@ -1,4 +1,4 @@
-import { useState, type SubmitEvent } from 'react'
+import { useEffect, useState, type SubmitEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { ArrowLeft, Check, Circle } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { formatCNPJ, formatCPF } from '@/lib/masks'
-import { ApiError } from '@/lib/apiClient'
+import { API_URL, ApiError } from '@/lib/apiClient'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
 import { GoogleIcon } from '@/components/ui/GoogleIcon'
@@ -50,7 +50,16 @@ export function RegisterPage() {
   const passwordsMismatch =
     confirmPassword.length > 0 && password !== confirmPassword
 
-  async function handleGoogleClick() {
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const googleError = params.get('googleError')
+    if (googleError) {
+      setBannerError(googleError)
+      navigate('/register', { replace: true })
+    }
+  }, [navigate])
+
+  function handleGoogleClick() {
     if (!companyDocument.trim()) {
       setFieldErrors((errors) => ({
         ...errors,
@@ -60,9 +69,13 @@ export function RegisterPage() {
     }
 
     setLoadingGoogle(true)
-    await new Promise((resolve) => setTimeout(resolve, 900))
-    setLoadingGoogle(false)
-    toast.info(t('auth.register.mockGoogleToast'))
+    const state = btoa(
+      JSON.stringify({
+        companyDocument,
+        companyDocumentType: DOCUMENT_TYPE_MAP[companyType],
+      }),
+    )
+    window.location.href = `${API_URL}/auth/google?state=${encodeURIComponent(state)}`
   }
 
   async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
