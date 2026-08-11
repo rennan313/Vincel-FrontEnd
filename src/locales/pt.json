@@ -141,6 +141,32 @@
         "invalid_credentials": "E-mail ou senha incorretos.",
         "default": "Ocorreu um erro ao entrar. Tente novamente."
       }
+    },
+    "register": {
+      "title": "Criar conta grátis",
+      "subtitle": "Gerencie projetos, clientes e propostas em um só lugar.",
+      "name": "Nome completo",
+      "namePlaceholder": "João da Silva",
+      "email": "E-mail",
+      "emailPlaceholder": "voce@exemplo.com",
+      "password": "Senha",
+      "passwordPlaceholder": "Mínimo 8 caracteres",
+      "passwordHint": "Mínimo 8 caracteres com letras e números",
+      "submit": "Criar conta grátis",
+      "submitting": "Criando conta...",
+      "google": "Continuar com Google",
+      "googleLoading": "Criando conta...",
+      "hasAccount": "Já tem uma conta?",
+      "login": "Entrar",
+      "leftBadge": "Plataforma para Escritórios de Arquitetura",
+      "leftTitlePrefix": "Seu escritório, em ",
+      "leftHighlight": "uma plataforma",
+      "leftSubtitle": "Projetos, clientes, propostas, reuniões e financeiro — centralize a operação do seu escritório de arquitetura.",
+      "mockGoogleToast": "Mock: cadastro com Google não implementado",
+      "mockSuccessToast": "Mock: escritório criado com sucesso",
+      "errors": {
+        "weakPassword": "A senha deve ter pelo menos 8 caracteres."
+      }
     }
   }
 }
