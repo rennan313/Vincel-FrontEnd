@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useQueryStates, parseAsInteger, parseAsString } from 'nuqs'
 import { useTranslation } from 'react-i18next'
@@ -29,6 +30,7 @@ const STATUS_VARIANT: Record<ProjectStatus, BadgeVariant> = {
 
 export function ProjectsPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [{ page, q: search }, setQuery] = useQueryStates({
     page: parseAsInteger.withDefault(1),
     q: parseAsString.withDefault(''),
@@ -110,7 +112,7 @@ export function ProjectsPage() {
           type="button"
           variant="primary"
           icon="Plus"
-          onClick={() => toast.info(t('projects.mockNewToast'))}
+          onClick={() => navigate('/projects/new')}
         >
           {t('projects.new')}
         </Button>

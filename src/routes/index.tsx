@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { ClientsPage } from '@/features/clients/ClientsPage'
 import { ProjectsPage } from '@/features/projects/ProjectsPage'
+import { CreateProjectPage } from '@/features/projects/create/CreateProjectPage'
 
 export const router = createBrowserRouter([
   {
@@ -19,6 +20,7 @@ export const router = createBrowserRouter([
           { path: '/dashboard', element: <DashboardPage /> },
           { path: '/clients', element: <ClientsPage /> },
           { path: '/projects', element: <ProjectsPage /> },
+          { path: '/projects/new', element: <CreateProjectPage /> },
         ],
       },
     ],

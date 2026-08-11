@@ -32,3 +32,26 @@ export function formatCNPJ(value: string): string {
     .replace(/(\d{3})(\d)/, '$1/$2')
     .replace(/(\d{4})(\d{1,2})$/, '$1-$2')
 }
+
+/**
+ * Currency mask that treats typed digits as cents (the standard BRL
+ * currency-input UX — "8500000" while typing reads as R$ 85.000,00).
+ */
+export function formatCurrencyBRL(value: string): string {
+  const digits = value.replace(/\D/g, '')
+  const cents = digits === '' ? 0 : parseInt(digits, 10)
+  return (cents / 100).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  })
+}
+
+export function parseCurrencyBRL(formatted: string): number {
+  const digits = formatted.replace(/\D/g, '')
+  return digits === '' ? 0 : parseInt(digits, 10) / 100
+}
+
+/** Formats an already-known number (not raw typed digits) as BRL currency. */
+export function formatBRLAmount(value: number): string {
+  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
