@@ -105,10 +105,10 @@ export function Sidebar() {
 
       <aside
         className={`fixed top-0 bottom-0 left-0 z-40 flex h-screen w-64 shrink-0 flex-col
-          border-r border-(--sidebar-border)/60 bg-(--sidebar-bg) transition-[transform,width] duration-300 ease-in-out
-          lg:relative lg:z-auto lg:transform-none
+          border-r border-(--sidebar-border)/60 bg-(--sidebar-bg) transition-[translate,width] duration-300 ease-in-out
+          lg:relative lg:z-auto
           ${rail ? 'lg:w-19' : 'lg:w-60'}
-          ${open ? 'translate-x-0' : '-translate-x-full'}`}
+          ${isDesktop ? '' : open ? 'translate-x-0' : '-translate-x-full'}`}
       >
         {rail ? (
           <div className="flex flex-col items-center gap-3 py-5">

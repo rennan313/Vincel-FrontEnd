@@ -48,5 +48,15 @@ describe('Sidebar', () => {
       ).toBeInTheDocument()
       expect(screen.getByRole('tooltip', { name: 'Clientes' })).toBeInTheDocument()
     })
+
+    it('is never translated off-screen on desktop, even with the mobile drawer closed', () => {
+      useSidebarStore.setState({ open: false })
+      renderSidebar()
+      // Regression check: the sidebar must not carry the mobile drawer's
+      // hidden-state class at desktop widths, or it renders invisible there.
+      expect(screen.getByRole('complementary').className).not.toContain(
+        '-translate-x-full',
+      )
+    })
   })
 })
