@@ -58,8 +58,11 @@ describe('LoginPage', () => {
       expect(screen.getByText('Dashboard mock')).toBeInTheDocument(),
     )
     expect(useAuthStore.getState().user).toEqual({
+      id: 'mock-user',
       name: 'Alexandre Soares',
       email: 'demo@vincel.studio',
+      role: 'ADMIN',
+      companyId: null,
     })
   })
 

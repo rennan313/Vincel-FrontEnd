@@ -14,7 +14,13 @@ import { loginSchema } from '@/features/auth/loginSchema'
 import { useAuthStore } from '@/store/authStore'
 
 const MOCK_CREDENTIALS = { email: 'demo@vincel.studio', password: 'demo1234' }
-const MOCK_USER = { name: 'Alexandre Soares', email: MOCK_CREDENTIALS.email }
+const MOCK_USER = {
+  id: 'mock-user',
+  name: 'Alexandre Soares',
+  email: MOCK_CREDENTIALS.email,
+  role: 'ADMIN',
+  companyId: null,
+}
 
 interface FieldErrors {
   email?: string

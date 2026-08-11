@@ -157,6 +157,15 @@
         "lowercase": "Uma letra minúscula",
         "number": "Um número"
       },
+      "companySection": "Dados do escritório",
+      "companyType": {
+        "PF": "Pessoa física",
+        "PJ": "Pessoa jurídica"
+      },
+      "companyDocument": {
+        "PF": "CPF",
+        "PJ": "CNPJ"
+      },
       "submit": "Criar conta grátis",
       "submitting": "Criando conta...",
       "google": "Continuar com Google",
@@ -168,9 +177,10 @@
       "leftHighlight": "uma plataforma",
       "leftSubtitle": "Projetos, clientes, propostas, reuniões e financeiro — centralize a operação do seu escritório de arquitetura.",
       "mockGoogleToast": "Mock: cadastro com Google não implementado",
-      "mockSuccessToast": "Mock: escritório criado com sucesso",
+      "successToast": "Escritório criado com sucesso!",
       "errors": {
-        "passwordMismatch": "As senhas não coincidem."
+        "passwordMismatch": "As senhas não coincidem.",
+        "companyDocument": "Informe o documento do escritório."
       }
     }
   }
