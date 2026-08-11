@@ -1,17 +1,17 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, ChevronDown, Search } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
+import { Skeleton } from '@/components/ui/Skeleton'
 import { cn } from '@/lib/cn'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
 import {
-  COMPONENT_CATEGORIES,
-  MOST_USED_COMPONENTS,
-  searchComponentCatalog,
-  type ComponentCatalogItem,
-} from '@/features/projects/create/componentCatalog'
+  fetchProjectComponentCatalog,
+  type ProjectComponentCatalogItem,
+} from '@/features/projects/create/catalogApi'
 import type { ProjectComponentItem } from '@/features/projects/create/types'
 
 function generateComponentId() {
@@ -38,8 +38,8 @@ function CatalogButton({
   item,
   onSelect,
 }: {
-  item: ComponentCatalogItem
-  onSelect: (item: ComponentCatalogItem) => void
+  item: ProjectComponentCatalogItem
+  onSelect: (item: ProjectComponentCatalogItem) => void
 }) {
   return (
     <button
@@ -67,7 +67,33 @@ export function ComponentsEditor() {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
   const [pendingRemove, setPendingRemove] = useState<ProjectComponentItem | null>(null)
 
-  const searchResults = searchComponentCatalog(catalogQuery)
+  const { data: catalog, isLoading: catalogLoading } = useQuery({
+    queryKey: ['project-components'],
+    queryFn: fetchProjectComponentCatalog,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const mostUsedItems = useMemo(
+    () => catalog?.filter((item) => item.mostUsed) ?? [],
+    [catalog],
+  )
+
+  const categories = useMemo(() => {
+    const grouped = new Map<string, ProjectComponentCatalogItem[]>()
+    for (const item of catalog ?? []) {
+      if (item.mostUsed) continue
+      const label = item.category ?? 'Outros'
+      if (!grouped.has(label)) grouped.set(label, [])
+      grouped.get(label)!.push(item)
+    }
+    return [...grouped.entries()].map(([label, items]) => ({ id: label, label, items }))
+  }, [catalog])
+
+  const searchResults = useMemo(() => {
+    const query = catalogQuery.trim().toLowerCase()
+    if (!query || !catalog) return []
+    return catalog.filter((item) => item.name.toLowerCase().includes(query))
+  }, [catalog, catalogQuery])
   const isSearching = catalogQuery.trim().length > 0
 
   function openCreate() {
@@ -289,7 +315,13 @@ export function ComponentsEditor() {
               autoFocus
             />
 
-            {isSearching ? (
+            {catalogLoading ? (
+              <div className="grid grid-cols-2 gap-2">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <Skeleton key={index} className="h-10 w-full" />
+                ))}
+              </div>
+            ) : isSearching ? (
               <ul className="divide-y divide-(--th-border) rounded-lg border border-(--th-border)">
                 {searchResults.length === 0 ? (
                   <li className="px-3 py-2.5 text-sm text-(--th-text-muted)">
@@ -313,23 +345,25 @@ export function ComponentsEditor() {
               </ul>
             ) : (
               <>
-                <div>
-                  <p className="mb-2 text-xs font-medium tracking-wide text-(--th-text-muted) uppercase">
-                    Mais utilizados
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {MOST_USED_COMPONENTS.map((item) => (
-                      <CatalogButton
-                        key={item.id}
-                        item={item}
-                        onSelect={(selected) => chooseName(selected.name)}
-                      />
-                    ))}
+                {mostUsedItems.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-xs font-medium tracking-wide text-(--th-text-muted) uppercase">
+                      Mais utilizados
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {mostUsedItems.map((item) => (
+                        <CatalogButton
+                          key={item.id}
+                          item={item}
+                          onSelect={(selected) => chooseName(selected.name)}
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="space-y-1">
-                  {COMPONENT_CATEGORIES.map((category) => {
+                  {categories.map((category) => {
                     const expanded = expandedCategory === category.id
                     return (
                       <div key={category.id}>

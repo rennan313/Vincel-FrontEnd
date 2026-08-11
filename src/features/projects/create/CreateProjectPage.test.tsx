@@ -35,9 +35,17 @@ const SERVICE_CATALOG = [
   { id: 'sv_compatibilizacao', name: 'Compatibilização', active: true },
 ]
 
+const PROJECT_COMPONENT_CATALOG = [
+  { id: 'pc_area_estimada', name: 'Área estimada', category: null, mostUsed: true, active: true },
+  { id: 'pc_quartos', name: 'Quartos', category: null, mostUsed: true, active: true },
+  { id: 'pc_sala_estar', name: 'Sala de estar', category: 'Características do imóvel', mostUsed: false, active: true },
+  { id: 'pc_cozinha', name: 'Cozinha', category: 'Características do imóvel', mostUsed: false, active: true },
+]
+
 vi.mock('@/features/projects/create/catalogApi', () => ({
   fetchProjectTypeCatalog: vi.fn(async () => PROJECT_TYPE_CATALOG),
   fetchServiceCatalog: vi.fn(async () => SERVICE_CATALOG),
+  fetchProjectComponentCatalog: vi.fn(async () => PROJECT_COMPONENT_CATALOG),
 }))
 
 vi.mock('@/features/projects/projectsApi', async () => {
