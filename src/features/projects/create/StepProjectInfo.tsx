@@ -46,10 +46,14 @@ export function StepProjectInfo({ onValidityChange }: StepProjectInfoProps) {
 
   // The project name is derived from type + área (and, once available, the
   // client) rather than typed here — it stays editable later, in Revisão.
+  // Stops re-deriving once nameIsCustom is set, so a manual edit (or a name
+  // seeded from an existing project when editing) survives revisiting this
+  // step, instead of being silently overwritten on every mount.
   useEffect(() => {
+    if (info.nameIsCustom) return
     updateInfo({ name: generateProjectName(info.type, info.customType, info.areaSqm) })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [info.type, info.customType, info.areaSqm])
+  }, [info.type, info.customType, info.areaSqm, info.nameIsCustom])
 
   const errors = useMemo<FieldErrors>(() => {
     const result: FieldErrors = {}

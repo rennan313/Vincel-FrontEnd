@@ -65,3 +65,8 @@ export async function fetchProjects(
     total: filtered.length,
   }
 }
+
+export async function fetchProjectById(id: string): Promise<Project | null> {
+  await new Promise((resolve) => setTimeout(resolve, MOCK_LATENCY_MS))
+  return MOCK_PROJECTS.find((project) => project.id === id) ?? null
+}

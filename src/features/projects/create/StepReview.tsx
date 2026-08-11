@@ -9,42 +9,28 @@ import {
   resolveServiceLabel,
 } from '@/features/projects/create/serviceCatalog'
 import { formatBRLAmount } from '@/lib/masks'
-import type { Complexity, PaymentMethod, WizardStep } from '@/features/projects/create/types'
+import { formatDate } from '@/lib/formatDate'
+import {
+  COMPLEXITY_LABEL,
+  formatAddressSummary,
+  paymentSummary,
+} from '@/features/projects/create/reviewFormatters'
+import type { WizardStep } from '@/features/projects/create/types'
 
 interface StepReviewProps {
   onEditStep: (step: WizardStep) => void
 }
 
-const COMPLEXITY_LABEL: Record<Complexity, string> = {
-  LOW: 'baixa',
-  MEDIUM: 'média',
-  HIGH: 'alta',
-}
-
-function paymentSummary(method: PaymentMethod, count: number): string {
-  switch (method) {
-    case 'cash':
-      return 'À vista'
-    case 'installments':
-      return `Parcelado em ${count} parcela${count === 1 ? '' : 's'}`
-    case 'by_phase':
-      return `Pago por etapa (${count} etapa${count === 1 ? '' : 's'})`
-    case 'monthly':
-      return `Pagamento mensal (${count} mês${count === 1 ? '' : 'es'})`
-    case 'custom':
-      return `Personalizado (${count} item${count === 1 ? '' : 'ns'})`
-  }
-}
-
 export function StepReview({ onEditStep }: StepReviewProps) {
   const draft = useProjectWizardStore((state) => state.draft)
   const updateInfo = useProjectWizardStore((state) => state.updateInfo)
-  const { info, scope, planning, financial } = draft
+  const { info, scope, planning, financial, client, schedule, address } = draft
   const [showAllServices, setShowAllServices] = useState(false)
 
   const totalDays = planning.phases.reduce((sum, phase) => sum + phase.estimatedDays, 0)
   const visibleServices = showAllServices ? scope.services : scope.services.slice(0, 4)
   const hiddenCount = scope.services.length - visibleServices.length
+  const addressSummary = formatAddressSummary(address)
 
   return (
     <div className="space-y-6">
@@ -66,7 +52,9 @@ export function StepReview({ onEditStep }: StepReviewProps) {
             <Input
               aria-label="Nome do projeto"
               value={info.name}
-              onChange={(event) => updateInfo({ name: event.target.value })}
+              onChange={(event) =>
+                updateInfo({ name: event.target.value, nameIsCustom: true })
+              }
               className="mt-1 h-auto border-transparent bg-transparent px-0 text-lg font-semibold focus:border-(--th-border) focus:bg-(--th-bg-card) focus:px-3 focus:py-1.5"
             />
             <p className="mt-1 text-sm text-(--th-text-sub)">
@@ -163,6 +151,29 @@ export function StepReview({ onEditStep }: StepReviewProps) {
             </p>
           </div>
           <Button type="button" variant="outline" size="sm" onClick={() => onEditStep(4)}>
+            Editar
+          </Button>
+        </div>
+      </Card>
+
+      <Card>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-medium tracking-wide text-(--th-text-muted) uppercase">
+              Cliente e cronograma
+            </p>
+            <p className="mt-1 text-lg font-semibold text-(--th-text)">
+              {client.name || 'Sem cliente definido'}
+            </p>
+            <p className="mt-1 text-sm text-(--th-text-sub)">
+              Início {schedule.startDate ? formatDate(schedule.startDate) : '—'}
+              {schedule.endDate ? ` · Fim ${formatDate(schedule.endDate)}` : ''}
+            </p>
+            {addressSummary && (
+              <p className="mt-1 text-sm text-(--th-text-sub)">{addressSummary}</p>
+            )}
+          </div>
+          <Button type="button" variant="outline" size="sm" onClick={() => onEditStep(5)}>
             Editar
           </Button>
         </div>

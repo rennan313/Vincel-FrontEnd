@@ -1,29 +1,47 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { Navigate, useNavigate, useParams } from 'react-router'
+import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
+import { Skeleton } from '@/components/ui/Skeleton'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
 import { ProjectWizardStepper } from '@/features/projects/create/ProjectWizardStepper'
 import { StepProjectInfo } from '@/features/projects/create/StepProjectInfo'
 import { StepScope } from '@/features/projects/create/StepScope'
 import { StepPlanning } from '@/features/projects/create/StepPlanning'
 import { StepFinancial } from '@/features/projects/create/StepFinancial'
+import { StepClient } from '@/features/projects/create/StepClient'
 import { StepReview } from '@/features/projects/create/StepReview'
+import { fetchProjectById } from '@/features/projects/projectsApi'
 import type { WizardStep } from '@/features/projects/create/types'
 
 export function CreateProjectPage() {
   const navigate = useNavigate()
+  const { projectId } = useParams()
+  const isEditing = Boolean(projectId)
+
   const draft = useProjectWizardStore((state) => state.draft)
   const init = useProjectWizardStore((state) => state.init)
+  const initEdit = useProjectWizardStore((state) => state.initEdit)
   const goToStep = useProjectWizardStore((state) => state.goToStep)
   const confirm = useProjectWizardStore((state) => state.confirm)
   const [furthestReached, setFurthestReached] = useState<WizardStep>(1)
   const [canContinue, setCanContinue] = useState(false)
 
+  const { data: editingProject, isLoading: loadingProject } = useQuery({
+    queryKey: ['project', projectId],
+    queryFn: () => fetchProjectById(projectId!),
+    enabled: isEditing,
+  })
+
   useEffect(() => {
-    init()
+    if (!isEditing) {
+      init()
+      return
+    }
+    if (editingProject) initEdit(projectId!, editingProject)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [isEditing, editingProject])
 
   useEffect(() => {
     setFurthestReached((current) => (draft.step > current ? draft.step : current))
@@ -31,20 +49,39 @@ export function CreateProjectPage() {
 
   function handleBack() {
     if (draft.step === 1) {
-      navigate('/projects')
+      navigate(isEditing ? `/projects/${projectId}` : '/projects')
       return
     }
     goToStep((draft.step - 1) as WizardStep)
   }
 
   function handleContinue() {
-    if (draft.step === 5) {
+    if (draft.step === 6) {
       confirm()
-      toast.success('Projeto criado a partir do rascunho.')
-      navigate('/projects')
+      if (isEditing) {
+        toast.success('Alterações salvas.')
+        navigate(`/projects/${projectId}`)
+      } else {
+        const draftId = draft.id
+        toast.success('Projeto criado a partir do rascunho.')
+        navigate(`/projects/${draftId}/summary`)
+      }
       return
     }
     goToStep((draft.step + 1) as WizardStep)
+  }
+
+  if (isEditing && loadingProject) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-4 px-6 py-8">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-40 w-full" />
+      </div>
+    )
+  }
+
+  if (isEditing && !editingProject) {
+    return <Navigate to="/projects" replace />
   }
 
   return (
@@ -60,7 +97,8 @@ export function CreateProjectPage() {
         {draft.step === 2 && <StepScope onValidityChange={setCanContinue} />}
         {draft.step === 3 && <StepPlanning onValidityChange={setCanContinue} />}
         {draft.step === 4 && <StepFinancial onValidityChange={setCanContinue} />}
-        {draft.step === 5 && <StepReview onEditStep={goToStep} />}
+        {draft.step === 5 && <StepClient onValidityChange={setCanContinue} />}
+        {draft.step === 6 && <StepReview onEditStep={goToStep} />}
       </div>
 
       <div className="mt-10 flex items-center justify-between border-t border-(--th-border) pt-6">
@@ -71,9 +109,9 @@ export function CreateProjectPage() {
           type="button"
           variant="primary"
           onClick={handleContinue}
-          disabled={draft.step !== 5 && !canContinue}
+          disabled={draft.step !== 6 && !canContinue}
         >
-          {draft.step === 5 ? 'Criar projeto' : 'Continuar'}
+          {draft.step === 6 ? (isEditing ? 'Salvar alterações' : 'Criar projeto') : 'Continuar'}
         </Button>
       </div>
     </div>

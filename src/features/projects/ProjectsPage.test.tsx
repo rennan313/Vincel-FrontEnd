@@ -1,5 +1,5 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, Route, Routes } from 'react-router'
 import { NuqsAdapter } from 'nuqs/adapters/react-router/v8'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -18,7 +18,10 @@ function renderProjectsPage() {
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={['/projects']}>
         <NuqsAdapter>
-          <ProjectsPage />
+          <Routes>
+            <Route path="/projects" element={<ProjectsPage />} />
+            <Route path="/projects/:projectId" element={<p>Project detail mock</p>} />
+          </Routes>
         </NuqsAdapter>
       </MemoryRouter>
     </QueryClientProvider>,

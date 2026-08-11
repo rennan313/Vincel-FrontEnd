@@ -1,4 +1,4 @@
-import type { ProjectDraft } from '@/features/projects/create/types'
+import { createEmptyDraft, type ProjectDraft } from '@/features/projects/create/types'
 
 export interface ProjectDraftRepository {
   load(id: string): ProjectDraft | null
@@ -16,6 +16,29 @@ function storageKey(id: string) {
 }
 
 /**
+ * Backfills any section missing from a draft stored before it existed
+ * (e.g. `client`/`schedule` were added after some drafts were already
+ * saved) with fresh defaults — a one-level-deep merge is enough since each
+ * section is fully replaced by createEmptyDraft, never partially patched
+ * here. Without this, loading a pre-existing draft crashes any step that
+ * reads a field the stored JSON doesn't have.
+ */
+function migrate(stored: ProjectDraft): ProjectDraft {
+  const empty = createEmptyDraft(stored.id, stored.createdAt)
+  return {
+    ...empty,
+    ...stored,
+    info: { ...empty.info, ...stored.info },
+    scope: { ...empty.scope, ...stored.scope },
+    planning: { ...empty.planning, ...stored.planning },
+    financial: { ...empty.financial, ...stored.financial },
+    client: { ...empty.client, ...stored.client },
+    schedule: { ...empty.schedule, ...stored.schedule },
+    address: { ...empty.address, ...stored.address },
+  }
+}
+
+/**
  * localStorage-backed implementation. This is the ONLY file that should
  * need to change once a real backend for project drafts exists — swap it
  * for an API-backed repository behind the same interface; the wizard store
@@ -26,7 +49,7 @@ export const localStorageProjectDraftRepository: ProjectDraftRepository = {
     const raw = localStorage.getItem(storageKey(id))
     if (!raw) return null
     try {
-      return JSON.parse(raw) as ProjectDraft
+      return migrate(JSON.parse(raw) as ProjectDraft)
     } catch {
       return null
     }
@@ -51,7 +74,7 @@ export const localStorageProjectDraftRepository: ProjectDraftRepository = {
       if (!raw) continue
 
       try {
-        const draft = JSON.parse(raw) as ProjectDraft
+        const draft = migrate(JSON.parse(raw) as ProjectDraft)
         if (draft.status !== 'draft') continue
         if (!latest || draft.updatedAt > latest.updatedAt) latest = draft
       } catch {

@@ -1,5 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
-import { Button } from '@/components/ui/Button'
+import { ErrorFallback } from '@/components/ErrorFallback'
 
 interface ErrorBoundaryProps {
   children: ReactNode
@@ -9,6 +9,13 @@ interface ErrorBoundaryState {
   error: Error | null
 }
 
+/**
+ * Top-level safety net for errors thrown OUTSIDE the router tree (e.g. a
+ * provider misconfiguration). Errors thrown by route elements are caught
+ * first by React Router's own per-route error boundary — see
+ * RouteErrorBoundary.tsx / routes/index.tsx's errorElement — this one is
+ * the fallback of last resort.
+ */
 export class ErrorBoundary extends Component<
   ErrorBoundaryProps,
   ErrorBoundaryState
@@ -29,20 +36,7 @@ export class ErrorBoundary extends Component<
 
   render() {
     if (this.state.error) {
-      return (
-        <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-(--th-bg) p-8 text-center">
-          <h1 className="text-xl font-semibold text-(--th-text)">
-            Algo deu errado
-          </h1>
-          <p className="max-w-sm text-sm text-(--th-text-muted)">
-            Ocorreu um erro inesperado nesta tela. Tente recarregar a página —
-            se o problema continuar, avise o time.
-          </p>
-          <Button type="button" variant="primary" onClick={this.handleReload}>
-            Recarregar página
-          </Button>
-        </div>
-      )
+      return <ErrorFallback onReload={this.handleReload} />
     }
 
     return this.props.children

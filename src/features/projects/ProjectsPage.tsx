@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useQueryStates, parseAsInteger, parseAsString } from 'nuqs'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
 import { PageTitle } from '@/components/ui/PageTitle'
 import { PageSubtitle } from '@/components/ui/PageSubtitle'
 import { Table, type TableColumn } from '@/components/ui/Table'
@@ -55,7 +54,12 @@ export function ProjectsPage() {
       key: 'name',
       header: t('projects.columns.name'),
       render: (project) => (
-        <span className="font-medium text-(--th-text)">{project.name}</span>
+        <Link
+          to={`/projects/${project.id}`}
+          className="font-medium text-(--th-text) hover:text-(--th-accent) hover:underline"
+        >
+          {project.name}
+        </Link>
       ),
     },
     {
@@ -94,7 +98,7 @@ export function ProjectsPage() {
             size="icon"
             icon="Pencil"
             aria-label={t('projects.editAction', { name: project.name })}
-            onClick={() => toast.info(t('projects.mockEditToast'))}
+            onClick={() => navigate(`/projects/${project.id}/edit`)}
           />
         </Tooltip>
       ),

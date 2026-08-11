@@ -35,6 +35,10 @@ export interface ProjectInfo {
   type: ProjectType | null
   customType: string
   name: string
+  /** True once the name was set by hand (Revisão, or seeded from an
+   * existing project when editing) — stops Step 1's auto-generation from
+   * silently overwriting it whenever the step is revisited. */
+  nameIsCustom: boolean
   areaSqm: number | null
 }
 
@@ -67,14 +71,49 @@ export interface Installment {
   amount: number
 }
 
+/** How honorários is calculated — the only two billing models this
+ * office uses today. */
+export type FeeModel = 'per_sqm' | 'per_hour'
+
 export interface FinancialData {
   constructionBudget: number | null
+  feeModel: FeeModel
+  /** R$ per m² (feeModel "per_sqm") or R$ per hour (feeModel "per_hour"). */
+  feeRate: number | null
+  /** Only used when feeModel is "per_hour". */
+  estimatedHours: number | null
+  /** Derived from feeRate × área (per_sqm) or feeRate × estimatedHours (per_hour). */
   feeAmount: number | null
   paymentMethod: PaymentMethod
   installments: Installment[]
 }
 
-export type WizardStep = 1 | 2 | 3 | 4 | 5
+export interface ClientInfo {
+  /** Set when picked from the existing clients list; null for a free-typed name. */
+  id: string | null
+  name: string
+}
+
+export interface ScheduleData {
+  /** ISO date (yyyy-mm-dd). */
+  startDate: string | null
+  /** ISO date (yyyy-mm-dd) — optional. */
+  endDate: string | null
+}
+
+/** Site address for the project — entirely optional, same shape as the
+ * client form's address section (clientFormSchema.ts). */
+export interface AddressData {
+  zip: string
+  street: string
+  number: string
+  complement: string
+  neighborhood: string
+  city: string
+  state: string
+}
+
+export type WizardStep = 1 | 2 | 3 | 4 | 5 | 6
 
 export type DraftStatus = 'draft' | 'confirmed'
 
@@ -86,6 +125,9 @@ export interface ProjectDraft {
   scope: ScopeData
   planning: PlanningData
   financial: FinancialData
+  client: ClientInfo
+  schedule: ScheduleData
+  address: AddressData
   createdAt: string
   updatedAt: string
 }
@@ -95,14 +137,28 @@ export function createEmptyDraft(id: string, timestamp: string): ProjectDraft {
     id,
     status: 'draft',
     step: 1,
-    info: { type: null, customType: '', name: '', areaSqm: null },
+    info: { type: null, customType: '', name: '', nameIsCustom: false, areaSqm: null },
     scope: { services: [], customServiceLabel: '', components: [] },
     planning: { phases: [], complexity: null, isCustomized: false },
     financial: {
       constructionBudget: null,
+      feeModel: 'per_sqm',
+      feeRate: null,
+      estimatedHours: null,
       feeAmount: null,
       paymentMethod: 'cash',
       installments: [],
+    },
+    client: { id: null, name: '' },
+    schedule: { startDate: null, endDate: null },
+    address: {
+      zip: '',
+      street: '',
+      number: '',
+      complement: '',
+      neighborhood: '',
+      city: '',
+      state: '',
     },
     createdAt: timestamp,
     updatedAt: timestamp,
