@@ -1,6 +1,16 @@
 import { useAuthStore } from '@/store/authStore'
 
-export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3333'
+declare global {
+  interface Window {
+    // Injected at container startup by docker-entrypoint.d/40-generate-env.sh
+    // — Vite bakes import.meta.env.VITE_API_URL in at `vite build` time, so a
+    // Cloud Run env var set on the running service can't reach it otherwise.
+    __ENV__?: { VITE_API_URL?: string }
+  }
+}
+
+export const API_URL =
+  window.__ENV__?.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3333'
 
 export class ApiError extends Error {
   status: number
