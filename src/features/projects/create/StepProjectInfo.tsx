@@ -1,23 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { SelectableCard } from '@/components/ui/SelectableCard'
+import { Skeleton } from '@/components/ui/Skeleton'
 import { Input } from '@/components/ui/Input'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
+import { fetchProjectTypeCatalog } from '@/features/projects/create/catalogApi'
 import {
   PROJECT_TYPE_ICONS,
-  PROJECT_TYPE_LABELS,
   generateProjectName,
+  resolveProjectTypeKeyByName,
 } from '@/features/projects/create/serviceCatalog'
 import type { ProjectType } from '@/features/projects/create/types'
-
-const PROJECT_TYPES: ProjectType[] = [
-  'residencial',
-  'comercial',
-  'industrial',
-  'interiores',
-  'paisagismo',
-  'urbanismo',
-  'outro',
-]
 
 interface StepProjectInfoProps {
   onValidityChange: (valid: boolean) => void
@@ -39,6 +32,34 @@ export function StepProjectInfo({ onValidityChange }: StepProjectInfoProps) {
     areaSqm: false,
     customType: false,
   })
+
+  const { data: catalog, isLoading: catalogLoading } = useQuery({
+    queryKey: ['project-types'],
+    queryFn: fetchProjectTypeCatalog,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  // Backend catalog entries are name-matched back to the front's fixed
+  // ProjectType keys (same approach seedDraftFromProject.ts uses) — an
+  // entry the admin renamed to something unrecognized is simply skipped,
+  // since the wizard's downstream logic (estimateProjectPlan, recommended
+  // services) is still keyed by these fixed values.
+  const projectTypes = useMemo<ProjectType[]>(() => {
+    if (!catalog) return []
+    const keys = catalog
+      .map((item) => resolveProjectTypeKeyByName(item.name))
+      .filter((key): key is ProjectType => key !== null)
+    return [...new Set(keys)]
+  }, [catalog])
+
+  const catalogByKey = useMemo(() => {
+    const map = new Map<ProjectType, string>()
+    catalog?.forEach((item) => {
+      const key = resolveProjectTypeKeyByName(item.name)
+      if (key) map.set(key, item.name)
+    })
+    return map
+  }, [catalog])
 
   function markTouched(field: TouchedField) {
     setTouchedFields((current) => ({ ...current, [field]: true }))
@@ -88,17 +109,25 @@ export function StepProjectInfo({ onValidityChange }: StepProjectInfoProps) {
         <p className="mb-3 text-sm font-medium text-(--th-text)">
           Tipo de projeto
         </p>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {PROJECT_TYPES.map((type) => (
-            <SelectableCard
-              key={type}
-              icon={PROJECT_TYPE_ICONS[type]}
-              label={PROJECT_TYPE_LABELS[type]}
-              selected={info.type === type}
-              onToggle={() => updateInfo({ type })}
-            />
-          ))}
-        </div>
+        {catalogLoading ? (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <Skeleton key={index} className="h-16 w-full" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {projectTypes.map((type) => (
+              <SelectableCard
+                key={type}
+                icon={PROJECT_TYPE_ICONS[type]}
+                label={catalogByKey.get(type) ?? type}
+                selected={info.type === type}
+                onToggle={() => updateInfo({ type })}
+              />
+            ))}
+          </div>
+        )}
         {info.type === 'outro' && (
           <div className="mt-3">
             <Input

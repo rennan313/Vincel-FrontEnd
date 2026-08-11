@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useQueryState, parseAsStringLiteral } from 'nuqs'
 import { useTranslation } from 'react-i18next'
 import type { BadgeVariant } from '@/components/ui/Badge'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
 import { useBreadcrumbStore } from '@/store/breadcrumbStore'
 import { seedDraftFromProject } from '@/features/projects/create/seedDraftFromProject'
@@ -69,8 +70,15 @@ export function ProjectDetailPage() {
 
   if (!draft) {
     return (
-      <div className="mx-auto max-w-2xl p-6 text-center text-sm text-(--th-text-muted)">
-        {t('projects.notFound')}
+      <div className="mx-auto max-w-2xl p-6">
+        <EmptyState
+          icon="FolderOpen"
+          title={t('projects.notFound.title')}
+          description={t('projects.notFound.description')}
+          actionLabel={t('projects.notFound.action')}
+          actionIcon="ArrowLeft"
+          onAction={() => navigate('/projects')}
+        />
       </div>
     )
   }

@@ -6,6 +6,7 @@ interface EmptyStateProps {
   title: string
   description: string
   actionLabel?: string
+  actionIcon?: IconName
   onAction?: () => void
 }
 
@@ -14,6 +15,7 @@ export function EmptyState({
   title,
   description,
   actionLabel,
+  actionIcon = 'Plus',
   onAction,
 }: EmptyStateProps) {
   const Icon = ICONS[icon]
@@ -30,7 +32,7 @@ export function EmptyState({
         </p>
       </div>
       {actionLabel && onAction && (
-        <Button type="button" variant="outline" size="sm" icon="Plus" onClick={onAction}>
+        <Button type="button" variant="outline" size="sm" icon={actionIcon} onClick={onAction}>
           {actionLabel}
         </Button>
       )}

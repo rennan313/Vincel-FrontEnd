@@ -10,7 +10,8 @@
     "main": "Principal",
     "dashboard": "Dashboard",
     "clients": "Clientes",
-    "projects": "Projetos"
+    "projects": "Projetos",
+    "users": "Usuários"
   },
   "sidebar": {
     "collapse": "Recolher menu",
@@ -81,6 +82,46 @@
       "mockUpdateToast": "Cliente atualizado com sucesso!"
     }
   },
+  "users": {
+    "subtitle": "Gerencie os usuários do seu escritório.",
+    "empty": "Nenhum usuário encontrado.",
+    "edit": "Editar",
+    "editAction": "Editar {{name}}",
+    "activate": "Reativar",
+    "activateAction": "Reativar {{name}}",
+    "deactivate": "Desativar",
+    "deactivateAction": "Desativar {{name}}",
+    "searchPlaceholder": "Buscar por nome ou e-mail",
+    "allRoles": "Todos os perfis",
+    "new": "Novo usuário",
+    "columns": {
+      "name": "Nome",
+      "email": "E-mail",
+      "role": "Perfil",
+      "status": "Status"
+    },
+    "status": {
+      "active": "Ativo",
+      "inactive": "Inativo"
+    },
+    "role": {
+      "ADMIN": "Administrador",
+      "ARCHITECT": "Arquiteto(a)",
+      "FINANCE": "Financeiro",
+      "CUSTOMER": "Cliente"
+    },
+    "form": {
+      "createTitle": "Novo usuário",
+      "editTitle": "Editar usuário",
+      "email": "E-mail",
+      "role": "Perfil",
+      "password": "Senha",
+      "cancel": "Cancelar",
+      "save": "Salvar",
+      "createToast": "Usuário cadastrado com sucesso!",
+      "updateToast": "Usuário atualizado com sucesso!"
+    }
+  },
   "projects": {
     "subtitle": "Acompanhe os projetos do seu escritório.",
     "empty": "Nenhum projeto encontrado.",
@@ -88,7 +129,11 @@
     "editAction": "Editar {{name}}",
     "searchPlaceholder": "Buscar por projeto ou cliente",
     "new": "Novo projeto",
-    "notFound": "Projeto não encontrado.",
+    "notFound": {
+      "title": "Projeto não encontrado",
+      "description": "Ele pode ter sido removido ou o link que você acessou está incorreto.",
+      "action": "Voltar para projetos"
+    },
     "allStatuses": "Todos os status",
     "columns": {
       "name": "Projeto",

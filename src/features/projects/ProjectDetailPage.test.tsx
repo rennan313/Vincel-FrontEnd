@@ -104,7 +104,7 @@ describe('ProjectDetailPage', () => {
     renderDetailPage('/projects/does-not-exist')
 
     await waitFor(() =>
-      expect(screen.getByText('Projeto não encontrado.')).toBeInTheDocument(),
+      expect(screen.getByText('Projeto não encontrado')).toBeInTheDocument(),
     )
   })
 

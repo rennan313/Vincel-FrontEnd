@@ -14,7 +14,12 @@ import {
 import { localStorageProjectDraftRepository as repository } from '@/features/projects/create/draftRepository'
 import { seedDraftFromProject } from '@/features/projects/create/seedDraftFromProject'
 import { PROJECT_TYPE_LABELS } from '@/features/projects/create/serviceCatalog'
-import { createProject, updateProject, type Project } from '@/features/projects/projectsApi'
+import {
+  createProject,
+  updateProject,
+  type Project,
+  type ProjectPayload,
+} from '@/features/projects/projectsApi'
 
 function nowIso() {
   return new Date().toISOString()
@@ -22,6 +27,49 @@ function nowIso() {
 
 function generateDraftId() {
   return `draft_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+}
+
+function hasAddressValue(address: AddressData): boolean {
+  return Object.values(address).some((value) => value.trim() !== '')
+}
+
+/** Builds the full API payload from a draft — every section the wizard
+ * collects (escopo/planejamento/financeiro/cronograma/endereço), not just
+ * the handful of top-level fields. Optional sections are omitted entirely
+ * rather than sent empty/null, matching the backend DTOs' @IsOptional() fields. */
+function buildProjectPayload(draft: ProjectDraft): ProjectPayload {
+  const { info, scope, planning, financial, client, schedule, address } = draft
+
+  const type =
+    info.type === 'outro'
+      ? info.customType.trim() || 'Projeto'
+      : info.type
+        ? PROJECT_TYPE_LABELS[info.type]
+        : 'Projeto'
+
+  return {
+    name: info.name,
+    type,
+    customType: info.type === 'outro' ? info.customType.trim() || undefined : undefined,
+    areaSqm: info.areaSqm ?? undefined,
+    clientId: client.id ?? undefined,
+    clientName: client.name,
+    services: scope.services.length > 0 ? scope.services : undefined,
+    customServiceLabel: scope.customServiceLabel.trim() || undefined,
+    components: scope.components.length > 0 ? scope.components : undefined,
+    planningPhases: planning.phases.length > 0 ? planning.phases : undefined,
+    complexity: planning.complexity ?? undefined,
+    constructionBudget: financial.constructionBudget ?? undefined,
+    feeModel: financial.feeModel,
+    feeRate: financial.feeRate ?? undefined,
+    estimatedHours: financial.estimatedHours ?? undefined,
+    feeAmount: financial.feeAmount ?? undefined,
+    paymentMethod: financial.paymentMethod,
+    installments: financial.installments.length > 0 ? financial.installments : undefined,
+    startDate: schedule.startDate ?? undefined,
+    endDate: schedule.endDate ?? undefined,
+    address: hasAddressValue(address) ? address : undefined,
+  }
 }
 
 interface ProjectWizardState {
@@ -166,24 +214,7 @@ export const useProjectWizardStore = create<ProjectWizardState>((set, get) => ({
 
   confirm: async () => {
     const current = get().draft
-    const { info, client } = current
-
-    const type =
-      info.type === 'outro'
-        ? info.customType.trim() || 'Projeto'
-        : info.type
-          ? PROJECT_TYPE_LABELS[info.type]
-          : 'Projeto'
-
-    // Only the fields the backend Project model supports today are sent —
-    // escopo/planejamento/financeiro/cronograma/endereço stay local-only in
-    // the draft until that data has somewhere real to live.
-    const payload = {
-      name: info.name,
-      type,
-      clientId: client.id ?? undefined,
-      clientName: client.name,
-    }
+    const payload = buildProjectPayload(current)
 
     const editingProjectId = current.id.startsWith('edit-')
       ? current.id.slice('edit-'.length)

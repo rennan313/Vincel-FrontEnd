@@ -1,4 +1,13 @@
 import { apiFetch } from '@/lib/apiClient'
+import type {
+  AddressData,
+  Complexity,
+  FeeModel,
+  Installment,
+  PaymentMethod,
+  PlanningPhase,
+  ProjectComponentItem,
+} from '@/features/projects/create/types'
 
 export type ProjectStatus = 'in_progress' | 'completed' | 'paused' | 'canceled'
 
@@ -6,9 +15,26 @@ export interface Project {
   id: string
   name: string
   type: string
+  customType?: string | null
+  areaSqm?: number | null
   status: ProjectStatus
   clientId?: string | null
   clientName: string
+  services?: string[]
+  customServiceLabel?: string | null
+  components?: ProjectComponentItem[]
+  planningPhases?: PlanningPhase[]
+  complexity?: Complexity | null
+  constructionBudget?: number | null
+  feeModel?: FeeModel | null
+  feeRate?: number | null
+  estimatedHours?: number | null
+  feeAmount?: number | null
+  paymentMethod?: PaymentMethod | null
+  installments?: Installment[]
+  startDate?: string | null
+  endDate?: string | null
+  address?: AddressData | null
   active: boolean
   createdAt: string
 }
@@ -23,9 +49,28 @@ export interface ProjectsPageResult {
 export interface ProjectPayload {
   name: string
   type: string
+  customType?: string
+  areaSqm?: number
   clientId?: string
   clientName: string
   status?: ProjectStatus
+  services?: string[]
+  customServiceLabel?: string
+  components?: ProjectComponentItem[]
+  planningPhases?: PlanningPhase[]
+  complexity?: Complexity
+  constructionBudget?: number
+  feeModel?: FeeModel
+  feeRate?: number
+  estimatedHours?: number
+  feeAmount?: number
+  paymentMethod?: PaymentMethod
+  installments?: Installment[]
+  /** ISO date (yyyy-mm-dd). */
+  startDate?: string
+  /** ISO date (yyyy-mm-dd). */
+  endDate?: string
+  address?: AddressData
 }
 
 export function fetchProjects(

@@ -42,7 +42,7 @@ export function Table<T>({
       className="overflow-hidden rounded-xl border border-(--th-border) bg-(--th-bg-card)"
       style={{ boxShadow: '0 2px 8px rgba(24, 21, 14, 0.04)' }}
     >
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto overflow-y-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-(--th-border)">

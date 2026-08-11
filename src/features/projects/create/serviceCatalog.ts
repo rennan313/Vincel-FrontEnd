@@ -42,6 +42,16 @@ export function resolveServiceLabel(key: ServiceKey, customLabel: string): strin
   return customLabel.trim() || SERVICE_LABELS.outro
 }
 
+/** Maps a backend Service catalog item's name back to the front's fixed
+ * ServiceKey union (same label-matching approach seedDraftFromProject.ts
+ * uses for ProjectType) — returns null for a name with no known match. */
+export function resolveServiceKeyByName(name: string): ServiceKey | null {
+  const match = (Object.entries(SERVICE_LABELS) as [ServiceKey, string][]).find(
+    ([, label]) => label.toLowerCase() === name.toLowerCase(),
+  )
+  return match ? match[0] : null
+}
+
 export const PROJECT_TYPE_LABELS: Record<ProjectType, string> = {
   residencial: 'Residencial',
   comercial: 'Comercial',
@@ -60,6 +70,15 @@ export const PROJECT_TYPE_ICONS: Record<ProjectType, IconName> = {
   paisagismo: 'Trees',
   urbanismo: 'Map',
   outro: 'Sparkles',
+}
+
+/** Maps a backend ProjectType catalog item's name back to the front's fixed
+ * ProjectType union — returns null for a name with no known match. */
+export function resolveProjectTypeKeyByName(name: string): ProjectType | null {
+  const match = (Object.entries(PROJECT_TYPE_LABELS) as [ProjectType, string][]).find(
+    ([, label]) => label.toLowerCase() === name.toLowerCase(),
+  )
+  return match ? match[0] : null
 }
 
 /**

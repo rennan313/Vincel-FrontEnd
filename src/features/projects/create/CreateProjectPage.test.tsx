@@ -16,6 +16,30 @@ const MOCK_PROJECTS: Project[] = [
 
 let nextCreatedId = 100
 
+const PROJECT_TYPE_CATALOG = [
+  { id: 'pt_residencial', name: 'Residencial', icon: 'Home', active: true },
+  { id: 'pt_comercial', name: 'Comercial', icon: 'Building2', active: true },
+  { id: 'pt_industrial', name: 'Industrial', icon: 'Factory', active: true },
+  { id: 'pt_interiores', name: 'Interiores', icon: 'Sofa', active: true },
+  { id: 'pt_paisagismo', name: 'Paisagismo', icon: 'Trees', active: true },
+  { id: 'pt_urbanismo', name: 'Urbanismo', icon: 'Map', active: true },
+  { id: 'pt_outro', name: 'Outro', icon: 'Sparkles', active: true },
+]
+
+const SERVICE_CATALOG = [
+  { id: 'sv_estudo_preliminar', name: 'Estudo preliminar', active: true },
+  { id: 'sv_anteprojeto', name: 'Anteprojeto', active: true },
+  { id: 'sv_projeto_legal', name: 'Projeto legal', active: true },
+  { id: 'sv_projeto_executivo', name: 'Projeto executivo', active: true },
+  { id: 'sv_projeto_estrutural', name: 'Projeto estrutural', active: true },
+  { id: 'sv_compatibilizacao', name: 'Compatibilização', active: true },
+]
+
+vi.mock('@/features/projects/create/catalogApi', () => ({
+  fetchProjectTypeCatalog: vi.fn(async () => PROJECT_TYPE_CATALOG),
+  fetchServiceCatalog: vi.fn(async () => SERVICE_CATALOG),
+}))
+
 vi.mock('@/features/projects/projectsApi', async () => {
   const actual = await vi.importActual('@/features/projects/projectsApi')
   return {
@@ -81,7 +105,7 @@ describe('CreateProjectPage', () => {
 
     // Step 1 — Projeto (nome is auto-generated from tipo + área, not typed)
     expect(screen.getByText('Vamos começar pelo projeto')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Residencial' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Residencial' }))
     fireEvent.change(screen.getByLabelText('Área do projeto'), {
       target: { value: '250' },
     })
@@ -189,7 +213,7 @@ describe('CreateProjectPage', () => {
   it('lets the user jump back to a previously completed step via the stepper', async () => {
     renderWizard()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Comercial' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Comercial' }))
     fireEvent.change(screen.getByLabelText('Área do projeto'), {
       target: { value: '120' },
     })
