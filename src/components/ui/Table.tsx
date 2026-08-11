@@ -38,7 +38,10 @@ export function Table<T>({
   const showEmpty = !loading && data.length === 0
 
   return (
-    <div className="overflow-hidden rounded-xl border border-(--th-border) bg-(--th-bg-card)">
+    <div
+      className="overflow-hidden rounded-xl border border-(--th-border) bg-(--th-bg-card)"
+      style={{ boxShadow: '0 2px 8px rgba(24, 21, 14, 0.04)' }}
+    >
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
