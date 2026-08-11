@@ -1,41 +1,53 @@
 import { useNavigate, useParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
+import { useQueryState, parseAsStringLiteral } from 'nuqs'
 import { useTranslation } from 'react-i18next'
-import { Card } from '@/components/ui/Card'
-import { Badge, type BadgeVariant } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
-import { Skeleton } from '@/components/ui/Skeleton'
-import { formatDate } from '@/lib/formatDate'
-import { fetchProjectById, type ProjectStatus } from '@/features/projects/projectsApi'
-
-const STATUS_VARIANT: Record<ProjectStatus, BadgeVariant> = {
-  in_progress: 'info',
-  completed: 'success',
-  paused: 'warning',
-  canceled: 'danger',
-}
+import type { BadgeVariant } from '@/components/ui/Badge'
+import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
+import { seedDraftFromProject } from '@/features/projects/create/seedDraftFromProject'
+import { fetchProjectById } from '@/features/projects/projectsApi'
+import { PROJECT_STATUS_VARIANT } from '@/features/projects/projectStatusStyles'
+import { ProjectHeader } from '@/features/projects/detail/ProjectHeader'
+import { ProjectSummaryCards } from '@/features/projects/detail/ProjectSummaryCards'
+import { ProjectTabs } from '@/features/projects/detail/ProjectTabs'
+import { PROJECT_TAB_KEYS } from '@/features/projects/detail/projectTabKeys'
+import { ProjectDetailSkeleton } from '@/features/projects/detail/ProjectDetailSkeleton'
+import { OverviewTab } from '@/features/projects/detail/tabs/OverviewTab'
+import { ScopeTab } from '@/features/projects/detail/tabs/ScopeTab'
+import { ScheduleTab } from '@/features/projects/detail/tabs/ScheduleTab'
+import { TeamTab } from '@/features/projects/detail/tabs/TeamTab'
+import { MaterialsTab } from '@/features/projects/detail/tabs/MaterialsTab'
+import { FinancialTab } from '@/features/projects/detail/tabs/FinancialTab'
+import { DocumentsTab } from '@/features/projects/detail/tabs/DocumentsTab'
 
 export function ProjectDetailPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { projectId } = useParams()
+  const [tab, setTab] = useQueryState(
+    'tab',
+    parseAsStringLiteral(PROJECT_TAB_KEYS).withDefault('overview'),
+  )
 
-  const { data: project, isLoading } = useQuery({
+  const storeDraft = useProjectWizardStore((state) => state.draft)
+  // A confirmed draft still in the wizard store is the richest, most
+  // accurate source — covers landing here right after creating (draft.id
+  // === projectId) or editing (draft.id === `edit-${projectId}`) a project.
+  const isCurrentDraft =
+    storeDraft.status === 'confirmed' &&
+    (storeDraft.id === projectId || storeDraft.id === `edit-${projectId}`)
+
+  const { data: sourceProject, isLoading } = useQuery({
     queryKey: ['project', projectId],
     queryFn: () => fetchProjectById(projectId!),
-    enabled: Boolean(projectId),
+    enabled: Boolean(projectId) && !isCurrentDraft,
   })
 
-  if (isLoading) {
-    return (
-      <div className="mx-auto max-w-2xl space-y-4 p-6">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-32 w-full" />
-      </div>
-    )
+  if (!isCurrentDraft && isLoading) {
+    return <ProjectDetailSkeleton />
   }
 
-  if (!project) {
+  if (!isCurrentDraft && !sourceProject) {
     return (
       <div className="mx-auto max-w-2xl p-6 text-center text-sm text-(--th-text-muted)">
         {t('projects.notFound')}
@@ -43,45 +55,48 @@ export function ProjectDetailPage() {
     )
   }
 
+  // Fallback path (navigated in from the list rather than the wizard):
+  // best-effort ProjectDraft derived from the mocked list entry — most
+  // sections start empty since the list only carries a handful of fields.
+  const draft = isCurrentDraft
+    ? storeDraft
+    : seedDraftFromProject(projectId!, sourceProject!)
+
+  const status: { variant: BadgeVariant; label: string } = sourceProject
+    ? {
+        variant: PROJECT_STATUS_VARIANT[sourceProject.status],
+        label: t(`projects.status.${sourceProject.status}`),
+      }
+    : draft.status === 'confirmed'
+      ? { variant: 'success', label: 'Confirmado' }
+      : { variant: 'neutral', label: 'Rascunho' }
+
   return (
-    <div className="mx-auto max-w-2xl p-6">
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-(--th-text)">{project.name}</h1>
-          <p className="mt-1 text-sm text-(--th-text-muted)">
-            {t('projects.columns.client')}: {project.clientName}
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          icon="Pencil"
-          onClick={() => navigate(`/projects/${projectId}/edit`)}
-        >
-          {t('projects.edit')}
-        </Button>
+    <div className="mx-auto max-w-5xl p-6">
+      <ProjectHeader
+        draft={draft}
+        statusLabel={status.label}
+        statusVariant={status.variant}
+        onEdit={() => navigate(`/projects/${projectId}/edit`)}
+      />
+
+      <div className="mt-6">
+        <ProjectSummaryCards draft={draft} />
       </div>
 
-      <Card>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <p className="text-(--th-text-muted)">{t('projects.columns.type')}</p>
-            <p className="mt-0.5 font-medium text-(--th-text)">{project.type}</p>
-          </div>
-          <div>
-            <p className="text-(--th-text-muted)">{t('projects.columns.status')}</p>
-            <Badge variant={STATUS_VARIANT[project.status]}>
-              {t(`projects.status.${project.status}`)}
-            </Badge>
-          </div>
-          <div>
-            <p className="text-(--th-text-muted)">{t('projects.columns.createdAt')}</p>
-            <p className="mt-0.5 font-medium text-(--th-text)">
-              {formatDate(project.createdAt)}
-            </p>
-          </div>
-        </div>
-      </Card>
+      <div className="mt-6">
+        <ProjectTabs active={tab} onChange={setTab} />
+      </div>
+
+      <div className="mt-6">
+        {tab === 'overview' && <OverviewTab draft={draft} />}
+        {tab === 'scope' && <ScopeTab draft={draft} />}
+        {tab === 'schedule' && <ScheduleTab draft={draft} />}
+        {tab === 'team' && <TeamTab />}
+        {tab === 'materials' && <MaterialsTab />}
+        {tab === 'financial' && <FinancialTab draft={draft} />}
+        {tab === 'documents' && <DocumentsTab />}
+      </div>
     </div>
   )
 }

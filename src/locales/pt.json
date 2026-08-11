@@ -86,10 +86,8 @@
     "empty": "Nenhum projeto encontrado.",
     "edit": "Editar",
     "editAction": "Editar {{name}}",
-    "mockEditToast": "Mock: edição de projeto não implementada",
     "searchPlaceholder": "Buscar por projeto ou cliente",
     "new": "Novo projeto",
-    "mockNewToast": "Mock: cadastro de projeto não implementado",
     "notFound": "Projeto não encontrado.",
     "columns": {
       "name": "Projeto",

@@ -9,7 +9,6 @@ import { ClientsPage } from '@/features/clients/ClientsPage'
 import { ProjectsPage } from '@/features/projects/ProjectsPage'
 import { ProjectDetailPage } from '@/features/projects/ProjectDetailPage'
 import { CreateProjectPage } from '@/features/projects/create/CreateProjectPage'
-import { ProjectSummaryPage } from '@/features/projects/create/ProjectSummaryPage'
 
 export const router = createBrowserRouter([
   {
@@ -25,7 +24,6 @@ export const router = createBrowserRouter([
           { path: '/clients', element: <ClientsPage /> },
           { path: '/projects', element: <ProjectsPage /> },
           { path: '/projects/new', element: <CreateProjectPage /> },
-          { path: '/projects/:draftId/summary', element: <ProjectSummaryPage /> },
           { path: '/projects/:projectId/edit', element: <CreateProjectPage /> },
           { path: '/projects/:projectId', element: <ProjectDetailPage /> },
         ],

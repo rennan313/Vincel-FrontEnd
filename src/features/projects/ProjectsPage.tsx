@@ -6,26 +6,16 @@ import { useTranslation } from 'react-i18next'
 import { PageTitle } from '@/components/ui/PageTitle'
 import { PageSubtitle } from '@/components/ui/PageSubtitle'
 import { Table, type TableColumn } from '@/components/ui/Table'
-import { Badge, type BadgeVariant } from '@/components/ui/Badge'
+import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { formatDate } from '@/lib/formatDate'
-import {
-  fetchProjects,
-  type Project,
-  type ProjectStatus,
-} from '@/features/projects/projectsApi'
+import { fetchProjects, type Project } from '@/features/projects/projectsApi'
+import { PROJECT_STATUS_VARIANT } from '@/features/projects/projectStatusStyles'
 
 const PAGE_SIZE = 8
-
-const STATUS_VARIANT: Record<ProjectStatus, BadgeVariant> = {
-  in_progress: 'info',
-  completed: 'success',
-  paused: 'warning',
-  canceled: 'danger',
-}
 
 export function ProjectsPage() {
   const { t } = useTranslation()
@@ -76,7 +66,7 @@ export function ProjectsPage() {
       key: 'status',
       header: t('projects.columns.status'),
       render: (project) => (
-        <Badge variant={STATUS_VARIANT[project.status]}>
+        <Badge variant={PROJECT_STATUS_VARIANT[project.status]}>
           {t(`projects.status.${project.status}`)}
         </Badge>
       ),

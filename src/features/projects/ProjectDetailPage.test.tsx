@@ -1,0 +1,137 @@
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { MemoryRouter, Route, Routes } from 'react-router'
+import { NuqsAdapter } from 'nuqs/adapters/react-router/v8'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { afterEach, describe, expect, it } from 'vitest'
+import { ProjectDetailPage } from '@/features/projects/ProjectDetailPage'
+import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
+import { createEmptyDraft } from '@/features/projects/create/types'
+import '@/lib/i18n'
+
+// See ClientsPage.test.tsx — nuqs's react-router adapter reads/writes the
+// real jsdom URL, which leaks across tests unless reset.
+afterEach(() => {
+  window.history.replaceState(null, '', '/')
+  useProjectWizardStore.setState({
+    draft: createEmptyDraft('reset-draft', new Date(0).toISOString()),
+  })
+})
+
+function renderDetailPage(initialPath: string) {
+  const queryClient = new QueryClient()
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={[initialPath]}>
+        <NuqsAdapter>
+          <Routes>
+            <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
+            <Route path="/projects/:projectId/edit" element={<p>Edit mock</p>} />
+          </Routes>
+        </NuqsAdapter>
+      </MemoryRouter>
+    </QueryClientProvider>,
+  )
+}
+
+describe('ProjectDetailPage', () => {
+  it('falls back to the mocked project list entry and renders the header/status', async () => {
+    renderDetailPage('/projects/1')
+
+    // MOCK_PROJECTS id "1" (projectsApi.ts): Residência Alto da Serra,
+    // Ana Beatriz Ferreira, Residencial, in_progress.
+    await waitFor(() =>
+      expect(
+        screen.getByRole('heading', { name: 'Residência Alto da Serra' }),
+      ).toBeInTheDocument(),
+    )
+    expect(screen.getByText('Em andamento')).toBeInTheDocument()
+    expect(
+      screen.getByText('Ana Beatriz Ferreira · Residencial'),
+    ).toBeInTheDocument()
+  })
+
+  it('shows a not-found message for an unknown project id', async () => {
+    renderDetailPage('/projects/does-not-exist')
+
+    await waitFor(() =>
+      expect(screen.getByText('Projeto não encontrado.')).toBeInTheDocument(),
+    )
+  })
+
+  it('prefers the confirmed wizard draft over the mocked list when it matches the route id', async () => {
+    const draft = {
+      ...createEmptyDraft('draft-rich', new Date(0).toISOString()),
+      status: 'confirmed' as const,
+      info: {
+        type: 'residencial' as const,
+        customType: '',
+        name: 'Residência Alphaville',
+        nameIsCustom: true,
+        areaSqm: 250,
+      },
+      client: { id: '1', name: 'Ana Beatriz Ferreira' },
+      planning: {
+        phases: [
+          { key: 'estudo_preliminar' as const, name: 'Estudo preliminar', estimatedDays: 9 },
+          { key: 'anteprojeto' as const, name: 'Anteprojeto', estimatedDays: 13 },
+        ],
+        complexity: 'MEDIUM' as const,
+        isCustomized: false,
+      },
+      financial: {
+        constructionBudget: 850000,
+        feeModel: 'per_sqm' as const,
+        feeRate: 180,
+        estimatedHours: null,
+        feeAmount: 45000,
+        paymentMethod: 'cash' as const,
+        installments: [{ id: 'cash', label: 'Pagamento único', amount: 45000 }],
+      },
+    }
+    useProjectWizardStore.setState({ draft })
+
+    renderDetailPage('/projects/draft-rich')
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('heading', { name: 'Residência Alphaville' }),
+      ).toBeInTheDocument(),
+    )
+    // Not sourced from a mocked Project, so the status badge falls back to
+    // the draft's own status instead of an operational one.
+    expect(screen.getByText('Confirmado')).toBeInTheDocument()
+    // Prazo estimado stat = sum of the two seeded phases (9 + 13) — appears
+    // both in the top stat card and in the Overview tab's "Resumo executivo".
+    expect(screen.getAllByText('22 dias').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('R$ 45.000,00').length).toBeGreaterThan(0)
+  })
+
+  it('switches tabs and renders the Financeiro tab content', async () => {
+    renderDetailPage('/projects/1')
+    await waitFor(() =>
+      expect(
+        screen.getByRole('heading', { name: 'Residência Alto da Serra' }),
+      ).toBeInTheDocument(),
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Financeiro' }))
+
+    await waitFor(() =>
+      expect(screen.getByText('Resumo financeiro')).toBeInTheDocument(),
+    )
+    expect(screen.getByText('Nenhuma parcela configurada.')).toBeInTheDocument()
+  })
+
+  it('navigates to the edit route when "Editar projeto" is clicked', async () => {
+    renderDetailPage('/projects/1')
+    await waitFor(() =>
+      expect(
+        screen.getByRole('heading', { name: 'Residência Alto da Serra' }),
+      ).toBeInTheDocument(),
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Editar projeto' }))
+
+    await waitFor(() => expect(screen.getByText('Edit mock')).toBeInTheDocument())
+  })
+})

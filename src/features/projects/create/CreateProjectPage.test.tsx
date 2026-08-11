@@ -3,7 +3,6 @@ import { MemoryRouter, Route, Routes } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it } from 'vitest'
 import { CreateProjectPage } from '@/features/projects/create/CreateProjectPage'
-import { ProjectSummaryPage } from '@/features/projects/create/ProjectSummaryPage'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
 import { createEmptyDraft } from '@/features/projects/create/types'
 import '@/lib/i18n'
@@ -15,7 +14,7 @@ function renderWizard() {
       <MemoryRouter initialEntries={['/projects/new']}>
         <Routes>
           <Route path="/projects/new" element={<CreateProjectPage />} />
-          <Route path="/projects/:draftId/summary" element={<ProjectSummaryPage />} />
+          <Route path="/projects/:projectId" element={<p>Project detail mock</p>} />
           <Route path="/projects" element={<p>Projects list mock</p>} />
         </Routes>
       </MemoryRouter>
@@ -42,7 +41,7 @@ describe('CreateProjectPage', () => {
     expect(screen.getByRole('button', { name: 'Continuar' })).toBeDisabled()
   })
 
-  it('walks through all 6 steps, confirms the project, and lands on the summary page', async () => {
+  it('walks through all 6 steps, confirms the project, and lands on its detail page', async () => {
     renderWizard()
 
     // Step 1 — Projeto (nome is auto-generated from tipo + área, not typed)
@@ -115,15 +114,8 @@ describe('CreateProjectPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Criar projeto' }))
 
     await waitFor(() =>
-      expect(screen.getByText('Projeto criado')).toBeInTheDocument(),
+      expect(screen.getByText('Project detail mock')).toBeInTheDocument(),
     )
-    expect(screen.getAllByText('Residência Alphaville').length).toBeGreaterThan(0)
-    expect(
-      screen.getByRole('button', { name: 'Baixar PDF' }),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: 'Enviar para o cliente' }),
-    ).toBeInTheDocument()
   })
 
   it('seeds an edit draft from the mocked project and returns to its detail page on save', async () => {

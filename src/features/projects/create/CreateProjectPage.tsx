@@ -57,15 +57,10 @@ export function CreateProjectPage() {
 
   function handleContinue() {
     if (draft.step === 6) {
+      const targetId = isEditing ? projectId! : draft.id
       confirm()
-      if (isEditing) {
-        toast.success('Alterações salvas.')
-        navigate(`/projects/${projectId}`)
-      } else {
-        const draftId = draft.id
-        toast.success('Projeto criado a partir do rascunho.')
-        navigate(`/projects/${draftId}/summary`)
-      }
+      toast.success(isEditing ? 'Alterações salvas.' : 'Projeto criado a partir do rascunho.')
+      navigate(`/projects/${targetId}`)
       return
     }
     goToStep((draft.step + 1) as WizardStep)
