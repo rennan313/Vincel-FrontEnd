@@ -89,6 +89,7 @@
     "searchPlaceholder": "Buscar por projeto ou cliente",
     "new": "Novo projeto",
     "notFound": "Projeto não encontrado.",
+    "allStatuses": "Todos os status",
     "columns": {
       "name": "Projeto",
       "client": "Cliente",
@@ -182,6 +183,15 @@
         "passwordMismatch": "As senhas não coincidem.",
         "companyDocument": "Informe o documento do escritório."
       }
+    },
+    "googleComplete": {
+      "title": "Só mais um passo",
+      "subtitle": "Bem-vindo(a), {{name}}! Para concluir, informe o documento do seu escritório.",
+      "submit": "Concluir cadastro",
+      "submitting": "Concluindo...",
+      "successToast": "Escritório criado com sucesso!",
+      "expiredError": "Sessão do Google expirada. Volte e tente novamente.",
+      "backToLogin": "Voltar para o login"
     }
   }
 }

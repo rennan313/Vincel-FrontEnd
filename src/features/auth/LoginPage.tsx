@@ -1,4 +1,4 @@
-import { useState, type SubmitEvent } from 'react'
+import { useEffect, useState, type SubmitEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -35,10 +35,21 @@ export function LoginPage() {
   const [loadingEmail, setLoadingEmail] = useState(false)
   const [loadingGoogle, setLoadingGoogle] = useState(false)
   const [bannerError, setBannerError] = useState<string | null>(null)
+  const [googleBannerError, setGoogleBannerError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const isBusy = loadingEmail || loadingGoogle
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const googleError = params.get('googleError')
+    if (googleError) {
+      setGoogleBannerError(googleError)
+      navigate('/', { replace: true })
+    }
+  }, [navigate])
+
   function handleGoogleClick() {
+    setGoogleBannerError(null)
     setBannerError(null)
     setLoadingGoogle(true)
     window.location.href = `${API_URL}/auth/google`
@@ -47,6 +58,7 @@ export function LoginPage() {
   async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     setBannerError(null)
+    setGoogleBannerError(null)
     setFieldErrors({})
 
     const formData = new FormData(event.currentTarget)
@@ -152,9 +164,9 @@ export function LoginPage() {
             </p>
           </div>
 
-          {bannerError && (
+          {(bannerError || googleBannerError) && (
             <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
-              {t(`auth.login.errors.${bannerError}`)}
+              {googleBannerError ?? t(`auth.login.errors.${bannerError}`)}
             </div>
           )}
 

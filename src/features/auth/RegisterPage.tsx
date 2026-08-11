@@ -1,4 +1,4 @@
-import { useEffect, useState, type SubmitEvent } from 'react'
+import { useState, type SubmitEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -50,32 +50,9 @@ export function RegisterPage() {
   const passwordsMismatch =
     confirmPassword.length > 0 && password !== confirmPassword
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const googleError = params.get('googleError')
-    if (googleError) {
-      setBannerError(googleError)
-      navigate('/register', { replace: true })
-    }
-  }, [navigate])
-
   function handleGoogleClick() {
-    if (!companyDocument.trim()) {
-      setFieldErrors((errors) => ({
-        ...errors,
-        companyDocument: t('auth.register.errors.companyDocument'),
-      }))
-      return
-    }
-
     setLoadingGoogle(true)
-    const state = btoa(
-      JSON.stringify({
-        companyDocument,
-        companyDocumentType: DOCUMENT_TYPE_MAP[companyType],
-      }),
-    )
-    window.location.href = `${API_URL}/auth/google?state=${encodeURIComponent(state)}`
+    window.location.href = `${API_URL}/auth/google`
   }
 
   async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {

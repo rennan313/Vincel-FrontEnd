@@ -41,3 +41,23 @@ export function fetchMe(accessToken: string): Promise<AuthUser> {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
 }
+
+export interface CompleteGoogleRegistrationPayload {
+  pendingToken: string
+  companyDocument: string
+  companyDocumentType: CompanyDocumentType
+}
+
+export interface CompleteGoogleRegistrationResponse {
+  accessToken: string
+  user: AuthUser
+}
+
+export function completeGoogleRegistration(
+  payload: CompleteGoogleRegistrationPayload,
+): Promise<CompleteGoogleRegistrationResponse> {
+  return apiFetch<CompleteGoogleRegistrationResponse>('/auth/google/complete', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}

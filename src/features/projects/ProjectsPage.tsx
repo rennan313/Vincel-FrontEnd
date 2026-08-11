@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
-import { useQueryStates, parseAsInteger, parseAsString } from 'nuqs'
+import { useQueryStates, parseAsInteger, parseAsString, parseAsStringLiteral } from 'nuqs'
 import { useTranslation } from 'react-i18next'
 import { PageTitle } from '@/components/ui/PageTitle'
 import { PageSubtitle } from '@/components/ui/PageSubtitle'
@@ -12,17 +12,20 @@ import { Input } from '@/components/ui/Input'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { formatDate } from '@/lib/formatDate'
-import { fetchProjects, type Project } from '@/features/projects/projectsApi'
+import { fetchProjects, type Project, type ProjectStatus } from '@/features/projects/projectsApi'
 import { PROJECT_STATUS_VARIANT } from '@/features/projects/projectStatusStyles'
 
 const PAGE_SIZE = 8
 
+const STATUS_OPTIONS = ['', 'in_progress', 'completed', 'paused', 'canceled'] as const
+
 export function ProjectsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [{ page, q: search }, setQuery] = useQueryStates({
+  const [{ page, q: search, status }, setQuery] = useQueryStates({
     page: parseAsInteger.withDefault(1),
     q: parseAsString.withDefault(''),
+    status: parseAsStringLiteral(STATUS_OPTIONS).withDefault(''),
   })
   const [searchInput, setSearchInput] = useState(search)
   const debouncedSearch = useDebouncedValue(searchInput, 300)
@@ -35,8 +38,9 @@ export function ProjectsPage() {
   }, [debouncedSearch])
 
   const { data, isLoading } = useQuery({
-    queryKey: ['projects', page, search],
-    queryFn: () => fetchProjects(page, PAGE_SIZE, search),
+    queryKey: ['projects', page, search, status],
+    queryFn: () =>
+      fetchProjects(page, PAGE_SIZE, search, status ? (status as ProjectStatus) : undefined),
   })
 
   const columns: TableColumn<Project>[] = [
@@ -112,7 +116,7 @@ export function ProjectsPage() {
         </Button>
       </div>
 
-      <div className="mt-4 mb-6">
+      <div className="mt-4 mb-6 flex items-center gap-3">
         <Input
           icon="Search"
           placeholder={t('projects.searchPlaceholder')}
@@ -121,6 +125,24 @@ export function ProjectsPage() {
           onChange={(event) => setSearchInput(event.target.value)}
           className="w-96"
         />
+        <select
+          aria-label={t('projects.columns.status')}
+          value={status}
+          onChange={(event) =>
+            setQuery({
+              status: (event.target.value || '') as (typeof STATUS_OPTIONS)[number],
+              page: 1,
+            })
+          }
+          className="h-10 rounded-lg border border-(--th-border) bg-(--th-bg-card) px-3 text-sm text-(--th-text) outline-none transition-colors focus:ring-2 focus:ring-(--th-border-focus)"
+        >
+          <option value="">{t('projects.allStatuses')}</option>
+          {STATUS_OPTIONS.filter((option) => option !== '').map((option) => (
+            <option key={option} value={option}>
+              {t(`projects.status.${option}`)}
+            </option>
+          ))}
+        </select>
       </div>
 
       <Table

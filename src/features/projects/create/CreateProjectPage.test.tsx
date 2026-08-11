@@ -1,11 +1,46 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CreateProjectPage } from '@/features/projects/create/CreateProjectPage'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
 import { createEmptyDraft } from '@/features/projects/create/types'
+import type { Project } from '@/features/projects/projectsApi'
 import '@/lib/i18n'
+
+// Same project shape the old MOCK_PROJECTS fixture in projectsApi.ts used to
+// carry for id "1".
+const MOCK_PROJECTS: Project[] = [
+  { id: '1', name: 'Residência Alto da Serra', clientName: 'Ana Beatriz Ferreira', type: 'Residencial', status: 'in_progress', active: true, createdAt: '2026-01-12' },
+]
+
+let nextCreatedId = 100
+
+vi.mock('@/features/projects/projectsApi', async () => {
+  const actual = await vi.importActual('@/features/projects/projectsApi')
+  return {
+    ...actual,
+    fetchProjectById: vi.fn(async (id: string) => {
+      const project = MOCK_PROJECTS.find((item) => item.id === id)
+      if (!project) throw new Error('Not found')
+      return project
+    }),
+    createProject: vi.fn(async (payload: Partial<Project>) => ({
+      id: String(nextCreatedId++),
+      status: 'in_progress',
+      active: true,
+      createdAt: new Date().toISOString(),
+      clientName: '',
+      type: '',
+      name: '',
+      ...payload,
+    })),
+    updateProject: vi.fn(async (id: string, payload: Partial<Project>) => {
+      const existing = MOCK_PROJECTS.find((item) => item.id === id)
+      return { ...(existing ?? MOCK_PROJECTS[0]), ...payload, id }
+    }),
+  }
+})
 
 function renderWizard() {
   const queryClient = new QueryClient()

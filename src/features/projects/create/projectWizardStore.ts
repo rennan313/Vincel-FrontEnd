@@ -13,7 +13,8 @@ import {
 } from '@/features/projects/create/types'
 import { localStorageProjectDraftRepository as repository } from '@/features/projects/create/draftRepository'
 import { seedDraftFromProject } from '@/features/projects/create/seedDraftFromProject'
-import type { Project } from '@/features/projects/projectsApi'
+import { PROJECT_TYPE_LABELS } from '@/features/projects/create/serviceCatalog'
+import { createProject, updateProject, type Project } from '@/features/projects/projectsApi'
 
 function nowIso() {
   return new Date().toISOString()
@@ -39,7 +40,7 @@ interface ProjectWizardState {
   updateClient: (patch: Partial<ClientInfo>) => void
   updateSchedule: (patch: Partial<ScheduleData>) => void
   updateAddress: (patch: Partial<AddressData>) => void
-  confirm: () => void
+  confirm: () => Promise<Project>
   discard: () => void
 }
 
@@ -163,19 +164,44 @@ export const useProjectWizardStore = create<ProjectWizardState>((set, get) => ({
     })
   },
 
-  confirm: () => {
+  confirm: async () => {
+    const current = get().draft
+    const { info, client } = current
+
+    const type =
+      info.type === 'outro'
+        ? info.customType.trim() || 'Projeto'
+        : info.type
+          ? PROJECT_TYPE_LABELS[info.type]
+          : 'Projeto'
+
+    // Only the fields the backend Project model supports today are sent —
+    // escopo/planejamento/financeiro/cronograma/endereço stay local-only in
+    // the draft until that data has somewhere real to live.
+    const payload = {
+      name: info.name,
+      type,
+      clientId: client.id ?? undefined,
+      clientName: client.name,
+    }
+
+    const editingProjectId = current.id.startsWith('edit-')
+      ? current.id.slice('edit-'.length)
+      : null
+
+    const project = editingProjectId
+      ? await updateProject(editingProjectId, payload)
+      : await createProject(payload)
+
     const draft: ProjectDraft = {
-      ...get().draft,
+      ...current,
+      id: project.id,
       status: 'confirmed',
       updatedAt: nowIso(),
     }
-    // Mocked "creation" — no backend to send this to yet (see clientsApi.ts /
-    // projectsApi.ts for the same pattern elsewhere in this app). Clearing
-    // the draft here is the isolation point: a real integration would POST
-    // `draft` to a projects API before clearing it, and nothing else in the
-    // wizard would need to change.
-    repository.clear(draft.id)
+    repository.clear(current.id)
     set({ draft })
+    return project
   },
 
   discard: () => {

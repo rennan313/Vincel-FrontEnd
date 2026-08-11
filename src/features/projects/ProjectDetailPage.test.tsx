@@ -2,11 +2,32 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { NuqsAdapter } from 'nuqs/adapters/react-router/v8'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ProjectDetailPage } from '@/features/projects/ProjectDetailPage'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
 import { createEmptyDraft } from '@/features/projects/create/types'
+import type { Project } from '@/features/projects/projectsApi'
 import '@/lib/i18n'
+
+// Same project shape the old MOCK_PROJECTS fixture in projectsApi.ts used to
+// carry for id "1" — kept identical so the deterministic mock enrichment in
+// seedDraftFromProject.ts (seeded from the id) still yields the same área/
+// financeiro/etc the assertions below rely on.
+const MOCK_PROJECTS: Project[] = [
+  { id: '1', name: 'Residência Alto da Serra', clientName: 'Ana Beatriz Ferreira', type: 'Residencial', status: 'in_progress', active: true, createdAt: '2026-01-12' },
+]
+
+vi.mock('@/features/projects/projectsApi', async () => {
+  const actual = await vi.importActual('@/features/projects/projectsApi')
+  return {
+    ...actual,
+    fetchProjectById: vi.fn(async (id: string) => {
+      const project = MOCK_PROJECTS.find((item) => item.id === id)
+      if (!project) throw new Error('Not found')
+      return project
+    }),
+  }
+})
 
 // See ClientsPage.test.tsx — nuqs's react-router adapter reads/writes the
 // real jsdom URL, which leaks across tests unless reset.
@@ -18,7 +39,10 @@ afterEach(() => {
 })
 
 function renderDetailPage(initialPath: string) {
-  const queryClient = new QueryClient()
+  // fetchProjectById now rejects (not resolves null) for an unknown id, like
+  // the real API's 404 — retries are disabled so the not-found test doesn't
+  // wait through React Query's default exponential backoff.
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[initialPath]}>
