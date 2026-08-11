@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { z } from 'zod'
@@ -9,12 +9,13 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
 import { formatCEP, formatCNPJ, formatCPF, formatPhone } from '@/lib/masks'
+import { ApiError } from '@/lib/apiClient'
 import {
   clientFormSchema,
   emptyClientFormValues,
   type ClientFormValues,
 } from '@/features/clients/clientFormSchema'
-import type { Client } from '@/features/clients/clientsApi'
+import { createClient, updateClient, type Client } from '@/features/clients/clientsApi'
 
 const FORM_ID = 'client-form'
 
@@ -31,6 +32,17 @@ function toFormValues(client?: Client): ClientFormValues {
     name: client.name,
     email: client.email,
     phone: client.phone,
+    type: client.type,
+    document: client.document ?? '',
+    address: {
+      zip: client.address?.zip ?? '',
+      street: client.address?.street ?? '',
+      number: client.address?.number ?? '',
+      complement: client.address?.complement ?? '',
+      neighborhood: client.address?.neighborhood ?? '',
+      city: client.address?.city ?? '',
+      state: client.address?.state ?? '',
+    },
   }
 }
 
@@ -39,18 +51,39 @@ type FieldErrors = Partial<Record<'name' | 'email' | 'phone', string>>
 export function ClientFormModal({ open, onClose, client }: ClientFormModalProps) {
   const { t } = useTranslation()
   const isEdit = !!client
+  const queryClient = useQueryClient()
   const [values, setValues] = useState<ClientFormValues>(emptyClientFormValues)
   const [errors, setErrors] = useState<FieldErrors>({})
+  const [bannerError, setBannerError] = useState<string | null>(null)
   const [showAddress, setShowAddress] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     if (open) {
       setValues(toFormValues(client))
       setErrors({})
-      setShowAddress(false)
+      setBannerError(null)
+      setShowAddress(Boolean(client?.address && Object.values(client.address).some(Boolean)))
     }
   }, [open, client])
+
+  const mutation = useMutation({
+    mutationFn: (payload: ClientFormValues) =>
+      client
+        ? updateClient(client.id, payload)
+        : createClient(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] })
+      toast.success(
+        isEdit ? t('clients.form.mockUpdateToast') : t('clients.form.mockCreateToast'),
+      )
+      onClose()
+    },
+    onError: (error) => {
+      setBannerError(
+        error instanceof ApiError ? error.message : 'Não foi possível salvar o cliente.',
+      )
+    },
+  })
 
   function updateField<K extends keyof ClientFormValues>(
     field: K,
@@ -97,8 +130,9 @@ export function ClientFormModal({ open, onClose, client }: ClientFormModalProps)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cepResult])
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    setBannerError(null)
 
     const parsed = clientFormSchema.safeParse(values)
     if (!parsed.success) {
@@ -111,16 +145,7 @@ export function ClientFormModal({ open, onClose, client }: ClientFormModalProps)
       return
     }
 
-    setSubmitting(true)
-    await new Promise((resolve) => setTimeout(resolve, 600))
-    setSubmitting(false)
-
-    toast.success(
-      isEdit
-        ? t('clients.form.mockUpdateToast')
-        : t('clients.form.mockCreateToast'),
-    )
-    onClose()
+    mutation.mutate(parsed.data)
   }
 
   return (
@@ -133,12 +158,22 @@ export function ClientFormModal({ open, onClose, client }: ClientFormModalProps)
           <Button type="button" variant="outline" onClick={onClose}>
             {t('clients.form.cancel')}
           </Button>
-          <Button type="submit" form={FORM_ID} variant="primary" loading={submitting}>
+          <Button
+            type="submit"
+            form={FORM_ID}
+            variant="primary"
+            loading={mutation.isPending}
+          >
             {t('clients.form.save')}
           </Button>
         </>
       }
     >
+      {bannerError && (
+        <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+          {bannerError}
+        </div>
+      )}
       <form id={FORM_ID} onSubmit={handleSubmit} className="space-y-6" noValidate>
         <div>
           <h3 className="mb-3 text-sm font-semibold text-(--th-text)">

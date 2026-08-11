@@ -77,8 +77,8 @@
       "state": "Estado",
       "cancel": "Cancelar",
       "save": "Salvar",
-      "mockCreateToast": "Mock: cliente cadastrado (não persistido)",
-      "mockUpdateToast": "Mock: cliente atualizado (não persistido)"
+      "mockCreateToast": "Cliente cadastrado com sucesso!",
+      "mockUpdateToast": "Cliente atualizado com sucesso!"
     }
   },
   "projects": {
