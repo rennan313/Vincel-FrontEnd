@@ -5,10 +5,10 @@ import {
   type ClientInfo,
   type FinancialData,
   type PlanningData,
+  type ProjectComponentItem,
   type ProjectDraft,
   type ProjectInfo,
   type ScheduleData,
-  type ScopeData,
   type WizardStep,
 } from '@/features/projects/create/types'
 import { localStorageProjectDraftRepository as repository } from '@/features/projects/create/draftRepository'
@@ -34,11 +34,11 @@ function hasAddressValue(address: AddressData): boolean {
 }
 
 /** Builds the full API payload from a draft — every section the wizard
- * collects (escopo/planejamento/financeiro/cronograma/endereço), not just
+ * collects (planejamento/financeiro/cronograma/endereço), not just
  * the handful of top-level fields. Optional sections are omitted entirely
  * rather than sent empty/null, matching the backend DTOs' @IsOptional() fields. */
 function buildProjectPayload(draft: ProjectDraft): ProjectPayload {
-  const { info, scope, planning, financial, client, schedule, address } = draft
+  const { info, components, planning, financial, client, schedule, address } = draft
 
   const type =
     info.type === 'outro'
@@ -54,9 +54,7 @@ function buildProjectPayload(draft: ProjectDraft): ProjectPayload {
     areaSqm: info.areaSqm ?? undefined,
     clientId: client.id ?? undefined,
     clientName: client.name,
-    services: scope.services.length > 0 ? scope.services : undefined,
-    customServiceLabel: scope.customServiceLabel.trim() || undefined,
-    components: scope.components.length > 0 ? scope.components : undefined,
+    components: components.length > 0 ? components : undefined,
     planningPhases: planning.phases.length > 0 ? planning.phases : undefined,
     complexity: planning.complexity ?? undefined,
     constructionBudget: financial.constructionBudget ?? undefined,
@@ -84,7 +82,11 @@ interface ProjectWizardState {
   initDuplicate: (source: ProjectDraft) => void
   goToStep: (step: WizardStep) => void
   updateInfo: (patch: Partial<ProjectInfo>) => void
-  updateScope: (patch: Partial<ScopeData>) => void
+  /** Mirrors a components change already persisted elsewhere (Materiais tab,
+   * on the project detail page) into a currently-open confirmed draft — so
+   * the detail page's own view of the draft doesn't go stale right after
+   * creating/editing a project and before the next full page load. */
+  setComponents: (components: ProjectComponentItem[]) => void
   updatePlanning: (patch: Partial<PlanningData>) => void
   updateFinancial: (patch: Partial<FinancialData>) => void
   updateClient: (patch: Partial<ClientInfo>) => void
@@ -158,13 +160,9 @@ export const useProjectWizardStore = create<ProjectWizardState>((set, get) => ({
     })
   },
 
-  updateScope: (patch) => {
+  setComponents: (components) => {
     set((state) => {
-      const draft: ProjectDraft = {
-        ...state.draft,
-        scope: { ...state.draft.scope, ...patch },
-        updatedAt: nowIso(),
-      }
+      const draft: ProjectDraft = { ...state.draft, components, updatedAt: nowIso() }
       persist(draft)
       return { draft }
     })

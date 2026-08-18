@@ -29,7 +29,6 @@ function migrate(stored: ProjectDraft): ProjectDraft {
     ...empty,
     ...stored,
     info: { ...empty.info, ...stored.info },
-    scope: { ...empty.scope, ...stored.scope },
     planning: { ...empty.planning, ...stored.planning },
     financial: { ...empty.financial, ...stored.financial },
     client: { ...empty.client, ...stored.client },

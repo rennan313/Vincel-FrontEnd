@@ -7,12 +7,6 @@ export interface ProjectTypeCatalogItem {
   active: boolean
 }
 
-export interface ServiceCatalogItem {
-  id: string
-  name: string
-  active: boolean
-}
-
 export interface ProjectComponentCatalogItem {
   id: string
   name: string
@@ -50,11 +44,6 @@ async function fetchAllPages<T>(path: string): Promise<T[]> {
 
 export async function fetchProjectTypeCatalog(): Promise<ProjectTypeCatalogItem[]> {
   const items = await fetchAllPages<ProjectTypeCatalogItem>('/project-types')
-  return items.filter((item) => item.active)
-}
-
-export async function fetchServiceCatalog(): Promise<ServiceCatalogItem[]> {
-  const items = await fetchAllPages<ServiceCatalogItem>('/services')
   return items.filter((item) => item.active)
 }
 

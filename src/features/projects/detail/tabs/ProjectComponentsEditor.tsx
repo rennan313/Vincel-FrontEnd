@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { cn } from '@/lib/cn'
-import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
 import {
   fetchProjectComponentCatalog,
   type ProjectComponentCatalogItem,
@@ -52,12 +51,12 @@ function CatalogButton({
   )
 }
 
-export function ComponentsEditor() {
-  const components = useProjectWizardStore(
-    (state) => state.draft.scope.components,
-  )
-  const updateScope = useProjectWizardStore((state) => state.updateScope)
+interface ProjectComponentsEditorProps {
+  components: ProjectComponentItem[]
+  onChange: (next: ProjectComponentItem[]) => void
+}
 
+export function ProjectComponentsEditor({ components, onChange }: ProjectComponentsEditorProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [mode, setMode] = useState<ModalMode>('picker')
@@ -137,19 +136,17 @@ export function ComponentsEditor() {
       note: form.note.trim() || undefined,
     }
 
-    updateScope({
-      components: editingId
+    onChange(
+      editingId
         ? components.map((component) => (component.id === editingId ? item : component))
         : [...components, item],
-    })
+    )
     setModalOpen(false)
   }
 
   function confirmRemove() {
     if (!pendingRemove) return
-    updateScope({
-      components: components.filter((component) => component.id !== pendingRemove.id),
-    })
+    onChange(components.filter((component) => component.id !== pendingRemove.id))
     setPendingRemove(null)
   }
 

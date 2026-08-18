@@ -17,20 +17,13 @@ const COMPLEXITY_LABEL: Record<Complexity, string> = {
 
 export function StepPlanning({ onValidityChange }: StepPlanningProps) {
   const info = useProjectWizardStore((state) => state.draft.info)
-  const scope = useProjectWizardStore((state) => state.draft.scope)
   const planning = useProjectWizardStore((state) => state.draft.planning)
   const updatePlanning = useProjectWizardStore((state) => state.updatePlanning)
   const seeded = useRef(false)
 
   useEffect(() => {
     if (!seeded.current && planning.phases.length === 0) {
-      const estimate = estimateProjectPlan({
-        type: info.type,
-        areaSqm: info.areaSqm,
-        services: scope.services,
-        customServiceLabel: scope.customServiceLabel,
-        componentCount: scope.components.length,
-      })
+      const estimate = estimateProjectPlan({ areaSqm: info.areaSqm })
       updatePlanning({
         phases: estimate.phases,
         complexity: estimate.complexity,
@@ -57,12 +50,7 @@ export function StepPlanning({ onValidityChange }: StepPlanningProps) {
   }
 
   function handleRecalculate() {
-    const estimate = estimateProjectPlan({
-      type: info.type,
-      areaSqm: info.areaSqm,
-      services: scope.services,
-      componentCount: scope.components.length,
-    })
+    const estimate = estimateProjectPlan({ areaSqm: info.areaSqm })
     updatePlanning({
       phases: estimate.phases,
       complexity: estimate.complexity,
@@ -77,15 +65,13 @@ export function StepPlanning({ onValidityChange }: StepPlanningProps) {
           Vamos planejar este projeto
         </h1>
         <p className="mt-1 text-sm text-(--th-text-muted)">
-          Criamos uma estimativa inicial com base no tipo, área e escopo
-          informado.
+          Criamos uma estimativa inicial com base na área informada.
         </p>
       </div>
 
       {planning.phases.length === 0 ? (
         <p className="rounded-lg border border-dashed border-(--th-border) p-4 text-center text-sm text-(--th-text-muted)">
-          Volte à etapa anterior e selecione ao menos um serviço para gerar
-          uma estimativa.
+          Preparando estimativa inicial...
         </p>
       ) : (
         <>
@@ -160,9 +146,8 @@ export function StepPlanning({ onValidityChange }: StepPlanningProps) {
           </div>
 
           <p className="text-xs text-(--th-text-muted)">
-            Esta é uma estimativa inicial baseada no escopo informado — não é
-            um prazo definitivo. Você poderá ajustar etapas e prazos ao longo
-            do projeto.
+            Esta é uma estimativa inicial — não é um prazo definitivo. Você
+            poderá ajustar etapas e prazos ao longo do projeto.
           </p>
         </>
       )}

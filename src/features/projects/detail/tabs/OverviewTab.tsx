@@ -23,8 +23,7 @@ export function OverviewTab({ draft }: OverviewTabProps) {
             Resumo executivo
           </p>
           <div className="mt-1 divide-y divide-(--th-border)">
-            <InfoRow label="Serviços contratados" value={String(draft.scope.services.length)} />
-            <InfoRow label="Componentes do projeto" value={String(draft.scope.components.length)} />
+            <InfoRow label="Componentes do projeto" value={String(draft.components.length)} />
             <InfoRow label="Prazo total calculado" value={`${totalDays} dias`} />
             <InfoRow
               label="Complexidade"

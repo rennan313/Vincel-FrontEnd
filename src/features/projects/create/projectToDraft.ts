@@ -28,7 +28,7 @@ function isServiceKey(value: string): value is ServiceKey {
 
 /**
  * Maps a real backend Project — already carrying everything the wizard
- * collected at creation (escopo/planejamento/financeiro/cronograma/endereço,
+ * collected at creation (planejamento/financeiro/cronograma/endereço,
  * see CreateProjectDto on vincel-api) — into a ProjectDraft the detail page
  * and the edit wizard can render. No fabrication: a project created before
  * a given field existed, or via a minimal payload, just renders that
@@ -40,7 +40,6 @@ export function projectToDraft(draftId: string, project: Project): ProjectDraft 
   const type = resolveProjectTypeKeyByName(project.type) ?? 'outro'
   const customType = type === 'outro' ? (project.customType ?? project.type) : ''
 
-  const services = (project.services ?? []).filter(isServiceKey)
   const planningPhases: PlanningPhase[] = (project.planningPhases ?? []).filter((phase) =>
     isServiceKey(phase.key),
   )
@@ -81,11 +80,7 @@ export function projectToDraft(draftId: string, project: Project): ProjectDraft 
       nameIsCustom: true,
       areaSqm: project.areaSqm ?? null,
     },
-    scope: {
-      services,
-      customServiceLabel: project.customServiceLabel ?? '',
-      components: project.components ?? [],
-    },
+    components: project.components ?? [],
     planning: {
       phases: planningPhases,
       complexity: project.complexity ?? null,

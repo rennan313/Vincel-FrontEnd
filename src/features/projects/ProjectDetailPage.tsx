@@ -18,7 +18,6 @@ import { ProjectTabs } from '@/features/projects/detail/ProjectTabs'
 import { PROJECT_TAB_KEYS } from '@/features/projects/detail/projectTabKeys'
 import { ProjectDetailSkeleton } from '@/features/projects/detail/ProjectDetailSkeleton'
 import { OverviewTab } from '@/features/projects/detail/tabs/OverviewTab'
-import { ScopeTab } from '@/features/projects/detail/tabs/ScopeTab'
 import { ScheduleTab } from '@/features/projects/detail/tabs/ScheduleTab'
 import { TeamTab } from '@/features/projects/detail/tabs/TeamTab'
 import { MaterialsTab } from '@/features/projects/detail/tabs/MaterialsTab'
@@ -129,7 +128,6 @@ export function ProjectDetailPage() {
 
       <div className="mt-6">
         {tab === 'overview' && <OverviewTab draft={draft} />}
-        {tab === 'scope' && <ScopeTab draft={draft} />}
         {tab === 'schedule' && <ScheduleTab draft={draft} />}
         {tab === 'team' && <TeamTab />}
         {tab === 'materials' && <MaterialsTab draft={draft} />}

@@ -11,7 +11,7 @@ import '@/lib/i18n'
 
 // A realistic full API response — projectToDraft.ts no longer fabricates
 // anything, it just maps whatever the backend actually returns, so the
-// fixture needs the real shape (escopo/planejamento/financeiro) for the
+// fixture needs the real shape (componentes/planejamento/financeiro) for the
 // assertions below to have anything non-empty to check.
 const MOCK_PROJECTS: Project[] = [
   {
@@ -24,7 +24,6 @@ const MOCK_PROJECTS: Project[] = [
     active: true,
     createdAt: '2026-01-12',
     areaSqm: 119,
-    services: ['estudo_preliminar', 'anteprojeto', 'projeto_executivo'],
     components: [
       { id: 'comp_1', name: 'Sala de estar', quantity: 1, areaSqm: 25 },
       { id: 'comp_2', name: 'Cozinha', quantity: 1, areaSqm: 18 },
@@ -107,7 +106,7 @@ describe('ProjectDetailPage', () => {
     ).toBeInTheDocument()
   })
 
-  it('renders the real escopo (serviços + componentes) from the API response', async () => {
+  it('renders the real componentes from the API response in the Materiais tab', async () => {
     renderDetailPage('/projects/1')
     await waitFor(() =>
       expect(
@@ -115,14 +114,11 @@ describe('ProjectDetailPage', () => {
       ).toBeInTheDocument(),
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Escopo' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Materiais' }))
 
     await waitFor(() =>
-      expect(screen.getByText('Serviços contratados')).toBeInTheDocument(),
+      expect(screen.getByText('Componentes do projeto')).toBeInTheDocument(),
     )
-    expect(
-      screen.queryByText('Nenhum serviço contratado ainda.'),
-    ).not.toBeInTheDocument()
     expect(
       screen.queryByText('Nenhum componente adicionado ainda.'),
     ).not.toBeInTheDocument()

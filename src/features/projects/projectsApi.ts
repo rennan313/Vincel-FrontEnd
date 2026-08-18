@@ -21,8 +21,6 @@ export interface Project {
   status: ProjectStatus
   clientId?: string | null
   clientName: string
-  services?: string[]
-  customServiceLabel?: string | null
   components?: ProjectComponentItem[]
   planningPhases?: PlanningPhase[]
   complexity?: Complexity | null
@@ -55,8 +53,6 @@ export interface ProjectPayload {
   clientId?: string
   clientName: string
   status?: ProjectStatus
-  services?: string[]
-  customServiceLabel?: string
   components?: ProjectComponentItem[]
   planningPhases?: PlanningPhase[]
   complexity?: Complexity

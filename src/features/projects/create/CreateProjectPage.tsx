@@ -8,7 +8,6 @@ import { ApiError } from '@/lib/apiClient'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
 import { ProjectWizardStepper } from '@/features/projects/create/ProjectWizardStepper'
 import { StepProjectInfo } from '@/features/projects/create/StepProjectInfo'
-import { StepScope } from '@/features/projects/create/StepScope'
 import { StepPlanning } from '@/features/projects/create/StepPlanning'
 import { StepFinancial } from '@/features/projects/create/StepFinancial'
 import { StepClient } from '@/features/projects/create/StepClient'
@@ -58,7 +57,7 @@ export function CreateProjectPage() {
   }
 
   async function handleContinue() {
-    if (draft.step === 6) {
+    if (draft.step === 5) {
       setSaving(true)
       try {
         const project = await confirm()
@@ -99,11 +98,10 @@ export function CreateProjectPage() {
 
       <div>
         {draft.step === 1 && <StepProjectInfo onValidityChange={setCanContinue} />}
-        {draft.step === 2 && <StepScope onValidityChange={setCanContinue} />}
-        {draft.step === 3 && <StepPlanning onValidityChange={setCanContinue} />}
-        {draft.step === 4 && <StepFinancial onValidityChange={setCanContinue} />}
-        {draft.step === 5 && <StepClient onValidityChange={setCanContinue} />}
-        {draft.step === 6 && <StepReview onEditStep={goToStep} />}
+        {draft.step === 2 && <StepPlanning onValidityChange={setCanContinue} />}
+        {draft.step === 3 && <StepFinancial onValidityChange={setCanContinue} />}
+        {draft.step === 4 && <StepClient onValidityChange={setCanContinue} />}
+        {draft.step === 5 && <StepReview onEditStep={goToStep} />}
       </div>
 
       <div className="mt-10 flex items-center justify-between border-t border-(--th-border) pt-6">
@@ -114,10 +112,10 @@ export function CreateProjectPage() {
           type="button"
           variant="primary"
           onClick={handleContinue}
-          disabled={(draft.step !== 6 && !canContinue) || saving}
-          loading={draft.step === 6 && saving}
+          disabled={(draft.step !== 5 && !canContinue) || saving}
+          loading={draft.step === 5 && saving}
         >
-          {draft.step === 6 ? (isEditing ? 'Salvar alterações' : 'Criar projeto') : 'Continuar'}
+          {draft.step === 5 ? (isEditing ? 'Salvar alterações' : 'Criar projeto') : 'Continuar'}
         </Button>
       </div>
     </div>

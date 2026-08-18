@@ -3,7 +3,6 @@ import { PROJECT_TAB_KEYS, type ProjectTabKey } from '@/features/projects/detail
 
 const TAB_LABELS: Record<ProjectTabKey, string> = {
   overview: 'Visão geral',
-  scope: 'Escopo',
   schedule: 'Cronograma',
   team: 'Equipe',
   materials: 'Materiais',

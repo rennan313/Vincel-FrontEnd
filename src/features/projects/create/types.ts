@@ -42,12 +42,6 @@ export interface ProjectInfo {
   areaSqm: number | null
 }
 
-export interface ScopeData {
-  services: ServiceKey[]
-  customServiceLabel: string
-  components: ProjectComponentItem[]
-}
-
 export type Complexity = 'LOW' | 'MEDIUM' | 'HIGH'
 
 export interface PlanningPhase {
@@ -113,7 +107,7 @@ export interface AddressData {
   state: string
 }
 
-export type WizardStep = 1 | 2 | 3 | 4 | 5 | 6
+export type WizardStep = 1 | 2 | 3 | 4 | 5
 
 export type DraftStatus = 'draft' | 'confirmed'
 
@@ -122,7 +116,7 @@ export interface ProjectDraft {
   status: DraftStatus
   step: WizardStep
   info: ProjectInfo
-  scope: ScopeData
+  components: ProjectComponentItem[]
   planning: PlanningData
   financial: FinancialData
   client: ClientInfo
@@ -138,7 +132,7 @@ export function createEmptyDraft(id: string, timestamp: string): ProjectDraft {
     status: 'draft',
     step: 1,
     info: { type: null, customType: '', name: '', nameIsCustom: false, areaSqm: null },
-    scope: { services: [], customServiceLabel: '', components: [] },
+    components: [],
     planning: { phases: [], complexity: null, isCustomized: false },
     financial: {
       constructionBudget: null,
