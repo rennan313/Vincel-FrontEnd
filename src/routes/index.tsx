@@ -8,6 +8,7 @@ import { CompleteGoogleRegistrationPage } from '@/features/auth/CompleteGoogleRe
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { ClientsPage } from '@/features/clients/ClientsPage'
+import { ProvidersPage } from '@/features/providers/ProvidersPage'
 import { ProjectsPage } from '@/features/projects/ProjectsPage'
 import { ProjectDetailPage } from '@/features/projects/ProjectDetailPage'
 import { CreateProjectPage } from '@/features/projects/create/CreateProjectPage'
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
           { path: '/users', element: <UsersPage /> },
           { path: '/assinatura', element: <SubscriptionPage /> },
           { path: '/clients', element: <ClientsPage /> },
+          { path: '/providers', element: <ProvidersPage /> },
           { path: '/projects', element: <ProjectsPage /> },
           { path: '/projects/new', element: <CreateProjectPage /> },
           { path: '/projects/:projectId/edit', element: <CreateProjectPage /> },

@@ -61,22 +61,6 @@ export type ProviderStatus =
   | 'CONCLUIDO'
   | 'CANCELADO'
 
-export interface ProjectTeamMember {
-  id: string
-  name: string
-  role: ProviderRole
-  /** Only meaningful when role is "OUTRO". */
-  customRole?: string
-  /** Free-text description of what this provider is responsible for on
-   * THIS project — distinct from `role`, which is just their general trade. */
-  responsibility?: string
-  status: ProviderStatus
-  phone?: string
-  email?: string
-  company?: string
-  document?: string
-}
-
 export interface ProjectInfo {
   type: ProjectType | null
   customType: string
@@ -163,7 +147,6 @@ export interface ProjectDraft {
   step: WizardStep
   info: ProjectInfo
   components: ProjectComponentItem[]
-  teamMembers: ProjectTeamMember[]
   planning: PlanningData
   financial: FinancialData
   client: ClientInfo
@@ -180,7 +163,6 @@ export function createEmptyDraft(id: string, timestamp: string): ProjectDraft {
     step: 1,
     info: { type: null, customType: '', name: '', nameIsCustom: false, areaSqm: null },
     components: [],
-    teamMembers: [],
     planning: { phases: [], complexity: null, isCustomized: false },
     financial: {
       constructionBudget: null,

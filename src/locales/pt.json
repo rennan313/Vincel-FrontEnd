@@ -10,6 +10,7 @@
     "main": "Principal",
     "dashboard": "Dashboard",
     "clients": "Clientes",
+    "providers": "Prestadores",
     "projects": "Projetos",
     "users": "Usuários",
     "subscription": "Assinatura"

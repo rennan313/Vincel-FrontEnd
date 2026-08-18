@@ -129,7 +129,7 @@ export function ProjectDetailPage() {
       <div className="mt-6">
         {tab === 'overview' && <OverviewTab draft={draft} />}
         {tab === 'schedule' && <ScheduleTab draft={draft} />}
-        {tab === 'team' && <TeamTab draft={draft} />}
+        {tab === 'team' && <TeamTab />}
         {tab === 'materials' && <MaterialsTab draft={draft} />}
         {tab === 'financial' && <FinancialTab draft={draft} />}
         {tab === 'documents' && <DocumentsTab />}

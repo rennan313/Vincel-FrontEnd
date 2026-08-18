@@ -18,6 +18,7 @@ interface NavItem {
 const BASE_NAV_ITEMS: NavItem[] = [
   { labelKey: 'nav.dashboard', to: '/dashboard', icon: 'LayoutDashboard' },
   { labelKey: 'nav.clients', to: '/clients', icon: 'Users' },
+  { labelKey: 'nav.providers', to: '/providers', icon: 'Briefcase' },
   { labelKey: 'nav.projects', to: '/projects', icon: 'FolderOpen' },
 ]
 
