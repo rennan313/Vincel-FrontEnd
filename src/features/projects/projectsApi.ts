@@ -8,6 +8,7 @@ import type {
   PaymentMethod,
   PlanningPhase,
   ProjectComponentItem,
+  ProjectTeamMember,
 } from '@/features/projects/create/types'
 
 export type ProjectStatus = 'in_progress' | 'completed' | 'paused' | 'canceled'
@@ -22,6 +23,7 @@ export interface Project {
   clientId?: string | null
   clientName: string
   components?: ProjectComponentItem[]
+  teamMembers?: ProjectTeamMember[]
   planningPhases?: PlanningPhase[]
   complexity?: Complexity | null
   constructionBudget?: number | null
@@ -54,6 +56,7 @@ export interface ProjectPayload {
   clientName: string
   status?: ProjectStatus
   components?: ProjectComponentItem[]
+  teamMembers?: ProjectTeamMember[]
   planningPhases?: PlanningPhase[]
   complexity?: Complexity
   constructionBudget?: number

@@ -81,6 +81,7 @@ export function projectToDraft(draftId: string, project: Project): ProjectDraft 
       areaSqm: project.areaSqm ?? null,
     },
     components: project.components ?? [],
+    teamMembers: project.teamMembers ?? [],
     planning: {
       phases: planningPhases,
       complexity: project.complexity ?? null,

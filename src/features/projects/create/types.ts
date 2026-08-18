@@ -31,6 +31,37 @@ export interface ProjectComponentItem {
   note?: string
 }
 
+export type ProviderRole =
+  | 'arquiteto_colaborador'
+  | 'engenheiro_estrutural'
+  | 'engenheiro_eletrico'
+  | 'engenheiro_hidraulico'
+  | 'mestre_obras'
+  | 'empreiteiro'
+  | 'pedreiro'
+  | 'eletricista'
+  | 'encanador'
+  | 'marceneiro'
+  | 'serralheiro'
+  | 'vidraceiro'
+  | 'pintor'
+  | 'gesseiro'
+  | 'paisagista'
+  | 'decorador'
+  | 'outro'
+
+export interface ProjectTeamMember {
+  id: string
+  name: string
+  role: ProviderRole
+  /** Only meaningful when role is "outro". */
+  customRole?: string
+  phone?: string
+  email?: string
+  company?: string
+  document?: string
+}
+
 export interface ProjectInfo {
   type: ProjectType | null
   customType: string
@@ -117,6 +148,7 @@ export interface ProjectDraft {
   step: WizardStep
   info: ProjectInfo
   components: ProjectComponentItem[]
+  teamMembers: ProjectTeamMember[]
   planning: PlanningData
   financial: FinancialData
   client: ClientInfo
@@ -133,6 +165,7 @@ export function createEmptyDraft(id: string, timestamp: string): ProjectDraft {
     step: 1,
     info: { type: null, customType: '', name: '', nameIsCustom: false, areaSqm: null },
     components: [],
+    teamMembers: [],
     planning: { phases: [], complexity: null, isCustomized: false },
     financial: {
       constructionBudget: null,
