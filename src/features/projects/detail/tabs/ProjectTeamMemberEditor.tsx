@@ -88,7 +88,7 @@ export function ProjectTeamMemberEditor({ teamMembers, onChange }: ProjectTeamMe
       id: editingId ?? generateMemberId(),
       name: form.name.trim(),
       role: form.role,
-      customRole: form.role === 'outro' ? form.customRole.trim() || undefined : undefined,
+      customRole: form.role === 'OUTRO' ? form.customRole.trim() || undefined : undefined,
       phone: form.phone.trim() || undefined,
       email: form.email.trim() || undefined,
       company: form.company.trim() || undefined,
@@ -230,7 +230,7 @@ export function ProjectTeamMemberEditor({ teamMembers, onChange }: ProjectTeamMe
             </select>
           </div>
 
-          {form.role === 'outro' && (
+          {form.role === 'OUTRO' && (
             <Input
               label="Qual participação?"
               value={form.customRole}

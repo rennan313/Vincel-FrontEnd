@@ -31,24 +31,26 @@ export interface ProjectComponentItem {
   note?: string
 }
 
+/** Must match the backend's ProviderRole Prisma enum values exactly —
+ * sent straight through to a class-validator @IsEnum() field. */
 export type ProviderRole =
-  | 'arquiteto_colaborador'
-  | 'engenheiro_estrutural'
-  | 'engenheiro_eletrico'
-  | 'engenheiro_hidraulico'
-  | 'mestre_obras'
-  | 'empreiteiro'
-  | 'pedreiro'
-  | 'eletricista'
-  | 'encanador'
-  | 'marceneiro'
-  | 'serralheiro'
-  | 'vidraceiro'
-  | 'pintor'
-  | 'gesseiro'
-  | 'paisagista'
-  | 'decorador'
-  | 'outro'
+  | 'ARQUITETO_COLABORADOR'
+  | 'ENGENHEIRO_ESTRUTURAL'
+  | 'ENGENHEIRO_ELETRICO'
+  | 'ENGENHEIRO_HIDRAULICO'
+  | 'MESTRE_OBRAS'
+  | 'EMPREITEIRO'
+  | 'PEDREIRO'
+  | 'ELETRICISTA'
+  | 'ENCANADOR'
+  | 'MARCENEIRO'
+  | 'SERRALHEIRO'
+  | 'VIDRACEIRO'
+  | 'PINTOR'
+  | 'GESSEIRO'
+  | 'PAISAGISTA'
+  | 'DECORADOR'
+  | 'OUTRO'
 
 export interface ProjectTeamMember {
   id: string
