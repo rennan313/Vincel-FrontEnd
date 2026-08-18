@@ -52,12 +52,25 @@ export type ProviderRole =
   | 'DECORADOR'
   | 'OUTRO'
 
+/** Must match the backend's ProviderStatus Prisma enum values exactly. */
+export type ProviderStatus =
+  | 'A_CONTRATAR'
+  | 'CONTRATADO'
+  | 'EM_ANDAMENTO'
+  | 'PAUSADO'
+  | 'CONCLUIDO'
+  | 'CANCELADO'
+
 export interface ProjectTeamMember {
   id: string
   name: string
   role: ProviderRole
-  /** Only meaningful when role is "outro". */
+  /** Only meaningful when role is "OUTRO". */
   customRole?: string
+  /** Free-text description of what this provider is responsible for on
+   * THIS project — distinct from `role`, which is just their general trade. */
+  responsibility?: string
+  status: ProviderStatus
   phone?: string
   email?: string
   company?: string
