@@ -80,7 +80,6 @@ export function projectToDraft(draftId: string, project: Project): ProjectDraft 
       nameIsCustom: true,
       areaSqm: project.areaSqm ?? null,
     },
-    components: project.components ?? [],
     planning: {
       phases: planningPhases,
       complexity: project.complexity ?? null,

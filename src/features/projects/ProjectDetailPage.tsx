@@ -130,7 +130,7 @@ export function ProjectDetailPage() {
         {tab === 'overview' && <OverviewTab draft={draft} />}
         {tab === 'schedule' && <ScheduleTab draft={draft} />}
         {tab === 'team' && <TeamTab />}
-        {tab === 'materials' && <MaterialsTab draft={draft} />}
+        {tab === 'materials' && <MaterialsTab />}
         {tab === 'financial' && <FinancialTab draft={draft} />}
         {tab === 'documents' && <DocumentsTab />}
       </div>

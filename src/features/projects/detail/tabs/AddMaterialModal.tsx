@@ -5,25 +5,17 @@ import { ArrowLeft, Search } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
-import { SelectableCard } from '@/components/ui/SelectableCard'
 import { formatBRLAmount, formatCurrencyBRL, parseCurrencyBRL } from '@/lib/masks'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { fetchProducts } from '@/features/projects/detail/productsApi'
 
-interface MaterialComponentOption {
-  id: string
-  name: string
-}
-
 interface AddMaterialModalProps {
   open: boolean
   onClose: () => void
-  components: MaterialComponentOption[]
 }
 
 interface MaterialFormState {
   name: string
-  componentId: string
   quantity: string
   unit: string
   unitPrice: number | null
@@ -31,7 +23,6 @@ interface MaterialFormState {
 
 const EMPTY_FORM: MaterialFormState = {
   name: '',
-  componentId: '',
   quantity: '1',
   unit: '',
   unitPrice: null,
@@ -39,10 +30,10 @@ const EMPTY_FORM: MaterialFormState = {
 
 type ModalMode = 'picker' | 'details'
 
-export function AddMaterialModal({ open, onClose, components }: AddMaterialModalProps) {
+export function AddMaterialModal({ open, onClose }: AddMaterialModalProps) {
   const [mode, setMode] = useState<ModalMode>('picker')
   const [form, setForm] = useState<MaterialFormState>(EMPTY_FORM)
-  const [errors, setErrors] = useState<{ name?: string; component?: string }>({})
+  const [errors, setErrors] = useState<{ name?: string }>({})
   const [query, setQuery] = useState('')
   const debouncedQuery = useDebouncedValue(query, 300)
 
@@ -73,13 +64,8 @@ export function AddMaterialModal({ open, onClose, components }: AddMaterialModal
   }
 
   function handleSave() {
-    const nextErrors: { name?: string; component?: string } = {}
-    if (!form.name.trim()) nextErrors.name = 'Informe o nome do material.'
-    if (components.length > 0 && !form.componentId) {
-      nextErrors.component = 'Selecione o componente ao qual este material pertence.'
-    }
-    if (Object.keys(nextErrors).length > 0) {
-      setErrors(nextErrors)
+    if (!form.name.trim()) {
+      setErrors({ name: 'Informe o nome do material.' })
       return
     }
 
@@ -139,25 +125,6 @@ export function AddMaterialModal({ open, onClose, components }: AddMaterialModal
             onChange={(event) => setForm((f) => ({ ...f, name: event.target.value }))}
             error={errors.name}
           />
-
-          {components.length > 0 && (
-            <div>
-              <p className="mb-2 text-sm text-(--th-text)">Componente</p>
-              <div className="grid grid-cols-2 gap-2">
-                {components.map((component) => (
-                  <SelectableCard
-                    key={component.id}
-                    label={component.name}
-                    selected={form.componentId === component.id}
-                    onToggle={() => setForm((f) => ({ ...f, componentId: component.id }))}
-                  />
-                ))}
-              </div>
-              {errors.component && (
-                <p className="mt-1 text-xs text-red-500">{errors.component}</p>
-              )}
-            </div>
-          )}
 
           <div className="grid grid-cols-2 gap-3">
             <Input

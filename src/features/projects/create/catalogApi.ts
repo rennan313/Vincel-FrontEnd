@@ -7,14 +7,6 @@ export interface ProjectTypeCatalogItem {
   active: boolean
 }
 
-export interface ProjectComponentCatalogItem {
-  id: string
-  name: string
-  category: string | null
-  mostUsed: boolean
-  active: boolean
-}
-
 interface PagedResult<T> {
   data: T[]
   total: number
@@ -47,7 +39,3 @@ export async function fetchProjectTypeCatalog(): Promise<ProjectTypeCatalogItem[
   return items.filter((item) => item.active)
 }
 
-export async function fetchProjectComponentCatalog(): Promise<ProjectComponentCatalogItem[]> {
-  const items = await fetchAllPages<ProjectComponentCatalogItem>('/project-components')
-  return items.filter((item) => item.active)
-}

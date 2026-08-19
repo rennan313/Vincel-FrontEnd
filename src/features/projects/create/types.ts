@@ -23,14 +23,6 @@ export type ServiceKey =
   | 'consultoria'
   | 'outro'
 
-export interface ProjectComponentItem {
-  id: string
-  name: string
-  quantity: number
-  areaSqm?: number
-  note?: string
-}
-
 /** Must match the backend's ProviderRole Prisma enum values exactly —
  * sent straight through to a class-validator @IsEnum() field. */
 export type ProviderRole =
@@ -146,7 +138,6 @@ export interface ProjectDraft {
   status: DraftStatus
   step: WizardStep
   info: ProjectInfo
-  components: ProjectComponentItem[]
   planning: PlanningData
   financial: FinancialData
   client: ClientInfo
@@ -162,7 +153,6 @@ export function createEmptyDraft(id: string, timestamp: string): ProjectDraft {
     status: 'draft',
     step: 1,
     info: { type: null, customType: '', name: '', nameIsCustom: false, areaSqm: null },
-    components: [],
     planning: { phases: [], complexity: null, isCustomized: false },
     financial: {
       constructionBudget: null,

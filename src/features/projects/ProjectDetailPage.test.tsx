@@ -11,7 +11,7 @@ import '@/lib/i18n'
 
 // A realistic full API response — projectToDraft.ts no longer fabricates
 // anything, it just maps whatever the backend actually returns, so the
-// fixture needs the real shape (componentes/planejamento/financeiro) for the
+// fixture needs the real shape (planejamento/financeiro) for the
 // assertions below to have anything non-empty to check.
 const MOCK_PROJECTS: Project[] = [
   {
@@ -24,10 +24,6 @@ const MOCK_PROJECTS: Project[] = [
     active: true,
     createdAt: '2026-01-12',
     areaSqm: 119,
-    components: [
-      { id: 'comp_1', name: 'Sala de estar', quantity: 1, areaSqm: 25 },
-      { id: 'comp_2', name: 'Cozinha', quantity: 1, areaSqm: 18 },
-    ],
     planningPhases: [
       { key: 'estudo_preliminar', name: 'Estudo preliminar', estimatedDays: 9 },
       { key: 'anteprojeto', name: 'Anteprojeto', estimatedDays: 13 },
@@ -104,26 +100,6 @@ describe('ProjectDetailPage', () => {
     expect(
       screen.getByText('Ana Beatriz Ferreira · Residencial · 119 m²'),
     ).toBeInTheDocument()
-  })
-
-  it('renders the real componentes from the API response in the Materiais tab', async () => {
-    renderDetailPage('/projects/1')
-    await waitFor(() =>
-      expect(
-        screen.getByRole('heading', { name: 'Residência Alto da Serra' }),
-      ).toBeInTheDocument(),
-    )
-
-    fireEvent.click(screen.getByRole('button', { name: 'Materiais' }))
-
-    await waitFor(() =>
-      expect(screen.getByText('Componentes do projeto')).toBeInTheDocument(),
-    )
-    expect(
-      screen.queryByText('Nenhum componente adicionado ainda.'),
-    ).not.toBeInTheDocument()
-    expect(screen.getByText('Sala de estar')).toBeInTheDocument()
-    expect(screen.getByText('Cozinha')).toBeInTheDocument()
   })
 
   it('shows a not-found message for an unknown project id', async () => {

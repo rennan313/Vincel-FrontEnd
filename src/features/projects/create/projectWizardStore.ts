@@ -5,7 +5,6 @@ import {
   type ClientInfo,
   type FinancialData,
   type PlanningData,
-  type ProjectComponentItem,
   type ProjectDraft,
   type ProjectInfo,
   type ScheduleData,
@@ -38,7 +37,7 @@ function hasAddressValue(address: AddressData): boolean {
  * the handful of top-level fields. Optional sections are omitted entirely
  * rather than sent empty/null, matching the backend DTOs' @IsOptional() fields. */
 function buildProjectPayload(draft: ProjectDraft): ProjectPayload {
-  const { info, components, planning, financial, client, schedule, address } = draft
+  const { info, planning, financial, client, schedule, address } = draft
 
   const type =
     info.type === 'outro'
@@ -54,7 +53,6 @@ function buildProjectPayload(draft: ProjectDraft): ProjectPayload {
     areaSqm: info.areaSqm ?? undefined,
     clientId: client.id ?? undefined,
     clientName: client.name,
-    components: components.length > 0 ? components : undefined,
     planningPhases: planning.phases.length > 0 ? planning.phases : undefined,
     complexity: planning.complexity ?? undefined,
     constructionBudget: financial.constructionBudget ?? undefined,
@@ -82,11 +80,6 @@ interface ProjectWizardState {
   initDuplicate: (source: ProjectDraft) => void
   goToStep: (step: WizardStep) => void
   updateInfo: (patch: Partial<ProjectInfo>) => void
-  /** Mirrors a components change already persisted elsewhere (Materiais tab,
-   * on the project detail page) into a currently-open confirmed draft — so
-   * the detail page's own view of the draft doesn't go stale right after
-   * creating/editing a project and before the next full page load. */
-  setComponents: (components: ProjectComponentItem[]) => void
   updatePlanning: (patch: Partial<PlanningData>) => void
   updateFinancial: (patch: Partial<FinancialData>) => void
   updateClient: (patch: Partial<ClientInfo>) => void
@@ -155,14 +148,6 @@ export const useProjectWizardStore = create<ProjectWizardState>((set, get) => ({
         info: { ...state.draft.info, ...patch },
         updatedAt: nowIso(),
       }
-      persist(draft)
-      return { draft }
-    })
-  },
-
-  setComponents: (components) => {
-    set((state) => {
-      const draft: ProjectDraft = { ...state.draft, components, updatedAt: nowIso() }
       persist(draft)
       return { draft }
     })
