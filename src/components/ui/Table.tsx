@@ -81,7 +81,10 @@ export function Table<T>({
                     {columns.map((column) => (
                       <td
                         key={column.key}
-                        className={clsx('px-4 py-3 text-(--th-text)', column.className)}
+                        className={clsx(
+                          'px-4 py-3 align-top text-(--th-text)',
+                          column.className,
+                        )}
                       >
                         {column.render(row)}
                       </td>
