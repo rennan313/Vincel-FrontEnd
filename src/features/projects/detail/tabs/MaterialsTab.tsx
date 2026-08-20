@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router'
+import { ImageOff } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Table, type TableColumn } from '@/components/ui/Table'
@@ -143,9 +144,22 @@ export function MaterialsTab() {
         <button
           type="button"
           onClick={() => setModalState({ open: true, material })}
-          className="text-left font-medium text-(--th-text) hover:text-(--th-accent) hover:underline"
+          className="flex items-center gap-3 text-left"
         >
-          {material.name}
+          {material.image ? (
+            <img
+              src={material.image}
+              alt={material.name}
+              className="size-10 shrink-0 rounded-lg border border-(--th-border) object-cover"
+            />
+          ) : (
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-(--th-border) bg-(--th-bg-elevated)">
+              <ImageOff className="size-4 text-(--th-text-muted)" />
+            </div>
+          )}
+          <span className="font-medium text-(--th-text) hover:text-(--th-accent) hover:underline">
+            {material.name}
+          </span>
         </button>
       ),
     },
