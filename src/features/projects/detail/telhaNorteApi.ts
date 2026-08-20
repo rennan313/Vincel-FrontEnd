@@ -11,6 +11,7 @@ export interface TelhaNorteRawProduct {
   items: Array<{
     images: Array<{ imageUrl: string }>
     sellers: Array<{ commertialOffer: { Price: number } }>
+    measurementUnit?: string
   }>
 }
 
@@ -35,6 +36,7 @@ export interface TelhaNorteProduct {
   category?: string
   image?: string
   price?: number
+  unit: string
   url: string
 }
 
@@ -54,6 +56,7 @@ export function normalizeTelhaNorteProduct(raw: TelhaNorteRawProduct): TelhaNort
     category,
     image,
     price,
+    unit: item?.measurementUnit || 'un',
     url: `https://www.telhanorte.com.br${raw.link}`,
   }
 }

@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { ArrowLeft } from 'lucide-react'
+import { toast } from 'sonner'
 import { Drawer } from '@/components/ui/Drawer'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatBRLAmount } from '@/lib/masks'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
+import { ApiError } from '@/lib/apiClient'
+import { createProduct } from '@/features/projects/detail/productsApi'
 import {
   normalizeTelhaNorteProduct,
   searchTelhaNorteProducts,
@@ -28,6 +31,7 @@ interface NormalizedProduct {
   category?: string
   image?: string
   price?: number
+  unit: string
   url: string
 }
 
@@ -45,11 +49,13 @@ function PartnerSearchResults({
   query,
   products,
   onSelect,
+  disabled,
 }: {
   loading: boolean
   query: string
   products: NormalizedProduct[]
   onSelect: (product: NormalizedProduct) => void
+  disabled?: boolean
 }) {
   if (loading) {
     return (
@@ -92,8 +98,9 @@ function PartnerSearchResults({
         <button
           key={product.id}
           type="button"
+          disabled={disabled}
           onClick={() => onSelect(product)}
-          className="flex w-full items-center gap-3 rounded-xl border border-(--th-border) p-3 text-left transition-colors hover:border-(--th-accent)/40 hover:bg-(--th-bg-elevated)"
+          className="flex w-full items-center gap-3 rounded-xl border border-(--th-border) p-3 text-left transition-colors hover:border-(--th-accent)/40 hover:bg-(--th-bg-elevated) disabled:pointer-events-none disabled:opacity-60"
         >
           {product.image ? (
             <img
@@ -150,16 +157,40 @@ export function MaterialSuggestionsDrawer({
   })
   const leroyMerlinProducts = (leroyMerlinResult?.products ?? []).map(normalizeLeroyMerlinProduct)
 
-  function handleSelectProduct(product: NormalizedProduct, supplier: string) {
-    onSelect({
-      name: product.name,
-      category: product.category ?? '',
-      brand: product.brand ?? '',
-      image: product.image ?? '',
-      unitCost: product.price != null ? formatBRLAmount(product.price) : '',
-      supplier,
-      referenceUrl: product.url,
-    })
+  const createProductMutation = useMutation({ mutationFn: createProduct })
+
+  // Registering the picked partner product in our own Product catalog
+  // (idempotent by sku on the backend) is what lets the resulting
+  // ProjectMaterial carry a productId, same as picking from the catalog.
+  async function handleSelectProduct(
+    product: NormalizedProduct,
+    supplier: string,
+    skuPrefix: string,
+  ) {
+    try {
+      const created = await createProductMutation.mutateAsync({
+        sku: `${skuPrefix}-${product.id}`,
+        name: product.name,
+        unit: product.unit,
+        brand: product.brand,
+        image: product.image,
+        category: product.category,
+      })
+      onSelect({
+        productId: created.id,
+        name: product.name,
+        category: product.category ?? '',
+        brand: product.brand ?? '',
+        image: product.image ?? '',
+        unitCost: product.price != null ? formatBRLAmount(product.price) : '',
+        supplier,
+        referenceUrl: product.url,
+      })
+    } catch (error) {
+      toast.error(
+        error instanceof ApiError ? error.message : 'Não foi possível adicionar esse produto.',
+      )
+    }
   }
 
   const subtitle =
@@ -249,7 +280,8 @@ export function MaterialSuggestionsDrawer({
             loading={telhaNorteLoading}
             query={query}
             products={telhaNorteProducts}
-            onSelect={(product) => handleSelectProduct(product, 'Telha Norte')}
+            disabled={createProductMutation.isPending}
+            onSelect={(product) => handleSelectProduct(product, 'Telha Norte', 'TN')}
           />
         </div>
       )}
@@ -277,7 +309,8 @@ export function MaterialSuggestionsDrawer({
             loading={leroyMerlinLoading}
             query={query}
             products={leroyMerlinProducts}
-            onSelect={(product) => handleSelectProduct(product, 'Leroy Merlin')}
+            disabled={createProductMutation.isPending}
+            onSelect={(product) => handleSelectProduct(product, 'Leroy Merlin', 'LM')}
           />
         </div>
       )}

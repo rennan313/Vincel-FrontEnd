@@ -6,6 +6,7 @@ export interface LeroyMerlinRawProduct {
   objectID: string
   name: string
   url: string
+  unit?: string
   pictures?: { normal?: string }
   attributes?: { Marca?: string[] }
   hierarchicalCategories?: { lvl0?: string[] }
@@ -35,6 +36,7 @@ export interface LeroyMerlinProduct {
   category?: string
   image?: string
   price?: number
+  unit: string
   url: string
 }
 
@@ -49,6 +51,7 @@ export function normalizeLeroyMerlinProduct(raw: LeroyMerlinRawProduct): LeroyMe
     category: raw.hierarchicalCategories?.lvl0?.[0],
     image: raw.pictures?.normal,
     price: raw.regionalAttributes?.grande_sao_paulo?.promotionalPrice,
+    unit: raw.unit || 'un',
     url: raw.url,
   }
 }
