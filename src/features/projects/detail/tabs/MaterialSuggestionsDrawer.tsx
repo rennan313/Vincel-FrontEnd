@@ -18,11 +18,42 @@ import {
   normalizeLeroyMerlinProduct,
   searchLeroyMerlinProducts,
 } from '@/features/projects/detail/leroyMerlinApi'
+import {
+  normalizeLojaObraFacilProduct,
+  searchLojaObraFacilProducts,
+} from '@/features/projects/detail/lojaObraFacilApi'
 import type { FormState } from '@/features/projects/detail/tabs/MaterialModal'
 
-const TELHA_NORTE_LOGO =
-  'https://telhanorte.vteximg.com.br/arquivos/telhanorte-positivo-logo-aqui.png'
-const LEROY_MERLIN_LOGO = 'https://www.leroymerlin.com.br/favicon.ico'
+type PartnerId = 'telha-norte' | 'leroy-merlin' | 'loja-obra-facil'
+type DrawerView = 'partners' | PartnerId
+
+interface PartnerConfig {
+  id: PartnerId
+  name: string
+  logo: string
+  skuPrefix: string
+}
+
+const PARTNERS: PartnerConfig[] = [
+  {
+    id: 'telha-norte',
+    name: 'Telha Norte',
+    logo: 'https://telhanorte.vteximg.com.br/arquivos/telhanorte-positivo-logo-aqui.png',
+    skuPrefix: 'TN',
+  },
+  {
+    id: 'leroy-merlin',
+    name: 'Leroy Merlin',
+    logo: 'https://www.leroymerlin.com.br/favicon.ico',
+    skuPrefix: 'LM',
+  },
+  {
+    id: 'loja-obra-facil',
+    name: 'Loja Obra Fácil',
+    logo: 'https://lojaobrafacil.com.br/image/catalog/logo/favico_of_a1.png',
+    skuPrefix: 'LOF',
+  },
+]
 
 interface NormalizedProduct {
   id: string
@@ -34,8 +65,6 @@ interface NormalizedProduct {
   unit: string
   url: string
 }
-
-type DrawerView = 'partners' | 'telha-norte' | 'leroy-merlin'
 
 interface MaterialSuggestionsDrawerProps {
   open: boolean
@@ -157,19 +186,31 @@ export function MaterialSuggestionsDrawer({
   })
   const leroyMerlinProducts = (leroyMerlinResult?.products ?? []).map(normalizeLeroyMerlinProduct)
 
+  const { data: lojaObraFacilResult, isFetching: lojaObraFacilLoading } = useQuery({
+    queryKey: ['loja-obra-facil-search', debouncedQuery],
+    queryFn: () => searchLojaObraFacilProducts(debouncedQuery),
+    enabled: open && view === 'loja-obra-facil' && debouncedQuery.trim().length > 0,
+  })
+  const lojaObraFacilProducts = (lojaObraFacilResult?.products ?? []).map(
+    normalizeLojaObraFacilProduct,
+  )
+
+  const searchByPartner: Record<PartnerId, { loading: boolean; products: NormalizedProduct[] }> =
+    {
+      'telha-norte': { loading: telhaNorteLoading, products: telhaNorteProducts },
+      'leroy-merlin': { loading: leroyMerlinLoading, products: leroyMerlinProducts },
+      'loja-obra-facil': { loading: lojaObraFacilLoading, products: lojaObraFacilProducts },
+    }
+
   const createProductMutation = useMutation({ mutationFn: createProduct })
 
   // Registering the picked partner product in our own Product catalog
   // (idempotent by sku on the backend) is what lets the resulting
   // ProjectMaterial carry a productId, same as picking from the catalog.
-  async function handleSelectProduct(
-    product: NormalizedProduct,
-    supplier: string,
-    skuPrefix: string,
-  ) {
+  async function handleSelectProduct(product: NormalizedProduct, partner: PartnerConfig) {
     try {
       const created = await createProductMutation.mutateAsync({
-        sku: `${skuPrefix}-${product.id}`,
+        sku: `${partner.skuPrefix}-${product.id}`,
         name: product.name,
         unit: product.unit,
         brand: product.brand,
@@ -183,7 +224,7 @@ export function MaterialSuggestionsDrawer({
         brand: product.brand ?? '',
         image: product.image ?? '',
         unitCost: product.price != null ? formatBRLAmount(product.price) : '',
-        supplier,
+        supplier: partner.name,
         referenceUrl: product.url,
       })
     } catch (error) {
@@ -193,55 +234,44 @@ export function MaterialSuggestionsDrawer({
     }
   }
 
+  const activePartner = view === 'partners' ? undefined : PARTNERS.find((p) => p.id === view)
+
   const subtitle =
     view === 'partners'
       ? 'Escolha um parceiro ou cadastre um material novo.'
-      : view === 'telha-norte'
-        ? 'Busque um produto na Telha Norte.'
-        : 'Busque um produto na Leroy Merlin.'
+      : `Busque um produto na ${activePartner?.name}.`
 
   return (
     <Drawer open={open} onClose={onClose} title="Adicionar material" subtitle={subtitle}>
       {view === 'partners' && (
         <div className="space-y-3">
           {partnersLoading ? (
-            <>
-              <div className="flex items-center gap-3 rounded-xl border border-(--th-border) p-3">
+            PARTNERS.map((partner) => (
+              <div
+                key={partner.id}
+                className="flex items-center gap-3 rounded-xl border border-(--th-border) p-3"
+              >
                 <Skeleton className="size-12 shrink-0 rounded-lg" />
                 <Skeleton className="h-4 w-1/2" />
               </div>
-              <div className="flex items-center gap-3 rounded-xl border border-(--th-border) p-3">
-                <Skeleton className="size-12 shrink-0 rounded-lg" />
-                <Skeleton className="h-4 w-1/2" />
-              </div>
-            </>
+            ))
           ) : (
             <>
-              <button
-                type="button"
-                onClick={() => setView('telha-norte')}
-                className="flex w-full items-center gap-3 rounded-xl border border-(--th-border) p-3 text-left transition-colors hover:border-(--th-accent)/40 hover:bg-(--th-bg-elevated)"
-              >
-                <img
-                  src={TELHA_NORTE_LOGO}
-                  alt="Telha Norte"
-                  className="h-12 w-16 shrink-0 rounded-lg border border-(--th-border) bg-white object-contain p-1.5"
-                />
-                <p className="text-sm font-medium text-(--th-text)">Telha Norte</p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setView('leroy-merlin')}
-                className="flex w-full items-center gap-3 rounded-xl border border-(--th-border) p-3 text-left transition-colors hover:border-(--th-accent)/40 hover:bg-(--th-bg-elevated)"
-              >
-                <img
-                  src={LEROY_MERLIN_LOGO}
-                  alt="Leroy Merlin"
-                  className="h-12 w-16 shrink-0 rounded-lg border border-(--th-border) bg-white object-contain p-1.5"
-                />
-                <p className="text-sm font-medium text-(--th-text)">Leroy Merlin</p>
-              </button>
+              {PARTNERS.map((partner) => (
+                <button
+                  key={partner.id}
+                  type="button"
+                  onClick={() => setView(partner.id)}
+                  className="flex w-full items-center gap-3 rounded-xl border border-(--th-border) p-3 text-left transition-colors hover:border-(--th-accent)/40 hover:bg-(--th-bg-elevated)"
+                >
+                  <img
+                    src={partner.logo}
+                    alt={partner.name}
+                    className="h-12 w-16 shrink-0 rounded-lg border border-(--th-border) bg-white object-contain p-1.5"
+                  />
+                  <p className="text-sm font-medium text-(--th-text)">{partner.name}</p>
+                </button>
+              ))}
             </>
           )}
 
@@ -257,7 +287,7 @@ export function MaterialSuggestionsDrawer({
         </div>
       )}
 
-      {view === 'telha-norte' && (
+      {activePartner && (
         <div className="space-y-4">
           <button
             type="button"
@@ -270,47 +300,18 @@ export function MaterialSuggestionsDrawer({
 
           <Input
             icon="Search"
-            placeholder="Busque um produto na Telha Norte..."
+            placeholder={`Busque um produto na ${activePartner.name}...`}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             autoFocus
           />
 
           <PartnerSearchResults
-            loading={telhaNorteLoading}
+            loading={searchByPartner[activePartner.id].loading}
             query={query}
-            products={telhaNorteProducts}
+            products={searchByPartner[activePartner.id].products}
             disabled={createProductMutation.isPending}
-            onSelect={(product) => handleSelectProduct(product, 'Telha Norte', 'TN')}
-          />
-        </div>
-      )}
-
-      {view === 'leroy-merlin' && (
-        <div className="space-y-4">
-          <button
-            type="button"
-            onClick={() => setView('partners')}
-            className="flex items-center gap-1.5 text-xs font-medium text-(--th-text-muted) hover:text-(--th-text)"
-          >
-            <ArrowLeft className="size-3.5" />
-            Voltar
-          </button>
-
-          <Input
-            icon="Search"
-            placeholder="Busque um produto na Leroy Merlin..."
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            autoFocus
-          />
-
-          <PartnerSearchResults
-            loading={leroyMerlinLoading}
-            query={query}
-            products={leroyMerlinProducts}
-            disabled={createProductMutation.isPending}
-            onSelect={(product) => handleSelectProduct(product, 'Leroy Merlin', 'LM')}
+            onSelect={(product) => handleSelectProduct(product, activePartner)}
           />
         </div>
       )}
