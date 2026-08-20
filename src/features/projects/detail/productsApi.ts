@@ -28,6 +28,7 @@ export interface CreateProductPayload {
   brand?: string
   image?: string
   category?: string
+  supplier?: string
 }
 
 export function createProduct(payload: CreateProductPayload): Promise<ProductCatalogItem> {

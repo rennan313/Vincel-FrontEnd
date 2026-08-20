@@ -31,7 +31,6 @@ interface PartnerConfig {
   id: PartnerId
   name: string
   logo: string
-  skuPrefix: string
 }
 
 const PARTNERS: PartnerConfig[] = [
@@ -39,19 +38,16 @@ const PARTNERS: PartnerConfig[] = [
     id: 'telha-norte',
     name: 'Telha Norte',
     logo: 'https://telhanorte.vteximg.com.br/arquivos/telhanorte-positivo-logo-aqui.png',
-    skuPrefix: 'TN',
   },
   {
     id: 'leroy-merlin',
     name: 'Leroy Merlin',
     logo: 'https://www.leroymerlin.com.br/favicon.ico',
-    skuPrefix: 'LM',
   },
   {
     id: 'loja-obra-facil',
     name: 'Loja Obra Fácil',
     logo: 'https://lojaobrafacil.com.br/image/catalog/logo/favico_of_a1.png',
-    skuPrefix: 'LOF',
   },
 ]
 
@@ -210,12 +206,13 @@ export function MaterialSuggestionsDrawer({
   async function handleSelectProduct(product: NormalizedProduct, partner: PartnerConfig) {
     try {
       const created = await createProductMutation.mutateAsync({
-        sku: `${partner.skuPrefix}-${product.id}`,
+        sku: product.id,
         name: product.name,
         unit: product.unit,
         brand: product.brand,
         image: product.image,
         category: product.category,
+        supplier: partner.name,
       })
       onSelect({
         productId: created.id,
