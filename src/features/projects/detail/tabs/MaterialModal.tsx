@@ -16,6 +16,7 @@ import {
   MATERIAL_STATUS_ORDER,
   MATERIAL_STATUS_VARIANT,
 } from '@/features/projects/create/materialStatuses'
+import { MATERIAL_ROOM_OPTIONS } from '@/features/projects/create/materialRooms'
 import type { MaterialStatus } from '@/features/projects/create/types'
 import { fetchProducts } from '@/features/projects/detail/productsApi'
 import { lookupMaterialByUrl } from '@/features/projects/detail/materialLookupApi'
@@ -238,6 +239,13 @@ export function MaterialModal({
   const totalCostPreview =
     quantityNumber != null && unitCostNumber != null ? quantityNumber * unitCostNumber : null
 
+  // Keeps a legacy free-text value (from before this was a fixed list)
+  // selectable instead of silently dropping it when the form opens.
+  const roomOptions =
+    form.room && !MATERIAL_ROOM_OPTIONS.includes(form.room)
+      ? [form.room, ...MATERIAL_ROOM_OPTIONS]
+      : MATERIAL_ROOM_OPTIONS
+
   const title =
     mode === 'picker' ? 'Adicionar material' : mode === 'edit' ? (material ? 'Editar material' : 'Novo material') : material?.name ?? ''
 
@@ -388,12 +396,23 @@ export function MaterialModal({
               onChange={(event) => setForm((f) => ({ ...f, category: event.target.value }))}
               hint="Opcional"
             />
-            <Input
-              label="Ambiente"
-              value={form.room}
-              onChange={(event) => setForm((f) => ({ ...f, room: event.target.value }))}
-              hint="Opcional"
-            />
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-(--th-text)">Ambiente</label>
+              <select
+                aria-label="Ambiente"
+                value={form.room}
+                onChange={(event) => setForm((f) => ({ ...f, room: event.target.value }))}
+                className="h-10 w-full rounded-lg border border-(--th-border) bg-(--th-bg-card) px-3 text-sm text-(--th-text) outline-none transition-colors focus:ring-2 focus:ring-(--th-border-focus)"
+              >
+                <option value="">Selecione</option>
+                {roomOptions.map((room) => (
+                  <option key={room} value={room}>
+                    {room}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-(--th-text-muted)">Opcional</p>
+            </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-(--th-text)">Status</label>
               <select
