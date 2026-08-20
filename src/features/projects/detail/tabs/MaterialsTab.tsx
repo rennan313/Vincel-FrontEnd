@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams } from 'react-router'
 import { ImageOff } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -28,50 +29,86 @@ const PAGE_SIZE = 20
 
 function RowActionsMenu({ onEdit, onRemove }: { onEdit: () => void; onRemove: () => void }) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [position, setPosition] = useState<{ top: number; right: number } | null>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    if (!open) return
+
     function handleClickOutside(event: MouseEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false)
+      const target = event.target as Node
+      if (
+        !triggerRef.current?.contains(target) &&
+        !menuRef.current?.contains(target)
+      ) {
+        setOpen(false)
+      }
     }
+    function handleReposition() {
+      setOpen(false)
+    }
+
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+    window.addEventListener('scroll', handleReposition, true)
+    window.addEventListener('resize', handleReposition)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      window.removeEventListener('scroll', handleReposition, true)
+      window.removeEventListener('resize', handleReposition)
+    }
+  }, [open])
+
+  function toggleOpen() {
+    if (!open && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect()
+      setPosition({ top: rect.bottom + 6, right: window.innerWidth - rect.right })
+    }
+    setOpen((value) => !value)
+  }
 
   return (
-    <div className="relative shrink-0" ref={ref}>
+    <div className="relative shrink-0">
       <Button
+        ref={triggerRef}
         type="button"
         variant="ghost"
         size="icon"
         icon="MoreVertical"
         aria-label="Mais ações"
-        onClick={() => setOpen((value) => !value)}
+        onClick={toggleOpen}
       />
-      {open && (
-        <div className="absolute top-full right-0 z-30 mt-1.5 w-40 overflow-hidden rounded-xl border border-(--th-border) bg-(--th-bg-card) py-1 shadow-lg">
-          <button
-            type="button"
-            onClick={() => {
-              setOpen(false)
-              onEdit()
-            }}
-            className="flex w-full items-center px-3 py-2 text-left text-sm text-(--th-text-sub) hover:bg-(--th-bg-elevated) hover:text-(--th-text)"
+      {open &&
+        position &&
+        createPortal(
+          <div
+            ref={menuRef}
+            style={{ position: 'fixed', top: position.top, right: position.right }}
+            className="z-50 w-40 overflow-hidden rounded-xl border border-(--th-border) bg-(--th-bg-card) py-1 shadow-lg"
           >
-            Editar
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setOpen(false)
-              onRemove()
-            }}
-            className="flex w-full items-center px-3 py-2 text-left text-sm text-red-500 hover:bg-(--th-bg-elevated)"
-          >
-            Remover
-          </button>
-        </div>
-      )}
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false)
+                onEdit()
+              }}
+              className="flex w-full items-center px-3 py-2 text-left text-sm text-(--th-text-sub) hover:bg-(--th-bg-elevated) hover:text-(--th-text)"
+            >
+              Editar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false)
+                onRemove()
+              }}
+              className="flex w-full items-center px-3 py-2 text-left text-sm text-red-500 hover:bg-(--th-bg-elevated)"
+            >
+              Remover
+            </button>
+          </div>,
+          document.body,
+        )}
     </div>
   )
 }
