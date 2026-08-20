@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Table, type TableColumn } from '@/components/ui/Table'
 import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ApiError } from '@/lib/apiClient'
 import { formatBRLAmount } from '@/lib/masks'
 import {
@@ -125,6 +126,7 @@ export function MaterialsTab() {
   const queryKey = ['project-materials', projectId]
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [modalState, setModalState] = useState<ModalState>({ open: false })
+  const [pendingRemove, setPendingRemove] = useState<ProjectMaterial>()
 
   const { data: materials = [], isLoading } = useQuery({
     queryKey,
@@ -159,7 +161,10 @@ export function MaterialsTab() {
 
   const removeMutation = useMutation({
     mutationFn: (id: string) => removeProjectMaterial(projectId!, id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey })
+      setPendingRemove(undefined)
+    },
     onError: handleError,
   })
 
@@ -236,7 +241,7 @@ export function MaterialsTab() {
       render: (material) => (
         <RowActionsMenu
           onEdit={() => setModalState({ open: true, material })}
-          onRemove={() => removeMutation.mutate(material.id)}
+          onRemove={() => setPendingRemove(material)}
         />
       ),
     },
@@ -285,6 +290,19 @@ export function MaterialsTab() {
         onCreate={(payload) => createMutation.mutate(payload)}
         onUpdate={(id, payload) => updateMutation.mutate({ id, payload })}
         onRemove={(id) => removeMutation.mutate(id)}
+      />
+
+      <ConfirmDialog
+        open={pendingRemove != null}
+        title="Remover material"
+        message={
+          <>
+            Remover <span className="font-medium text-(--th-text)">{pendingRemove?.name}</span>{' '}
+            deste projeto? Essa ação não pode ser desfeita.
+          </>
+        }
+        onCancel={() => setPendingRemove(undefined)}
+        onConfirm={() => pendingRemove && removeMutation.mutate(pendingRemove.id)}
       />
     </div>
   )

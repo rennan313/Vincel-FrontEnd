@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Building2, Mail, Phone, Search } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
@@ -559,27 +560,19 @@ export function ProjectTeamMemberEditor({
         )}
       </Modal>
 
-      <Modal
+      <ConfirmDialog
         open={pendingRemove !== null}
-        onClose={() => setPendingRemove(null)}
         title="Remover prestador"
-        footer={
+        message={
           <>
-            <Button type="button" variant="outline" onClick={() => setPendingRemove(null)}>
-              Cancelar
-            </Button>
-            <Button type="button" variant="danger" onClick={confirmRemove}>
-              Remover
-            </Button>
+            Remover{' '}
+            <span className="font-medium text-(--th-text)">{pendingRemove?.provider.name}</span>{' '}
+            deste projeto? Essa ação não pode ser desfeita.
           </>
         }
-      >
-        <p className="text-sm text-(--th-text-sub)">
-          Remover{' '}
-          <span className="font-medium text-(--th-text)">{pendingRemove?.provider.name}</span>{' '}
-          deste projeto? Essa ação não pode ser desfeita.
-        </p>
-      </Modal>
+        onCancel={() => setPendingRemove(null)}
+        onConfirm={confirmRemove}
+      />
     </div>
   )
 }

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { cn } from '@/lib/cn'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { formatBRLAmount, formatCurrencyBRL, parseCurrencyBRL } from '@/lib/masks'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { ApiError } from '@/lib/apiClient'
@@ -644,36 +644,23 @@ export function MaterialModal({
         </div>
       )}
 
-      {confirmRemove && material && (
-        <div
-          className={cn(
-            'fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4',
-          )}
-        >
-          <div className="w-full max-w-sm rounded-xl border border-(--th-border) bg-(--th-bg-card) p-5 shadow-xl">
-            <p className="text-sm font-semibold text-(--th-text)">Remover material</p>
-            <p className="mt-1 text-sm text-(--th-text-sub)">
+      {material && (
+        <ConfirmDialog
+          open={confirmRemove}
+          title="Remover material"
+          message={
+            <>
               Remover <span className="font-medium text-(--th-text)">{material.name}</span> deste
               projeto? Essa ação não pode ser desfeita.
-            </p>
-            <div className="mt-4 flex items-center justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setConfirmRemove(false)}>
-                Cancelar
-              </Button>
-              <Button
-                type="button"
-                variant="danger"
-                onClick={() => {
-                  onRemove(material.id)
-                  setConfirmRemove(false)
-                  onClose()
-                }}
-              >
-                Remover
-              </Button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+          onCancel={() => setConfirmRemove(false)}
+          onConfirm={() => {
+            onRemove(material.id)
+            setConfirmRemove(false)
+            onClose()
+          }}
+        />
       )}
     </Modal>
   )
