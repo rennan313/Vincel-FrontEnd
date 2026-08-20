@@ -53,6 +53,9 @@ export type ProviderStatus =
   | 'CONCLUIDO'
   | 'CANCELADO'
 
+/** Must match the backend's ProjectMaterialStatus Prisma enum values exactly. */
+export type MaterialStatus = 'A_DEFINIR' | 'ESPECIFICADO' | 'APROVADO' | 'COMPRADO'
+
 export interface ProjectInfo {
   type: ProjectType | null
   customType: string

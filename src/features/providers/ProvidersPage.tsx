@@ -18,7 +18,12 @@ import {
   type Provider,
 } from '@/features/providers/providersApi'
 import { ProviderFormModal } from '@/features/providers/ProviderFormModal'
-import { ProviderStatusBadgeMenu } from '@/features/providers/ProviderStatusBadgeMenu'
+import { StatusBadgeMenu } from '@/components/ui/StatusBadgeMenu'
+import {
+  PROVIDER_STATUS_LABELS,
+  PROVIDER_STATUS_ORDER,
+  PROVIDER_STATUS_VARIANT,
+} from '@/features/projects/create/providerStatuses'
 import type { ProviderStatus } from '@/features/projects/create/types'
 
 const PAGE_SIZE = 8
@@ -99,8 +104,11 @@ export function ProvidersPage() {
       key: 'status',
       header: 'Status',
       render: (provider) => (
-        <ProviderStatusBadgeMenu
+        <StatusBadgeMenu
           status={provider.status}
+          options={PROVIDER_STATUS_ORDER}
+          labels={PROVIDER_STATUS_LABELS}
+          variants={PROVIDER_STATUS_VARIANT}
           onChange={(status) => updateStatusMutation.mutate({ id: provider.id, status })}
         />
       ),

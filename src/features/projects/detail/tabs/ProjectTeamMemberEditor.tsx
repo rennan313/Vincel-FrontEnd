@@ -16,13 +16,14 @@ import {
 import {
   PROVIDER_STATUS_LABELS,
   PROVIDER_STATUS_ORDER,
+  PROVIDER_STATUS_VARIANT,
 } from '@/features/projects/create/providerStatuses'
 import type { ProviderRole, ProviderStatus } from '@/features/projects/create/types'
 import type {
   AssignProviderPayload,
   ProjectProviderLink,
 } from '@/features/projects/detail/projectProvidersApi'
-import { ProviderStatusBadgeMenu } from '@/features/providers/ProviderStatusBadgeMenu'
+import { StatusBadgeMenu } from '@/components/ui/StatusBadgeMenu'
 import { fetchProviders, type Provider } from '@/features/providers/providersApi'
 
 interface MemberFormState {
@@ -330,8 +331,11 @@ export function ProjectTeamMemberEditor({
                 )}
               </div>
               <div className="flex shrink-0 items-center gap-1">
-                <ProviderStatusBadgeMenu
+                <StatusBadgeMenu
                   status={link.status}
+                  options={PROVIDER_STATUS_ORDER}
+                  labels={PROVIDER_STATUS_LABELS}
+                  variants={PROVIDER_STATUS_VARIANT}
                   onChange={(status) => onUpdate(link.id, { status })}
                 />
                 <RowActionsMenu

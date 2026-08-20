@@ -1,24 +1,25 @@
 import { useEffect, useRef, useState } from 'react'
-import { Badge } from '@/components/ui/Badge'
+import { Badge, type BadgeVariant } from '@/components/ui/Badge'
 import { cn } from '@/lib/cn'
-import {
-  PROVIDER_STATUS_LABELS,
-  PROVIDER_STATUS_ORDER,
-  PROVIDER_STATUS_VARIANT,
-} from '@/features/projects/create/providerStatuses'
-import type { ProviderStatus } from '@/features/projects/create/types'
 
-interface ProviderStatusBadgeMenuProps {
-  status: ProviderStatus
-  onChange: (next: ProviderStatus) => void
+interface StatusBadgeMenuProps<T extends string> {
+  status: T
+  options: readonly T[]
+  labels: Record<T, string>
+  variants: Record<T, BadgeVariant>
+  onChange: (next: T) => void
 }
 
-/** Click-outside-to-close popover — same pattern as ProjectHeader's
- * ActionsMenu. Lets the status change happen inline, in one click, rather
- * than being buried behind an edit form. Shared between the Equipe tab
- * (per-project status) and the standalone Prestadores page (general status)
- * so both use the exact same status set and interaction. */
-export function ProviderStatusBadgeMenu({ status, onChange }: ProviderStatusBadgeMenuProps) {
+/** Click-outside-to-close popover — a status badge that's also a one-click
+ * dropdown to change it, instead of being buried behind an edit form.
+ * Generic over any fixed status enum (provider status, material status...). */
+export function StatusBadgeMenu<T extends string>({
+  status,
+  options,
+  labels,
+  variants,
+  onChange,
+}: StatusBadgeMenuProps<T>) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -40,14 +41,12 @@ export function ProviderStatusBadgeMenu({ status, onChange }: ProviderStatusBadg
         aria-label="Alterar status"
         className="cursor-pointer"
       >
-        <Badge variant={PROVIDER_STATUS_VARIANT[status]}>
-          {PROVIDER_STATUS_LABELS[status]} ▾
-        </Badge>
+        <Badge variant={variants[status]}>{labels[status]} ▾</Badge>
       </button>
 
       {open && (
         <div className="absolute top-full right-0 z-30 mt-1.5 w-44 overflow-hidden rounded-xl border border-(--th-border) bg-(--th-bg-card) py-1 shadow-lg">
-          {PROVIDER_STATUS_ORDER.map((option) => (
+          {options.map((option) => (
             <button
               key={option}
               type="button"
@@ -57,9 +56,7 @@ export function ProviderStatusBadgeMenu({ status, onChange }: ProviderStatusBadg
               }}
               className={cn(
                 'flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-(--th-bg-elevated)',
-                option === status
-                  ? 'font-medium text-(--th-text)'
-                  : 'text-(--th-text-sub)',
+                option === status ? 'font-medium text-(--th-text)' : 'text-(--th-text-sub)',
               )}
             >
               <span
@@ -68,7 +65,7 @@ export function ProviderStatusBadgeMenu({ status, onChange }: ProviderStatusBadg
                   option === status ? 'bg-(--th-accent)' : 'bg-transparent',
                 )}
               />
-              {PROVIDER_STATUS_LABELS[option]}
+              {labels[option]}
             </button>
           ))}
         </div>
