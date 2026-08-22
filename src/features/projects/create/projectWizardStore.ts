@@ -81,6 +81,12 @@ interface ProjectWizardState {
   goToStep: (step: WizardStep) => void
   updateInfo: (patch: Partial<ProjectInfo>) => void
   updatePlanning: (patch: Partial<PlanningData>) => void
+  /** Reflects a planning-phase edit made outside the wizard (e.g. the
+   * project detail page's Cronograma tab) into whichever wizard draft
+   * currently represents this project — the in-memory one if it's active,
+   * or an abandoned `edit-${projectId}` draft still cached in localStorage —
+   * so reopening "Editar" doesn't show stale phase durations. */
+  syncPlanningFromServer: (projectId: string, phases: PlanningData['phases']) => void
   updateFinancial: (patch: Partial<FinancialData>) => void
   updateClient: (patch: Partial<ClientInfo>) => void
   updateSchedule: (patch: Partial<ScheduleData>) => void
@@ -162,6 +168,31 @@ export const useProjectWizardStore = create<ProjectWizardState>((set, get) => ({
       }
       persist(draft)
       return { draft }
+    })
+  },
+
+  syncPlanningFromServer: (projectId, phases) => {
+    const editDraftId = `edit-${projectId}`
+    const active = get().draft
+    if (active.id === projectId || active.id === editDraftId) {
+      set((state) => {
+        const draft: ProjectDraft = {
+          ...state.draft,
+          planning: { ...state.draft.planning, phases, isCustomized: true },
+          updatedAt: nowIso(),
+        }
+        persist(draft)
+        return { draft }
+      })
+      return
+    }
+
+    const cached = repository.load(editDraftId)
+    if (!cached) return
+    persist({
+      ...cached,
+      planning: { ...cached.planning, phases, isCustomized: true },
+      updatedAt: nowIso(),
     })
   },
 

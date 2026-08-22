@@ -2,15 +2,10 @@ import {
   createEmptyDraft,
   type AddressData,
   type FinancialData,
-  type PlanningPhase,
   type ProjectDraft,
   type ScheduleData,
-  type ServiceKey,
 } from '@/features/projects/create/types'
-import {
-  SERVICE_ORDER,
-  resolveProjectTypeKeyByName,
-} from '@/features/projects/create/serviceCatalog'
+import { resolveProjectTypeKeyByName } from '@/features/projects/create/serviceCatalog'
 import type { Project } from '@/features/projects/projectsApi'
 
 function toISODateString(value: string): string | null {
@@ -20,10 +15,6 @@ function toISODateString(value: string): string | null {
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
-}
-
-function isServiceKey(value: string): value is ServiceKey {
-  return (SERVICE_ORDER as string[]).includes(value)
 }
 
 /**
@@ -40,9 +31,10 @@ export function projectToDraft(draftId: string, project: Project): ProjectDraft 
   const type = resolveProjectTypeKeyByName(project.type) ?? 'outro'
   const customType = type === 'outro' ? (project.customType ?? project.type) : ''
 
-  const planningPhases: PlanningPhase[] = (project.planningPhases ?? []).filter((phase) =>
-    isServiceKey(phase.key),
-  )
+  const planningPhases = (project.planningPhases ?? []).map((phase) => ({
+    ...phase,
+    startDate: phase.startDate ? toISODateString(phase.startDate) : null,
+  }))
 
   const financial: FinancialData = {
     constructionBudget: project.constructionBudget ?? null,

@@ -70,9 +70,17 @@ export interface ProjectInfo {
 export type Complexity = 'LOW' | 'MEDIUM' | 'HIGH'
 
 export interface PlanningPhase {
-  key: ServiceKey
+  /** ServiceKey for a catalog-seeded phase, or a generated id for a
+   * custom item added directly on the Cronograma tab. */
+  key: string
   name: string
   estimatedDays: number
+  /** ISO date (yyyy-mm-dd) this task is scheduled to start. Término
+   * previsto is derived from this + estimatedDays — see getPhaseEndDate —
+   * never stored separately. */
+  startDate?: string | null
+  /** Free-text: which team/person executes this task. */
+  team?: string | null
 }
 
 export interface PlanningData {
