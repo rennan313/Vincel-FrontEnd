@@ -1,7 +1,10 @@
+import { useParams } from 'react-router'
+import { useQuery } from '@tanstack/react-query'
 import { Card } from '@/components/ui/Card'
 import { ICONS, type IconName } from '@/components/ui/icons'
 import { formatBRLAmount } from '@/lib/masks'
 import type { ProjectDraft } from '@/features/projects/create/types'
+import { fetchProjectProviders } from '@/features/projects/detail/projectProvidersApi'
 import {
   getProjectProgress,
   getTotalDays,
@@ -21,6 +24,14 @@ interface ProjectSummaryCardsProps {
 }
 
 export function ProjectSummaryCards({ draft }: ProjectSummaryCardsProps) {
+  const { projectId } = useParams()
+  // Same query key ScheduleTab/FinancialTab/TeamTab use, so this just reads
+  // their shared cache instead of firing its own request.
+  const { data: providerLinks = [] } = useQuery({
+    queryKey: ['project-providers', projectId],
+    queryFn: () => fetchProjectProviders(projectId!),
+  })
+
   const stats: StatCard[] = [
     {
       key: 'deadline',
@@ -38,7 +49,7 @@ export function ProjectSummaryCards({ draft }: ProjectSummaryCardsProps) {
       key: 'progress',
       icon: 'Layers',
       label: 'Progresso',
-      value: `${getProjectProgress(draft)}%`,
+      value: `${getProjectProgress(providerLinks)}%`,
     },
     {
       key: 'complexity',

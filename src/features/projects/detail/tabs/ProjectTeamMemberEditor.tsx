@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/Textarea'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Tooltip } from '@/components/ui/Tooltip'
+import { cn } from '@/lib/cn'
 import {
   formatBRLAmount,
   formatCNPJ,
@@ -43,6 +44,7 @@ interface MemberFormState {
   responsibility: string
   status: ProviderStatus
   agreedAmount: number
+  weight: number
   phone: string
   email: string
   companyName: string
@@ -56,6 +58,7 @@ const EMPTY_FORM: MemberFormState = {
   responsibility: '',
   status: 'A_CONTRATAR',
   agreedAmount: 0,
+  weight: 0,
   phone: '',
   email: '',
   companyName: '',
@@ -204,6 +207,7 @@ export function ProjectTeamMemberEditor({
       responsibility: link.responsibility ?? '',
       status: link.status,
       agreedAmount: link.agreedAmount ?? 0,
+      weight: link.weight ?? 0,
       phone: link.provider.phone ?? '',
       email: link.provider.email ?? '',
       companyName: link.provider.companyName ?? '',
@@ -224,6 +228,7 @@ export function ProjectTeamMemberEditor({
       responsibility: '',
       status: 'A_CONTRATAR',
       agreedAmount: 0,
+      weight: 0,
       phone: provider.phone ?? '',
       email: provider.email ?? '',
       companyName: provider.companyName ?? '',
@@ -249,6 +254,7 @@ export function ProjectTeamMemberEditor({
         responsibility: form.responsibility.trim() || undefined,
         status: form.status,
         agreedAmount: form.agreedAmount || undefined,
+        weight: form.weight || undefined,
       })
       setModalOpen(false)
       return
@@ -270,6 +276,7 @@ export function ProjectTeamMemberEditor({
       responsibility: form.responsibility.trim() || undefined,
       status: form.status,
       agreedAmount: form.agreedAmount || undefined,
+      weight: form.weight || undefined,
       phone: form.phone.trim() || undefined,
       email: form.email.trim() || undefined,
       companyName: form.companyName.trim() || undefined,
@@ -298,13 +305,26 @@ export function ProjectTeamMemberEditor({
   }
 
   const readOnlyContact = Boolean(selectedProviderId)
+  const totalWeight = links.reduce((sum, link) => sum + (link.weight ?? 0), 0)
 
   return (
     <div>
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-(--th-text)">
-          Prestadores de serviço
-        </p>
+        <div>
+          <p className="text-sm font-medium text-(--th-text)">
+            Prestadores de serviço
+          </p>
+          {links.length > 0 && totalWeight > 0 && (
+            <p
+              className={cn(
+                'mt-0.5 text-xs',
+                totalWeight > 100 ? 'text-red-500' : 'text-(--th-text-muted)',
+              )}
+            >
+              {`Peso alocado: ${totalWeight}%${totalWeight > 100 ? ' — passa de 100%' : ''}`}
+            </p>
+          )}
+        </div>
         <Button type="button" variant="outline" size="sm" icon="UserPlus" onClick={openCreate}>
           Adicionar prestador
         </Button>
@@ -353,9 +373,14 @@ export function ProjectTeamMemberEditor({
                     {link.responsibility}
                   </p>
                 )}
-                {!!link.agreedAmount && (
+                {(!!link.agreedAmount || !!link.weight) && (
                   <p className="mt-0.5 text-xs font-medium text-(--th-text)">
-                    {formatBRLAmount(link.agreedAmount)}
+                    {[
+                      link.agreedAmount ? formatBRLAmount(link.agreedAmount) : null,
+                      link.weight ? `${link.weight}% do projeto` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
                   </p>
                 )}
                 {(link.provider.phone || link.provider.email || link.provider.companyName) && (
@@ -574,18 +599,34 @@ export function ProjectTeamMemberEditor({
               }
             />
 
-            <Input
-              label="Valor combinado"
-              placeholder="R$ 0,00"
-              hint="Opcional — valor combinado com este prestador para o projeto"
-              value={form.agreedAmount ? formatBRLAmount(form.agreedAmount) : ''}
-              onChange={(event) =>
-                setForm((f) => ({
-                  ...f,
-                  agreedAmount: parseCurrencyBRL(formatCurrencyBRL(event.target.value)),
-                }))
-              }
-            />
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Valor combinado"
+                placeholder="R$ 0,00"
+                hint="Opcional"
+                value={form.agreedAmount ? formatBRLAmount(form.agreedAmount) : ''}
+                onChange={(event) =>
+                  setForm((f) => ({
+                    ...f,
+                    agreedAmount: parseCurrencyBRL(formatCurrencyBRL(event.target.value)),
+                  }))
+                }
+              />
+              <Input
+                label="Peso no projeto"
+                type="number"
+                min={0}
+                max={100}
+                placeholder="0"
+                hint="Opcional — % que essa tarefa entrega no projeto"
+                rightSlot={<span className="text-sm text-(--th-text-muted)">%</span>}
+                value={form.weight || ''}
+                onChange={(event) => {
+                  const value = Math.min(100, Math.max(0, Number(event.target.value) || 0))
+                  setForm((f) => ({ ...f, weight: value }))
+                }}
+              />
+            </div>
 
             <div className="grid grid-cols-2 gap-3">
               <Input

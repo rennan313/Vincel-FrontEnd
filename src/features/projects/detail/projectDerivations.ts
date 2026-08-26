@@ -1,5 +1,10 @@
 import { PROJECT_TYPE_LABELS } from '@/features/projects/create/serviceCatalog'
-import type { PlanningPhase, ProjectDraft, ProjectInfo } from '@/features/projects/create/types'
+import type {
+  PlanningPhase,
+  ProjectDraft,
+  ProjectInfo,
+  ProviderStatus,
+} from '@/features/projects/create/types'
 
 /** Prazo total — always derived by summing phase durations, never stored. */
 export function getTotalDays(draft: ProjectDraft): number {
@@ -56,14 +61,19 @@ export function getInstallmentsTotal(draft: ProjectDraft): number {
 }
 
 /**
- * Progresso do projeto. PlanningPhase has no completion/status field in the
- * schema yet, so there is currently no "real" signal to compute this from —
- * always 0% until phases (or some other tracked unit of work) gain one.
- * Kept as a function, not a literal, so there's a single place to update
- * once that field exists.
+ * Progresso do projeto — soma o peso (%) de cada prestador cuja tarefa está
+ * concluída. Prestadores sem peso definido não contam para nem contra o
+ * total. Capped em 100% mesmo que os pesos alocados somem mais do que
+ * isso (a aba Equipe já avisa separadamente sobre esse caso).
  */
-export function getProjectProgress(_draft: ProjectDraft): number {
-  return 0
+export function getProjectProgress(
+  providerLinks: { status: ProviderStatus; weight?: number | null }[],
+): number {
+  const total = providerLinks.reduce(
+    (sum, link) => sum + (link.status === 'CONCLUIDO' ? (link.weight ?? 0) : 0),
+    0,
+  )
+  return Math.min(100, Math.round(total))
 }
 
 export function resolveProjectTypeLabel(info: ProjectInfo): string {
