@@ -1,7 +1,24 @@
 import { Input } from '@/components/ui/Input'
+import { cn } from '@/lib/cn'
 import { formatDate } from '@/lib/formatDate'
-import { getPhaseEndDate } from '@/features/projects/detail/projectDerivations'
+import { getPhaseEndDate, getPhaseScheduleVariance } from '@/features/projects/detail/projectDerivations'
 import type { PlanningPhase } from '@/features/projects/create/types'
+
+function PhaseVarianceNote({ phase }: { phase: PlanningPhase }) {
+  const variance = getPhaseScheduleVariance(phase)
+  if (!variance) return null
+  return (
+    <p
+      className={cn(
+        'mt-1 text-xs font-medium',
+        variance.status === 'atrasado' ? 'text-red-500' : 'text-emerald-500',
+      )}
+    >
+      {variance.days} {variance.days === 1 ? 'dia' : 'dias'}{' '}
+      {variance.status === 'atrasado' ? 'de atraso' : 'de adiantamento'}
+    </p>
+  )
+}
 
 interface ProjectTimelineProps {
   phases: PlanningPhase[]
@@ -15,6 +32,7 @@ interface ProjectTimelineProps {
   onNameChange?: (index: number, value: string) => void
   onDurationChange?: (index: number, value: string) => void
   onStartDateChange?: (index: number, value: string) => void
+  onEndDateChange?: (index: number, value: string) => void
   onTeamChange?: (index: number, value: string) => void
   /** Fired when a field edit should be persisted (e.g. on blur). */
   onCommit?: () => void
@@ -34,6 +52,7 @@ export function ProjectTimeline({
   onNameChange,
   onDurationChange,
   onStartDateChange,
+  onEndDateChange,
   onTeamChange,
   onCommit,
   disabled,
@@ -118,7 +137,7 @@ export function ProjectTimeline({
                   )}
                 </div>
 
-                {editable ? (
+                {editable && (
                   <div className="mt-2 grid grid-cols-3 gap-2">
                     <Input
                       aria-label={`Início de ${phase.name}`}
@@ -131,15 +150,16 @@ export function ProjectTimeline({
                       onBlur={onCommit}
                       className="h-8 px-2 text-xs"
                     />
-                    <div
-                      className="flex h-8 items-center rounded-lg border border-(--th-border) bg-(--th-bg-elevated) px-2 text-xs text-(--th-text-muted)"
-                      title="Término previsto — calculado a partir do início e da duração em dias"
-                    >
-                      {(() => {
-                        const computedEndDate = getPhaseEndDate(phase)
-                        return computedEndDate ? formatDate(computedEndDate) : 'Término —'
-                      })()}
-                    </div>
+                    <Input
+                      aria-label={`Término previsto de ${phase.name}`}
+                      type="date"
+                      title="Por padrão é início + duração — pode ser ajustado para refletir atraso ou adiantamento"
+                      value={phase.endDate ?? getPhaseEndDate(phase) ?? ''}
+                      disabled={disabled}
+                      onChange={(event) => onEndDateChange?.(index, event.target.value)}
+                      onBlur={onCommit}
+                      className="h-8 px-2 text-xs"
+                    />
                     <select
                       aria-label={`Equipe responsável por ${phase.name}`}
                       value={phase.team ?? ''}
@@ -160,21 +180,26 @@ export function ProjectTimeline({
                       ))}
                     </select>
                   </div>
-                ) : (
+                )}
+                {editable && <PhaseVarianceNote phase={phase} />}
+                {!editable && (
                   (() => {
-                    const computedEndDate = getPhaseEndDate(phase)
+                    const effectiveEndDate = phase.endDate ?? getPhaseEndDate(phase)
                     return (
                       (phase.startDate || phase.team) && (
-                        <p className="mt-1 text-xs text-(--th-text-muted)">
-                          {[
-                            phase.startDate && `Início: ${formatDate(phase.startDate)}`,
-                            computedEndDate &&
-                              `Término previsto: ${formatDate(computedEndDate)}`,
-                            phase.team && `Equipe: ${phase.team}`,
-                          ]
-                            .filter(Boolean)
-                            .join(' · ')}
-                        </p>
+                        <>
+                          <p className="mt-1 text-xs text-(--th-text-muted)">
+                            {[
+                              phase.startDate && `Início: ${formatDate(phase.startDate)}`,
+                              effectiveEndDate &&
+                                `Término previsto: ${formatDate(effectiveEndDate)}`,
+                              phase.team && `Equipe: ${phase.team}`,
+                            ]
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </p>
+                          <PhaseVarianceNote phase={phase} />
+                        </>
                       )
                     )
                   })()

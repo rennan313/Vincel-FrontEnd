@@ -7,10 +7,10 @@ export function getTotalDays(draft: ProjectDraft): number {
 }
 
 /**
- * Término previsto de uma etapa — always derived from startDate +
- * estimatedDays, never stored: informing the duration is what drives this,
- * not an independently-set end date. Null when the phase has no start date
- * to count from yet.
+ * Estimated término previsto of a phase — startDate + estimatedDays. This
+ * is the baseline the user's own término previsto (phase.endDate, editable)
+ * gets compared against — see getPhaseScheduleVariance. Null when the
+ * phase has no start date to count from yet.
  */
 export function getPhaseEndDate(phase: PlanningPhase): string | null {
   if (!phase.startDate) return null
@@ -18,6 +18,36 @@ export function getPhaseEndDate(phase: PlanningPhase): string | null {
   const end = new Date(Date.UTC(year, month - 1, day))
   end.setUTCDate(end.getUTCDate() + phase.estimatedDays)
   return end.toISOString().slice(0, 10)
+}
+
+function daysBetweenISODates(from: string, to: string): number {
+  const [fy, fm, fd] = from.split('-').map(Number)
+  const [ty, tm, td] = to.split('-').map(Number)
+  const fromMs = Date.UTC(fy, fm - 1, fd)
+  const toMs = Date.UTC(ty, tm - 1, td)
+  return Math.round((toMs - fromMs) / 86_400_000)
+}
+
+export interface PhaseScheduleVariance {
+  /** Always positive — how many days off the estimate. */
+  days: number
+  status: 'atrasado' | 'adiantado'
+}
+
+/**
+ * How far the phase's informed término previsto (phase.endDate) sits from
+ * the início + estimatedDays estimate — null when there's nothing to
+ * compare (no override yet, they match, or there's no estimate to compare
+ * against in the first place).
+ */
+export function getPhaseScheduleVariance(phase: PlanningPhase): PhaseScheduleVariance | null {
+  const estimated = getPhaseEndDate(phase)
+  if (!phase.endDate || !estimated || phase.endDate === estimated) return null
+
+  const diffDays = daysBetweenISODates(estimated, phase.endDate)
+  return diffDays > 0
+    ? { days: diffDays, status: 'atrasado' }
+    : { days: Math.abs(diffDays), status: 'adiantado' }
 }
 
 /** Total das parcelas — always derived by summing installment amounts, never stored. */

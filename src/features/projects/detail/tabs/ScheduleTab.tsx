@@ -95,6 +95,10 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
     updatePhaseField(index, 'startDate', value || null)
   }
 
+  function handleEndDateChange(index: number, value: string) {
+    updatePhaseField(index, 'endDate', value || null)
+  }
+
   function handleTeamChange(index: number, value: string) {
     updatePhaseField(index, 'team', value || null)
   }
@@ -111,6 +115,7 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
         name: `Nova etapa ${phases.length + 1}`,
         estimatedDays: 1,
         startDate: null,
+        endDate: null,
         team: null,
       },
     ]
@@ -129,6 +134,7 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
         onNameChange={handleNameChange}
         onDurationChange={handleDurationChange}
         onStartDateChange={handleStartDateChange}
+        onEndDateChange={handleEndDateChange}
         onTeamChange={handleTeamChange}
         onCommit={handleCommit}
         disabled={saveMutation.isPending}

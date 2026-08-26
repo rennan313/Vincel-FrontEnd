@@ -75,10 +75,13 @@ export interface PlanningPhase {
   key: string
   name: string
   estimatedDays: number
-  /** ISO date (yyyy-mm-dd) this task is scheduled to start. Término
-   * previsto is derived from this + estimatedDays — see getPhaseEndDate —
-   * never stored separately. */
+  /** ISO date (yyyy-mm-dd) this task is scheduled to start. */
   startDate?: string | null
+  /** ISO date (yyyy-mm-dd) término previsto. Defaults to startDate +
+   * estimatedDays (see getPhaseEndDate) but can be overridden by hand —
+   * when it is, getPhaseScheduleVariance compares it back against that
+   * estimate to show how many days ahead/behind. */
+  endDate?: string | null
   /** Free-text: which team/person executes this task. */
   team?: string | null
 }

@@ -34,6 +34,7 @@ export function projectToDraft(draftId: string, project: Project): ProjectDraft 
   const planningPhases = (project.planningPhases ?? []).map((phase) => ({
     ...phase,
     startDate: phase.startDate ? toISODateString(phase.startDate) : null,
+    endDate: phase.endDate ? toISODateString(phase.endDate) : null,
   }))
 
   const financial: FinancialData = {
