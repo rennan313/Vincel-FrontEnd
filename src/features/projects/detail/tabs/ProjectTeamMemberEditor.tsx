@@ -8,7 +8,14 @@ import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { formatCPF, formatCNPJ, formatPhone } from '@/lib/masks'
+import {
+  formatBRLAmount,
+  formatCNPJ,
+  formatCPF,
+  formatCurrencyBRL,
+  formatPhone,
+  parseCurrencyBRL,
+} from '@/lib/masks'
 import {
   PROVIDER_ROLE_LABELS,
   PROVIDER_ROLE_ORDER,
@@ -34,6 +41,7 @@ interface MemberFormState {
   customRole: string
   responsibility: string
   status: ProviderStatus
+  agreedAmount: number
   phone: string
   email: string
   companyName: string
@@ -46,6 +54,7 @@ const EMPTY_FORM: MemberFormState = {
   customRole: '',
   responsibility: '',
   status: 'A_CONTRATAR',
+  agreedAmount: 0,
   phone: '',
   email: '',
   companyName: '',
@@ -193,6 +202,7 @@ export function ProjectTeamMemberEditor({
       customRole: link.provider.customRole ?? '',
       responsibility: link.responsibility ?? '',
       status: link.status,
+      agreedAmount: link.agreedAmount ?? 0,
       phone: link.provider.phone ?? '',
       email: link.provider.email ?? '',
       companyName: link.provider.companyName ?? '',
@@ -212,6 +222,7 @@ export function ProjectTeamMemberEditor({
       customRole: provider.customRole ?? '',
       responsibility: '',
       status: 'A_CONTRATAR',
+      agreedAmount: 0,
       phone: provider.phone ?? '',
       email: provider.email ?? '',
       companyName: provider.companyName ?? '',
@@ -236,6 +247,7 @@ export function ProjectTeamMemberEditor({
         providerId: selectedProviderId,
         responsibility: form.responsibility.trim() || undefined,
         status: form.status,
+        agreedAmount: form.agreedAmount || undefined,
       })
       setModalOpen(false)
       return
@@ -256,6 +268,7 @@ export function ProjectTeamMemberEditor({
       customRole: form.role.includes('OUTRO') ? form.customRole.trim() || undefined : undefined,
       responsibility: form.responsibility.trim() || undefined,
       status: form.status,
+      agreedAmount: form.agreedAmount || undefined,
       phone: form.phone.trim() || undefined,
       email: form.email.trim() || undefined,
       companyName: form.companyName.trim() || undefined,
@@ -325,6 +338,11 @@ export function ProjectTeamMemberEditor({
                 {link.responsibility && (
                   <p className="mt-0.5 truncate text-xs text-(--th-text-sub)">
                     {link.responsibility}
+                  </p>
+                )}
+                {!!link.agreedAmount && (
+                  <p className="mt-0.5 text-xs font-medium text-(--th-text)">
+                    {formatBRLAmount(link.agreedAmount)}
                   </p>
                 )}
                 {(link.provider.phone || link.provider.email || link.provider.companyName) && (
@@ -540,6 +558,19 @@ export function ProjectTeamMemberEditor({
               value={form.responsibility}
               onChange={(event) =>
                 setForm((f) => ({ ...f, responsibility: event.target.value }))
+              }
+            />
+
+            <Input
+              label="Valor combinado"
+              placeholder="R$ 0,00"
+              hint="Opcional — valor combinado com este prestador para o projeto"
+              value={form.agreedAmount ? formatBRLAmount(form.agreedAmount) : ''}
+              onChange={(event) =>
+                setForm((f) => ({
+                  ...f,
+                  agreedAmount: parseCurrencyBRL(formatCurrencyBRL(event.target.value)),
+                }))
               }
             />
 

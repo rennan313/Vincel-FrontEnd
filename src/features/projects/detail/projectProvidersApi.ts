@@ -11,6 +11,8 @@ export interface ProjectProviderLink {
   providerId: string
   status: ProviderStatus
   responsibility?: string | null
+  /** Valor combinado com este prestador para este projeto. */
+  agreedAmount?: number | null
   provider: Provider
 }
 
@@ -27,6 +29,7 @@ export interface AssignProviderPayload {
   document?: string
   responsibility?: string
   status?: ProviderStatus
+  agreedAmount?: number
 }
 
 export function fetchProjectProviders(projectId: string): Promise<ProjectProviderLink[]> {
