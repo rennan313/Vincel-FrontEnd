@@ -85,9 +85,13 @@ export function ProvidersPage() {
       key: 'role',
       header: 'Participação',
       render: (provider) => (
-        <Badge variant="neutral">
-          {resolveProviderRoleLabel(provider.role, provider.customRole ?? undefined)}
-        </Badge>
+        <div className="flex flex-wrap gap-1">
+          {provider.role.map((role) => (
+            <Badge key={role} variant="neutral">
+              {resolveProviderRoleLabel(role, provider.customRole ?? undefined)}
+            </Badge>
+          ))}
+        </div>
       ),
     },
     {

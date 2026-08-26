@@ -4,7 +4,8 @@ import type { ProviderRole, ProviderStatus } from '@/features/projects/create/ty
 export interface Provider {
   id: string
   name: string
-  role: ProviderRole
+  /** A provider can hold more than one participação. */
+  role: ProviderRole[]
   customRole?: string | null
   phone?: string | null
   email?: string | null
@@ -23,7 +24,7 @@ export interface ProvidersPageResult {
 
 export interface ProviderPayload {
   name: string
-  role: ProviderRole
+  role: ProviderRole[]
   customRole?: string
   phone?: string
   email?: string

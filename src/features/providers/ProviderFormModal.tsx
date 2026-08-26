@@ -30,7 +30,7 @@ interface ProviderFormModalProps {
 
 interface FormValues {
   name: string
-  role: ProviderRole
+  role: ProviderRole[]
   customRole: string
   status: ProviderStatus
   phone: string
@@ -41,7 +41,7 @@ interface FormValues {
 
 const EMPTY_VALUES: FormValues = {
   name: '',
-  role: PROVIDER_ROLE_ORDER[0],
+  role: [],
   customRole: '',
   status: 'A_CONTRATAR',
   phone: '',
@@ -75,6 +75,7 @@ export function ProviderFormModal({ open, onClose, provider }: ProviderFormModal
   const queryClient = useQueryClient()
   const [values, setValues] = useState<FormValues>(EMPTY_VALUES)
   const [nameError, setNameError] = useState<string>()
+  const [roleError, setRoleError] = useState<string>()
   const [emailError, setEmailError] = useState<string>()
   const [bannerError, setBannerError] = useState<string | null>(null)
 
@@ -82,6 +83,7 @@ export function ProviderFormModal({ open, onClose, provider }: ProviderFormModal
     if (open) {
       setValues(toFormValues(provider))
       setNameError(undefined)
+      setRoleError(undefined)
       setEmailError(undefined)
       setBannerError(null)
     }
@@ -106,6 +108,15 @@ export function ProviderFormModal({ open, onClose, provider }: ProviderFormModal
     setValues((current) => ({ ...current, [field]: value }))
   }
 
+  function toggleRole(role: ProviderRole) {
+    setValues((current) => ({
+      ...current,
+      role: current.role.includes(role)
+        ? current.role.filter((value) => value !== role)
+        : [...current.role, role],
+    }))
+  }
+
   function handleSubmit() {
     setBannerError(null)
 
@@ -115,6 +126,12 @@ export function ProviderFormModal({ open, onClose, provider }: ProviderFormModal
       hasError = true
     } else {
       setNameError(undefined)
+    }
+    if (values.role.length === 0) {
+      setRoleError('Selecione ao menos uma participação.')
+      hasError = true
+    } else {
+      setRoleError(undefined)
     }
     if (values.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
       setEmailError('Informe um e-mail válido.')
@@ -127,7 +144,7 @@ export function ProviderFormModal({ open, onClose, provider }: ProviderFormModal
     mutation.mutate({
       name: values.name.trim(),
       role: values.role,
-      customRole: values.role === 'OUTRO' ? values.customRole.trim() || undefined : undefined,
+      customRole: values.role.includes('OUTRO') ? values.customRole.trim() || undefined : undefined,
       status: values.status,
       phone: values.phone.trim() || undefined,
       email: values.email.trim() || undefined,
@@ -171,44 +188,52 @@ export function ProviderFormModal({ open, onClose, provider }: ProviderFormModal
           error={nameError}
         />
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-(--th-text)">
-              Participação
-            </label>
-            <select
-              aria-label="Participação"
-              value={values.role}
-              onChange={(event) => updateField('role', event.target.value as ProviderRole)}
-              className="h-10 w-full rounded-lg border border-(--th-border) bg-(--th-bg-card) px-3 text-sm text-(--th-text) outline-none transition-colors focus:ring-2 focus:ring-(--th-border-focus)"
-            >
-              {PROVIDER_ROLE_ORDER.map((role) => (
-                <option key={role} value={role}>
-                  {PROVIDER_ROLE_LABELS[role]}
-                </option>
-              ))}
-            </select>
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-(--th-text)">
+            Participação
+          </label>
+          <div
+            role="group"
+            aria-label="Participação"
+            className="grid grid-cols-2 gap-x-3 gap-y-1.5 rounded-lg border border-(--th-border) bg-(--th-bg-card) p-3"
+          >
+            {PROVIDER_ROLE_ORDER.map((role) => (
+              <label
+                key={role}
+                className="flex items-center gap-2 text-sm text-(--th-text)"
+              >
+                <input
+                  type="checkbox"
+                  checked={values.role.includes(role)}
+                  onChange={() => toggleRole(role)}
+                  className="size-4 rounded border-(--th-border) accent-(--th-accent)"
+                />
+                {PROVIDER_ROLE_LABELS[role]}
+              </label>
+            ))}
           </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-(--th-text)">
-              Status
-            </label>
-            <select
-              aria-label="Status"
-              value={values.status}
-              onChange={(event) => updateField('status', event.target.value as ProviderStatus)}
-              className="h-10 w-full rounded-lg border border-(--th-border) bg-(--th-bg-card) px-3 text-sm text-(--th-text) outline-none transition-colors focus:ring-2 focus:ring-(--th-border-focus)"
-            >
-              {PROVIDER_STATUS_ORDER.map((status) => (
-                <option key={status} value={status}>
-                  {PROVIDER_STATUS_LABELS[status]}
-                </option>
-              ))}
-            </select>
-          </div>
+          {roleError && <p className="mt-1 text-xs text-red-500">{roleError}</p>}
         </div>
 
-        {values.role === 'OUTRO' && (
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-(--th-text)">
+            Status
+          </label>
+          <select
+            aria-label="Status"
+            value={values.status}
+            onChange={(event) => updateField('status', event.target.value as ProviderStatus)}
+            className="h-10 w-full rounded-lg border border-(--th-border) bg-(--th-bg-card) px-3 text-sm text-(--th-text) outline-none transition-colors focus:ring-2 focus:ring-(--th-border-focus)"
+          >
+            {PROVIDER_STATUS_ORDER.map((status) => (
+              <option key={status} value={status}>
+                {PROVIDER_STATUS_LABELS[status]}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {values.role.includes('OUTRO') && (
           <Input
             label="Qual participação?"
             value={values.customRole}

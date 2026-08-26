@@ -40,9 +40,15 @@ export const PROVIDER_ROLE_LABELS: Record<ProviderRole, string> = {
   OUTRO: 'Outro',
 }
 
-/** Resolves the display label for a provider's role — "OUTRO" reads the
- * user's free-text description instead of the generic catalog label. */
+/** Resolves the display label for a single provider role — "OUTRO" reads
+ * the user's free-text description instead of the generic catalog label. */
 export function resolveProviderRoleLabel(role: ProviderRole, customRole?: string): string {
   if (role !== 'OUTRO') return PROVIDER_ROLE_LABELS[role]
   return customRole?.trim() || PROVIDER_ROLE_LABELS.OUTRO
+}
+
+/** Resolves the display label for every role a provider holds — a provider
+ * can have more than one participação (e.g. eletricista and encanador). */
+export function resolveProviderRoleLabels(roles: ProviderRole[], customRole?: string): string {
+  return roles.map((role) => resolveProviderRoleLabel(role, customRole)).join(', ')
 }

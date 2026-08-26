@@ -32,18 +32,19 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
     queryKey: ['project-providers', projectId],
     queryFn: () => fetchProjectProviders(projectId!),
   })
-  // Grouped by name: the same person can be cadastrado under more than one
-  // provider role (e.g. eletricista and encanador) — each shows up as its
-  // own participação, listed together under that name.
+  // Grouped by name: a provider can hold more than one participação (e.g.
+  // eletricista and encanador), and the same name could also show up under
+  // more than one cadastro — every role from every match is listed together.
   const teamOptions = Array.from(
     providerLinks
       .reduce((byName, link) => {
-        const roleLabel = resolveProviderRoleLabel(
-          link.provider.role,
-          link.provider.customRole ?? undefined,
+        const roleLabels = link.provider.role.map((role) =>
+          resolveProviderRoleLabel(role, link.provider.customRole ?? undefined),
         )
         const roles = byName.get(link.provider.name) ?? []
-        if (!roles.includes(roleLabel)) roles.push(roleLabel)
+        for (const roleLabel of roleLabels) {
+          if (!roles.includes(roleLabel)) roles.push(roleLabel)
+        }
         byName.set(link.provider.name, roles)
         return byName
       }, new Map<string, string[]>())

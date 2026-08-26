@@ -19,7 +19,7 @@ export interface AssignProviderPayload {
    * normal path. When absent, name/role must be set to cadastrar a new one. */
   providerId?: string
   name?: string
-  role?: ProviderRole
+  role?: ProviderRole[]
   customRole?: string
   phone?: string
   email?: string

@@ -13,6 +13,7 @@ import {
   PROVIDER_ROLE_LABELS,
   PROVIDER_ROLE_ORDER,
   resolveProviderRoleLabel,
+  resolveProviderRoleLabels,
 } from '@/features/projects/create/providerRoles'
 import {
   PROVIDER_STATUS_LABELS,
@@ -29,7 +30,7 @@ import { fetchProviders, type Provider } from '@/features/providers/providersApi
 
 interface MemberFormState {
   name: string
-  role: ProviderRole
+  role: ProviderRole[]
   customRole: string
   responsibility: string
   status: ProviderStatus
@@ -41,7 +42,7 @@ interface MemberFormState {
 
 const EMPTY_FORM: MemberFormState = {
   name: '',
-  role: PROVIDER_ROLE_ORDER[0],
+  role: [],
   customRole: '',
   responsibility: '',
   status: 'A_CONTRATAR',
@@ -144,6 +145,7 @@ export function ProjectTeamMemberEditor({
   const [pickerQuery, setPickerQuery] = useState('')
   const [form, setForm] = useState<MemberFormState>(EMPTY_FORM)
   const [nameError, setNameError] = useState<string>()
+  const [roleError, setRoleError] = useState<string>()
   const [pendingRemove, setPendingRemove] = useState<ProjectProviderLink | null>(null)
 
   const { data: rosterData, isLoading: rosterLoading } = useQuery({
@@ -159,7 +161,7 @@ export function ProjectTeamMemberEditor({
   const query = pickerQuery.trim().toLowerCase()
   const filteredProviders = query
     ? availableProviders.filter((provider) => {
-        const roleLabel = resolveProviderRoleLabel(
+        const roleLabel = resolveProviderRoleLabels(
           provider.role,
           provider.customRole ?? undefined,
         ).toLowerCase()
@@ -177,6 +179,7 @@ export function ProjectTeamMemberEditor({
     setForm(EMPTY_FORM)
     setPickerQuery('')
     setNameError(undefined)
+    setRoleError(undefined)
     setMode('picker')
     setModalOpen(true)
   }
@@ -196,6 +199,7 @@ export function ProjectTeamMemberEditor({
       document: link.provider.document ?? '',
     })
     setNameError(undefined)
+    setRoleError(undefined)
     setMode('form')
     setModalOpen(true)
   }
@@ -214,6 +218,7 @@ export function ProjectTeamMemberEditor({
       document: provider.document ?? '',
     })
     setNameError(undefined)
+    setRoleError(undefined)
     setMode('form')
   }
 
@@ -221,6 +226,7 @@ export function ProjectTeamMemberEditor({
     setSelectedProviderId(null)
     setForm(EMPTY_FORM)
     setNameError(undefined)
+    setRoleError(undefined)
     setMode('form')
   }
 
@@ -239,11 +245,15 @@ export function ProjectTeamMemberEditor({
       setNameError('Informe o nome do prestador.')
       return
     }
+    if (form.role.length === 0) {
+      setRoleError('Selecione ao menos uma participação.')
+      return
+    }
 
     const payload: AssignProviderPayload = {
       name: form.name.trim(),
       role: form.role,
-      customRole: form.role === 'OUTRO' ? form.customRole.trim() || undefined : undefined,
+      customRole: form.role.includes('OUTRO') ? form.customRole.trim() || undefined : undefined,
       responsibility: form.responsibility.trim() || undefined,
       status: form.status,
       phone: form.phone.trim() || undefined,
@@ -258,6 +268,13 @@ export function ProjectTeamMemberEditor({
       onAssign(payload)
     }
     setModalOpen(false)
+  }
+
+  function toggleFormRole(role: ProviderRole) {
+    setForm((f) => ({
+      ...f,
+      role: f.role.includes(role) ? f.role.filter((value) => value !== role) : [...f.role, role],
+    }))
   }
 
   function confirmRemove() {
@@ -299,9 +316,11 @@ export function ProjectTeamMemberEditor({
                   <p className="truncate text-sm font-medium text-(--th-text)">
                     {link.provider.name}
                   </p>
-                  <Badge variant="neutral">
-                    {resolveProviderRoleLabel(link.provider.role, link.provider.customRole ?? undefined)}
-                  </Badge>
+                  {link.provider.role.map((role) => (
+                    <Badge key={role} variant="neutral">
+                      {resolveProviderRoleLabel(role, link.provider.customRole ?? undefined)}
+                    </Badge>
+                  ))}
                 </div>
                 {link.responsibility && (
                   <p className="mt-0.5 truncate text-xs text-(--th-text-sub)">
@@ -414,7 +433,7 @@ export function ProjectTeamMemberEditor({
                         <div className="min-w-0">
                           <p className="truncate text-sm text-(--th-text)">{provider.name}</p>
                           <p className="truncate text-xs text-(--th-text-muted)">
-                            {resolveProviderRoleLabel(provider.role, provider.customRole ?? undefined)}
+                            {resolveProviderRoleLabels(provider.role, provider.customRole ?? undefined)}
                             {provider.phone ? ` · ${provider.phone}` : ''}
                           </p>
                         </div>
@@ -457,49 +476,55 @@ export function ProjectTeamMemberEditor({
               disabled={readOnlyContact}
             />
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-(--th-text)">
-                  Participação no projeto
-                </label>
-                <select
-                  aria-label="Participação no projeto"
-                  value={form.role}
-                  disabled={readOnlyContact}
-                  onChange={(event) =>
-                    setForm((f) => ({ ...f, role: event.target.value as ProviderRole }))
-                  }
-                  className="h-10 w-full rounded-lg border border-(--th-border) bg-(--th-bg-card) px-3 text-sm text-(--th-text) outline-none transition-colors focus:ring-2 focus:ring-(--th-border-focus) disabled:opacity-60"
-                >
-                  {PROVIDER_ROLE_ORDER.map((role) => (
-                    <option key={role} value={role}>
-                      {PROVIDER_ROLE_LABELS[role]}
-                    </option>
-                  ))}
-                </select>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-(--th-text)">
+                Participação no projeto
+              </label>
+              <div
+                role="group"
+                aria-label="Participação no projeto"
+                className="grid grid-cols-2 gap-x-3 gap-y-1.5 rounded-lg border border-(--th-border) bg-(--th-bg-card) p-3"
+              >
+                {PROVIDER_ROLE_ORDER.map((role) => (
+                  <label
+                    key={role}
+                    className="flex items-center gap-2 text-sm text-(--th-text)"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={form.role.includes(role)}
+                      disabled={readOnlyContact}
+                      onChange={() => toggleFormRole(role)}
+                      className="size-4 rounded border-(--th-border) accent-(--th-accent) disabled:opacity-60"
+                    />
+                    {PROVIDER_ROLE_LABELS[role]}
+                  </label>
+                ))}
               </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-(--th-text)">
-                  Status
-                </label>
-                <select
-                  aria-label="Status"
-                  value={form.status}
-                  onChange={(event) =>
-                    setForm((f) => ({ ...f, status: event.target.value as ProviderStatus }))
-                  }
-                  className="h-10 w-full rounded-lg border border-(--th-border) bg-(--th-bg-card) px-3 text-sm text-(--th-text) outline-none transition-colors focus:ring-2 focus:ring-(--th-border-focus)"
-                >
-                  {PROVIDER_STATUS_ORDER.map((status) => (
-                    <option key={status} value={status}>
-                      {PROVIDER_STATUS_LABELS[status]}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {roleError && <p className="mt-1 text-xs text-red-500">{roleError}</p>}
             </div>
 
-            {form.role === 'OUTRO' && !readOnlyContact && (
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-(--th-text)">
+                Status
+              </label>
+              <select
+                aria-label="Status"
+                value={form.status}
+                onChange={(event) =>
+                  setForm((f) => ({ ...f, status: event.target.value as ProviderStatus }))
+                }
+                className="h-10 w-full rounded-lg border border-(--th-border) bg-(--th-bg-card) px-3 text-sm text-(--th-text) outline-none transition-colors focus:ring-2 focus:ring-(--th-border-focus)"
+              >
+                {PROVIDER_STATUS_ORDER.map((status) => (
+                  <option key={status} value={status}>
+                    {PROVIDER_STATUS_LABELS[status]}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {form.role.includes('OUTRO') && !readOnlyContact && (
               <Input
                 label="Qual participação?"
                 value={form.customRole}
