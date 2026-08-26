@@ -137,7 +137,6 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
         onEndDateChange={handleEndDateChange}
         onTeamChange={handleTeamChange}
         onCommit={handleCommit}
-        disabled={saveMutation.isPending}
         teamOptions={teamOptions}
       />
 

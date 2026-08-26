@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { Tooltip } from '@/components/ui/Tooltip'
 import {
   formatBRLAmount,
   formatCNPJ,
@@ -329,11 +330,23 @@ export function ProjectTeamMemberEditor({
                   <p className="truncate text-sm font-medium text-(--th-text)">
                     {link.provider.name}
                   </p>
-                  {link.provider.role.map((role) => (
+                  {link.provider.role.slice(0, 3).map((role) => (
                     <Badge key={role} variant="neutral">
                       {resolveProviderRoleLabel(role, link.provider.customRole ?? undefined)}
                     </Badge>
                   ))}
+                  {link.provider.role.length > 3 && (
+                    <Tooltip
+                      label={link.provider.role
+                        .slice(3)
+                        .map((role) =>
+                          resolveProviderRoleLabel(role, link.provider.customRole ?? undefined),
+                        )
+                        .join(', ')}
+                    >
+                      <Badge variant="neutral">{`+${link.provider.role.length - 3}`}</Badge>
+                    </Tooltip>
+                  )}
                 </div>
                 {link.responsibility && (
                   <p className="mt-0.5 truncate text-xs text-(--th-text-sub)">
