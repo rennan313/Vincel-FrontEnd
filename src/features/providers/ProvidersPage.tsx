@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useQueryStates, parseAsInteger, parseAsString } from 'nuqs'
+import { useQueryState, useQueryStates, parseAsBoolean, parseAsInteger, parseAsString } from 'nuqs'
 import { toast } from 'sonner'
 import { PageTitle } from '@/components/ui/PageTitle'
 import { PageSubtitle } from '@/components/ui/PageSubtitle'
@@ -42,6 +42,8 @@ export function ProvidersPage() {
   const [searchInput, setSearchInput] = useState(search)
   const debouncedSearch = useDebouncedValue(searchInput, 300)
   const [modalState, setModalState] = useState<ModalState>({ open: false })
+  // Deep link from the Dashboard's "Novo prestador" quick action.
+  const [openNew, setOpenNew] = useQueryState('new', parseAsBoolean)
 
   useEffect(() => {
     if (debouncedSearch !== search) {
@@ -49,6 +51,14 @@ export function ProvidersPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch])
+
+  useEffect(() => {
+    if (openNew) {
+      setModalState({ open: true })
+      setOpenNew(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openNew])
 
   const { data, isLoading } = useQuery({
     queryKey: ['providers', page, search],
