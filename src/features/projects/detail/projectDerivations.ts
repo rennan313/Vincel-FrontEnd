@@ -1,9 +1,58 @@
 import { PROJECT_TYPE_LABELS } from '@/features/projects/create/serviceCatalog'
-import type { ProjectDraft, ProjectInfo } from '@/features/projects/create/types'
+import type {
+  PlanningPhase,
+  ProjectDraft,
+  ProjectInfo,
+  ProviderStatus,
+} from '@/features/projects/create/types'
 
 /** Prazo total — always derived by summing phase durations, never stored. */
 export function getTotalDays(draft: ProjectDraft): number {
   return draft.planning.phases.reduce((sum, phase) => sum + phase.estimatedDays, 0)
+}
+
+/**
+ * Estimated término previsto of a phase — startDate + estimatedDays. This
+ * is the baseline the user's own término previsto (phase.endDate, editable)
+ * gets compared against — see getPhaseScheduleVariance. Null when the
+ * phase has no start date to count from yet.
+ */
+export function getPhaseEndDate(phase: PlanningPhase): string | null {
+  if (!phase.startDate) return null
+  const [year, month, day] = phase.startDate.split('-').map(Number)
+  const end = new Date(Date.UTC(year, month - 1, day))
+  end.setUTCDate(end.getUTCDate() + phase.estimatedDays)
+  return end.toISOString().slice(0, 10)
+}
+
+function daysBetweenISODates(from: string, to: string): number {
+  const [fy, fm, fd] = from.split('-').map(Number)
+  const [ty, tm, td] = to.split('-').map(Number)
+  const fromMs = Date.UTC(fy, fm - 1, fd)
+  const toMs = Date.UTC(ty, tm - 1, td)
+  return Math.round((toMs - fromMs) / 86_400_000)
+}
+
+export interface PhaseScheduleVariance {
+  /** Always positive — how many days off the estimate. */
+  days: number
+  status: 'atrasado' | 'adiantado'
+}
+
+/**
+ * How far the phase's informed término previsto (phase.endDate) sits from
+ * the início + estimatedDays estimate — null when there's nothing to
+ * compare (no override yet, they match, or there's no estimate to compare
+ * against in the first place).
+ */
+export function getPhaseScheduleVariance(phase: PlanningPhase): PhaseScheduleVariance | null {
+  const estimated = getPhaseEndDate(phase)
+  if (!phase.endDate || !estimated || phase.endDate === estimated) return null
+
+  const diffDays = daysBetweenISODates(estimated, phase.endDate)
+  return diffDays > 0
+    ? { days: diffDays, status: 'atrasado' }
+    : { days: Math.abs(diffDays), status: 'adiantado' }
 }
 
 /** Total das parcelas — always derived by summing installment amounts, never stored. */
@@ -12,14 +61,19 @@ export function getInstallmentsTotal(draft: ProjectDraft): number {
 }
 
 /**
- * Progresso do projeto. PlanningPhase has no completion/status field in the
- * schema yet, so there is currently no "real" signal to compute this from —
- * always 0% until phases (or some other tracked unit of work) gain one.
- * Kept as a function, not a literal, so there's a single place to update
- * once that field exists.
+ * Progresso do projeto — soma o peso (%) de cada prestador cuja tarefa está
+ * concluída. Prestadores sem peso definido não contam para nem contra o
+ * total. Capped em 100% mesmo que os pesos alocados somem mais do que
+ * isso (a aba Equipe já avisa separadamente sobre esse caso).
  */
-export function getProjectProgress(_draft: ProjectDraft): number {
-  return 0
+export function getProjectProgress(
+  providerLinks: { status: ProviderStatus; weight?: number | null }[],
+): number {
+  const total = providerLinks.reduce(
+    (sum, link) => sum + (link.status === 'CONCLUIDO' ? (link.weight ?? 0) : 0),
+    0,
+  )
+  return Math.min(100, Math.round(total))
 }
 
 export function resolveProjectTypeLabel(info: ProjectInfo): string {

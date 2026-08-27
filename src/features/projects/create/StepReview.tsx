@@ -1,13 +1,8 @@
-import { useState } from 'react'
 import { Card } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
-import {
-  PROJECT_TYPE_LABELS,
-  resolveServiceLabel,
-} from '@/features/projects/create/serviceCatalog'
+import { PROJECT_TYPE_LABELS } from '@/features/projects/create/serviceCatalog'
 import { formatBRLAmount } from '@/lib/masks'
 import { formatDate } from '@/lib/formatDate'
 import {
@@ -24,12 +19,9 @@ interface StepReviewProps {
 export function StepReview({ onEditStep }: StepReviewProps) {
   const draft = useProjectWizardStore((state) => state.draft)
   const updateInfo = useProjectWizardStore((state) => state.updateInfo)
-  const { info, scope, planning, financial, client, schedule, address } = draft
-  const [showAllServices, setShowAllServices] = useState(false)
+  const { info, planning, financial, client, schedule, address } = draft
 
   const totalDays = planning.phases.reduce((sum, phase) => sum + phase.estimatedDays, 0)
-  const visibleServices = showAllServices ? scope.services : scope.services.slice(0, 4)
-  const hiddenCount = scope.services.length - visibleServices.length
   const addressSummary = formatAddressSummary(address)
 
   return (
@@ -74,40 +66,6 @@ export function StepReview({ onEditStep }: StepReviewProps) {
 
       <Card>
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-xs font-medium tracking-wide text-(--th-text-muted) uppercase">
-              Escopo
-            </p>
-            <p className="mt-1 text-sm text-(--th-text-sub)">
-              {scope.services.length} serviços · {scope.components.length} componentes
-            </p>
-            <ul className="mt-2 flex flex-wrap gap-1.5">
-              {visibleServices.map((service) => (
-                <li key={service}>
-                  <Badge variant="neutral">
-                    {resolveServiceLabel(service, scope.customServiceLabel)}
-                  </Badge>
-                </li>
-              ))}
-            </ul>
-            {scope.services.length > 4 && (
-              <button
-                type="button"
-                className="mt-2 text-xs font-medium text-(--th-accent)"
-                onClick={() => setShowAllServices((value) => !value)}
-              >
-                {showAllServices ? 'Ver menos' : `Ver todos (+${hiddenCount})`}
-              </button>
-            )}
-          </div>
-          <Button type="button" variant="outline" size="sm" onClick={() => onEditStep(2)}>
-            Editar
-          </Button>
-        </div>
-      </Card>
-
-      <Card>
-        <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs font-medium tracking-wide text-(--th-text-muted) uppercase">
               Planejamento
@@ -120,7 +78,7 @@ export function StepReview({ onEditStep }: StepReviewProps) {
               {planning.complexity ? COMPLEXITY_LABEL[planning.complexity] : '—'}
             </p>
           </div>
-          <Button type="button" variant="outline" size="sm" onClick={() => onEditStep(3)}>
+          <Button type="button" variant="outline" size="sm" onClick={() => onEditStep(2)}>
             Editar
           </Button>
         </div>
@@ -150,7 +108,7 @@ export function StepReview({ onEditStep }: StepReviewProps) {
               {paymentSummary(financial.paymentMethod, financial.installments.length)}
             </p>
           </div>
-          <Button type="button" variant="outline" size="sm" onClick={() => onEditStep(4)}>
+          <Button type="button" variant="outline" size="sm" onClick={() => onEditStep(3)}>
             Editar
           </Button>
         </div>
@@ -173,7 +131,7 @@ export function StepReview({ onEditStep }: StepReviewProps) {
               <p className="mt-1 text-sm text-(--th-text-sub)">{addressSummary}</p>
             )}
           </div>
-          <Button type="button" variant="outline" size="sm" onClick={() => onEditStep(5)}>
+          <Button type="button" variant="outline" size="sm" onClick={() => onEditStep(4)}>
             Editar
           </Button>
         </div>

@@ -26,26 +26,8 @@ const PROJECT_TYPE_CATALOG = [
   { id: 'pt_outro', name: 'Outro', icon: 'Sparkles', active: true },
 ]
 
-const SERVICE_CATALOG = [
-  { id: 'sv_estudo_preliminar', name: 'Estudo preliminar', active: true },
-  { id: 'sv_anteprojeto', name: 'Anteprojeto', active: true },
-  { id: 'sv_projeto_legal', name: 'Projeto legal', active: true },
-  { id: 'sv_projeto_executivo', name: 'Projeto executivo', active: true },
-  { id: 'sv_projeto_estrutural', name: 'Projeto estrutural', active: true },
-  { id: 'sv_compatibilizacao', name: 'Compatibilização', active: true },
-]
-
-const PROJECT_COMPONENT_CATALOG = [
-  { id: 'pc_area_estimada', name: 'Área estimada', category: null, mostUsed: true, active: true },
-  { id: 'pc_quartos', name: 'Quartos', category: null, mostUsed: true, active: true },
-  { id: 'pc_sala_estar', name: 'Sala de estar', category: 'Características do imóvel', mostUsed: false, active: true },
-  { id: 'pc_cozinha', name: 'Cozinha', category: 'Características do imóvel', mostUsed: false, active: true },
-]
-
 vi.mock('@/features/projects/create/catalogApi', () => ({
   fetchProjectTypeCatalog: vi.fn(async () => PROJECT_TYPE_CATALOG),
-  fetchServiceCatalog: vi.fn(async () => SERVICE_CATALOG),
-  fetchProjectComponentCatalog: vi.fn(async () => PROJECT_COMPONENT_CATALOG),
 }))
 
 vi.mock('@/features/projects/projectsApi', async () => {
@@ -108,7 +90,7 @@ describe('CreateProjectPage', () => {
     expect(screen.getByRole('button', { name: 'Continuar' })).toBeDisabled()
   })
 
-  it('walks through all 6 steps, confirms the project, and lands on its detail page', async () => {
+  it('walks through all 5 steps, confirms the project, and lands on its detail page', async () => {
     renderWizard()
 
     // Step 1 — Projeto (nome is auto-generated from tipo + área, not typed)
@@ -120,14 +102,7 @@ describe('CreateProjectPage', () => {
     await waitForEnabledContinue()
     fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
 
-    // Step 2 — Escopo (residencial pre-seeds recommended services)
-    await waitFor(() =>
-      expect(screen.getByText('O que vamos desenvolver?')).toBeInTheDocument(),
-    )
-    await waitForEnabledContinue()
-    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
-
-    // Step 3 — Planejamento (estimate generated from step 1/2 data)
+    // Step 2 — Planejamento (estimate generated from step 1 data)
     await waitFor(() =>
       expect(screen.getByText('Vamos planejar este projeto')).toBeInTheDocument(),
     )
@@ -135,7 +110,7 @@ describe('CreateProjectPage', () => {
     await waitForEnabledContinue()
     fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
 
-    // Step 4 — Financeiro (per_sqm fee model, area from step 1)
+    // Step 3 — Financeiro (per_sqm fee model, area from step 1)
     await waitFor(() =>
       expect(screen.getByText('Vamos definir o investimento')).toBeInTheDocument(),
     )
@@ -148,7 +123,7 @@ describe('CreateProjectPage', () => {
     await waitForEnabledContinue()
     fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
 
-    // Step 5 — Cliente e cronograma
+    // Step 4 — Cliente e cronograma
     await waitFor(() =>
       expect(
         screen.getByText('Quem é o cliente e quando começamos?'),
@@ -166,7 +141,7 @@ describe('CreateProjectPage', () => {
     await waitForEnabledContinue()
     fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
 
-    // Step 6 — Revisão: the auto-generated name is editable here
+    // Step 5 — Revisão: the auto-generated name is editable here
     await waitFor(() =>
       expect(screen.getByText('Revise seu projeto')).toBeInTheDocument(),
     )
@@ -229,7 +204,7 @@ describe('CreateProjectPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
 
     await waitFor(() =>
-      expect(screen.getByText('O que vamos desenvolver?')).toBeInTheDocument(),
+      expect(screen.getByText('Vamos planejar este projeto')).toBeInTheDocument(),
     )
 
     fireEvent.click(screen.getByRole('button', { name: 'Projeto' }))

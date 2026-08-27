@@ -1,10 +1,5 @@
-import type {
-  Complexity,
-  PlanningPhase,
-  ProjectType,
-  ServiceKey,
-} from '@/features/projects/create/types'
-import { SERVICE_ORDER, resolveServiceLabel } from '@/features/projects/create/serviceCatalog'
+import type { Complexity, PlanningPhase, ServiceKey } from '@/features/projects/create/types'
+import { SERVICE_LABELS } from '@/features/projects/create/serviceCatalog'
 
 const BASE_DAYS: Record<ServiceKey, number> = {
   estudo_preliminar: 7,
@@ -20,17 +15,20 @@ const BASE_DAYS: Record<ServiceKey, number> = {
   compatibilizacao: 5,
   acompanhamento_obra: 20,
   consultoria: 5,
-  // No catalog data for a free-text "outro" service — fall back to a
-  // middling default rather than guessing.
   outro: 7,
 }
 
+/** Fixed set of phases every project starts with — no longer driven by a
+ * per-project service selection (that concept was removed from the flow). */
+const DEFAULT_PHASE_KEYS: ServiceKey[] = [
+  'estudo_preliminar',
+  'anteprojeto',
+  'projeto_executivo',
+  'acompanhamento_obra',
+]
+
 export interface EstimateInput {
-  type: ProjectType | null
   areaSqm: number | null
-  services: ServiceKey[]
-  customServiceLabel?: string
-  componentCount: number
 }
 
 export interface ProjectPlanEstimate {
@@ -42,11 +40,6 @@ export interface ProjectPlanEstimate {
 function areaFactor(areaSqm: number | null): number {
   if (!areaSqm || areaSqm <= 0) return 1
   return Math.min(1.6, Math.max(0.8, areaSqm / 200))
-}
-
-/** Extra detailing time for projects with an unusually large component list. */
-function componentBuffer(componentCount: number): number {
-  return componentCount > 6 ? Math.min(10, (componentCount - 6) * 1.5) : 0
 }
 
 function resolveComplexity(totalDays: number): Complexity {
@@ -66,18 +59,14 @@ function resolveComplexity(totalDays: number): Complexity {
  */
 export function estimateProjectPlan(input: EstimateInput): ProjectPlanEstimate {
   const factor = areaFactor(input.areaSqm)
-  const orderedServices = SERVICE_ORDER.filter((service) =>
-    input.services.includes(service),
-  )
 
-  const phases: PlanningPhase[] = orderedServices.map((service) => ({
-    key: service,
-    name: resolveServiceLabel(service, input.customServiceLabel ?? ''),
-    estimatedDays: Math.max(1, Math.round(BASE_DAYS[service] * factor)),
+  const phases: PlanningPhase[] = DEFAULT_PHASE_KEYS.map((key) => ({
+    key,
+    name: SERVICE_LABELS[key],
+    estimatedDays: Math.max(1, Math.round(BASE_DAYS[key] * factor)),
   }))
 
-  const baseTotal = phases.reduce((sum, phase) => sum + phase.estimatedDays, 0)
-  const estimatedDays = Math.round(baseTotal + componentBuffer(input.componentCount))
+  const estimatedDays = phases.reduce((sum, phase) => sum + phase.estimatedDays, 0)
 
   return {
     complexity: resolveComplexity(estimatedDays),

@@ -1,6 +1,5 @@
 export const PROJECT_TAB_KEYS = [
   'overview',
-  'scope',
   'schedule',
   'team',
   'materials',

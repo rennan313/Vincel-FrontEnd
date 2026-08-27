@@ -9,11 +9,10 @@ interface StepConfig {
 
 const STEPS: StepConfig[] = [
   { step: 1, label: 'Projeto' },
-  { step: 2, label: 'Escopo' },
-  { step: 3, label: 'Planejamento' },
-  { step: 4, label: 'Financeiro' },
-  { step: 5, label: 'Cliente' },
-  { step: 6, label: 'Revisão' },
+  { step: 2, label: 'Planejamento' },
+  { step: 3, label: 'Financeiro' },
+  { step: 4, label: 'Cliente' },
+  { step: 5, label: 'Revisão' },
 ]
 
 interface ProjectWizardStepperProps {

@@ -8,7 +8,6 @@ import {
   type ProjectDraft,
   type ProjectInfo,
   type ScheduleData,
-  type ScopeData,
   type WizardStep,
 } from '@/features/projects/create/types'
 import { localStorageProjectDraftRepository as repository } from '@/features/projects/create/draftRepository'
@@ -34,11 +33,11 @@ function hasAddressValue(address: AddressData): boolean {
 }
 
 /** Builds the full API payload from a draft — every section the wizard
- * collects (escopo/planejamento/financeiro/cronograma/endereço), not just
+ * collects (planejamento/financeiro/cronograma/endereço), not just
  * the handful of top-level fields. Optional sections are omitted entirely
  * rather than sent empty/null, matching the backend DTOs' @IsOptional() fields. */
 function buildProjectPayload(draft: ProjectDraft): ProjectPayload {
-  const { info, scope, planning, financial, client, schedule, address } = draft
+  const { info, planning, financial, client, schedule, address } = draft
 
   const type =
     info.type === 'outro'
@@ -54,9 +53,6 @@ function buildProjectPayload(draft: ProjectDraft): ProjectPayload {
     areaSqm: info.areaSqm ?? undefined,
     clientId: client.id ?? undefined,
     clientName: client.name,
-    services: scope.services.length > 0 ? scope.services : undefined,
-    customServiceLabel: scope.customServiceLabel.trim() || undefined,
-    components: scope.components.length > 0 ? scope.components : undefined,
     planningPhases: planning.phases.length > 0 ? planning.phases : undefined,
     complexity: planning.complexity ?? undefined,
     constructionBudget: financial.constructionBudget ?? undefined,
@@ -84,8 +80,13 @@ interface ProjectWizardState {
   initDuplicate: (source: ProjectDraft) => void
   goToStep: (step: WizardStep) => void
   updateInfo: (patch: Partial<ProjectInfo>) => void
-  updateScope: (patch: Partial<ScopeData>) => void
   updatePlanning: (patch: Partial<PlanningData>) => void
+  /** Reflects a planning-phase edit made outside the wizard (e.g. the
+   * project detail page's Cronograma tab) into whichever wizard draft
+   * currently represents this project — the in-memory one if it's active,
+   * or an abandoned `edit-${projectId}` draft still cached in localStorage —
+   * so reopening "Editar" doesn't show stale phase durations. */
+  syncPlanningFromServer: (projectId: string, phases: PlanningData['phases']) => void
   updateFinancial: (patch: Partial<FinancialData>) => void
   updateClient: (patch: Partial<ClientInfo>) => void
   updateSchedule: (patch: Partial<ScheduleData>) => void
@@ -158,18 +159,6 @@ export const useProjectWizardStore = create<ProjectWizardState>((set, get) => ({
     })
   },
 
-  updateScope: (patch) => {
-    set((state) => {
-      const draft: ProjectDraft = {
-        ...state.draft,
-        scope: { ...state.draft.scope, ...patch },
-        updatedAt: nowIso(),
-      }
-      persist(draft)
-      return { draft }
-    })
-  },
-
   updatePlanning: (patch) => {
     set((state) => {
       const draft: ProjectDraft = {
@@ -179,6 +168,31 @@ export const useProjectWizardStore = create<ProjectWizardState>((set, get) => ({
       }
       persist(draft)
       return { draft }
+    })
+  },
+
+  syncPlanningFromServer: (projectId, phases) => {
+    const editDraftId = `edit-${projectId}`
+    const active = get().draft
+    if (active.id === projectId || active.id === editDraftId) {
+      set((state) => {
+        const draft: ProjectDraft = {
+          ...state.draft,
+          planning: { ...state.draft.planning, phases, isCustomized: true },
+          updatedAt: nowIso(),
+        }
+        persist(draft)
+        return { draft }
+      })
+      return
+    }
+
+    const cached = repository.load(editDraftId)
+    if (!cached) return
+    persist({
+      ...cached,
+      planning: { ...cached.planning, phases, isCustomized: true },
+      updatedAt: nowIso(),
     })
   },
 

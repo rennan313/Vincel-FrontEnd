@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useQueryStates, parseAsInteger, parseAsString } from 'nuqs'
+import { useQueryState, useQueryStates, parseAsBoolean, parseAsInteger, parseAsString } from 'nuqs'
 import { useTranslation } from 'react-i18next'
 import { PageTitle } from '@/components/ui/PageTitle'
 import { PageSubtitle } from '@/components/ui/PageSubtitle'
@@ -29,6 +29,8 @@ export function ClientsPage() {
   const [searchInput, setSearchInput] = useState(search)
   const debouncedSearch = useDebouncedValue(searchInput, 300)
   const [modalState, setModalState] = useState<ModalState>({ open: false })
+  // Deep link from the Dashboard's "Novo cliente" quick action.
+  const [openNew, setOpenNew] = useQueryState('new', parseAsBoolean)
 
   useEffect(() => {
     if (debouncedSearch !== search) {
@@ -36,6 +38,14 @@ export function ClientsPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch])
+
+  useEffect(() => {
+    if (openNew) {
+      setModalState({ open: true })
+      setOpenNew(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openNew])
 
   const { data, isLoading } = useQuery({
     queryKey: ['clients', page, search],

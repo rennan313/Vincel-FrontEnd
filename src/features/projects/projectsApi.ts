@@ -7,7 +7,6 @@ import type {
   Installment,
   PaymentMethod,
   PlanningPhase,
-  ProjectComponentItem,
 } from '@/features/projects/create/types'
 
 export type ProjectStatus = 'in_progress' | 'completed' | 'paused' | 'canceled'
@@ -21,9 +20,6 @@ export interface Project {
   status: ProjectStatus
   clientId?: string | null
   clientName: string
-  services?: string[]
-  customServiceLabel?: string | null
-  components?: ProjectComponentItem[]
   planningPhases?: PlanningPhase[]
   complexity?: Complexity | null
   constructionBudget?: number | null
@@ -55,9 +51,6 @@ export interface ProjectPayload {
   clientId?: string
   clientName: string
   status?: ProjectStatus
-  services?: string[]
-  customServiceLabel?: string
-  components?: ProjectComponentItem[]
   planningPhases?: PlanningPhase[]
   complexity?: Complexity
   constructionBudget?: number

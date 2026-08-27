@@ -2,15 +2,10 @@ import {
   createEmptyDraft,
   type AddressData,
   type FinancialData,
-  type PlanningPhase,
   type ProjectDraft,
   type ScheduleData,
-  type ServiceKey,
 } from '@/features/projects/create/types'
-import {
-  SERVICE_ORDER,
-  resolveProjectTypeKeyByName,
-} from '@/features/projects/create/serviceCatalog'
+import { resolveProjectTypeKeyByName } from '@/features/projects/create/serviceCatalog'
 import type { Project } from '@/features/projects/projectsApi'
 
 function toISODateString(value: string): string | null {
@@ -22,13 +17,9 @@ function toISODateString(value: string): string | null {
   return `${year}-${month}-${day}`
 }
 
-function isServiceKey(value: string): value is ServiceKey {
-  return (SERVICE_ORDER as string[]).includes(value)
-}
-
 /**
  * Maps a real backend Project — already carrying everything the wizard
- * collected at creation (escopo/planejamento/financeiro/cronograma/endereço,
+ * collected at creation (planejamento/financeiro/cronograma/endereço,
  * see CreateProjectDto on vincel-api) — into a ProjectDraft the detail page
  * and the edit wizard can render. No fabrication: a project created before
  * a given field existed, or via a minimal payload, just renders that
@@ -40,10 +31,11 @@ export function projectToDraft(draftId: string, project: Project): ProjectDraft 
   const type = resolveProjectTypeKeyByName(project.type) ?? 'outro'
   const customType = type === 'outro' ? (project.customType ?? project.type) : ''
 
-  const services = (project.services ?? []).filter(isServiceKey)
-  const planningPhases: PlanningPhase[] = (project.planningPhases ?? []).filter((phase) =>
-    isServiceKey(phase.key),
-  )
+  const planningPhases = (project.planningPhases ?? []).map((phase) => ({
+    ...phase,
+    startDate: phase.startDate ? toISODateString(phase.startDate) : null,
+    endDate: phase.endDate ? toISODateString(phase.endDate) : null,
+  }))
 
   const financial: FinancialData = {
     constructionBudget: project.constructionBudget ?? null,
@@ -80,11 +72,6 @@ export function projectToDraft(draftId: string, project: Project): ProjectDraft 
       name: project.name,
       nameIsCustom: true,
       areaSqm: project.areaSqm ?? null,
-    },
-    scope: {
-      services,
-      customServiceLabel: project.customServiceLabel ?? '',
-      components: project.components ?? [],
     },
     planning: {
       phases: planningPhases,

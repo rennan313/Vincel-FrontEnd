@@ -10,6 +10,7 @@
     "main": "Principal",
     "dashboard": "Dashboard",
     "clients": "Clientes",
+    "providers": "Prestadores",
     "projects": "Projetos",
     "users": "Usuários",
     "subscription": "Assinatura"
@@ -28,9 +29,15 @@
   "dashboard": {
     "greeting": "Olá, {{name}}",
     "subtitle": "Aqui está um resumo do seu escritório.",
-    "activeProjects": "Projetos ativos",
-    "activeClients": "Clientes ativos",
-    "monthRevenue": "Faturamento do mês"
+    "quickActions": "Ações rápidas",
+    "newProject": "Novo projeto",
+    "newClient": "Novo cliente",
+    "newProvider": "Novo prestador",
+    "recentProjects": "Projetos recentes",
+    "recentClients": "Clientes recentes",
+    "viewAll": "Ver todos",
+    "noProjects": "Nenhum projeto criado ainda.",
+    "noClients": "Nenhum cliente cadastrado ainda."
   },
   "comingSoon": {
     "message": "Essa tela ainda está em construção."

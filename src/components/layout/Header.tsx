@@ -10,6 +10,7 @@ import { useBreadcrumbStore } from '@/store/breadcrumbStore'
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'nav.dashboard',
   '/clients': 'nav.clients',
+  '/providers': 'nav.providers',
   '/projects': 'nav.projects',
 }
 

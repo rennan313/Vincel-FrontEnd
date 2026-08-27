@@ -23,13 +23,38 @@ export type ServiceKey =
   | 'consultoria'
   | 'outro'
 
-export interface ProjectComponentItem {
-  id: string
-  name: string
-  quantity: number
-  areaSqm?: number
-  note?: string
-}
+/** Must match the backend's ProviderRole Prisma enum values exactly —
+ * sent straight through to a class-validator @IsEnum() field. */
+export type ProviderRole =
+  | 'ARQUITETO_COLABORADOR'
+  | 'ENGENHEIRO_ESTRUTURAL'
+  | 'ENGENHEIRO_ELETRICO'
+  | 'ENGENHEIRO_HIDRAULICO'
+  | 'MESTRE_OBRAS'
+  | 'EMPREITEIRO'
+  | 'PEDREIRO'
+  | 'ELETRICISTA'
+  | 'ENCANADOR'
+  | 'MARCENEIRO'
+  | 'SERRALHEIRO'
+  | 'VIDRACEIRO'
+  | 'PINTOR'
+  | 'GESSEIRO'
+  | 'PAISAGISTA'
+  | 'DECORADOR'
+  | 'OUTRO'
+
+/** Must match the backend's ProviderStatus Prisma enum values exactly. */
+export type ProviderStatus =
+  | 'A_CONTRATAR'
+  | 'CONTRATADO'
+  | 'EM_ANDAMENTO'
+  | 'PAUSADO'
+  | 'CONCLUIDO'
+  | 'CANCELADO'
+
+/** Must match the backend's ProjectMaterialStatus Prisma enum values exactly. */
+export type MaterialStatus = 'A_DEFINIR' | 'ESPECIFICADO' | 'APROVADO' | 'COMPRADO'
 
 export interface ProjectInfo {
   type: ProjectType | null
@@ -42,18 +67,23 @@ export interface ProjectInfo {
   areaSqm: number | null
 }
 
-export interface ScopeData {
-  services: ServiceKey[]
-  customServiceLabel: string
-  components: ProjectComponentItem[]
-}
-
 export type Complexity = 'LOW' | 'MEDIUM' | 'HIGH'
 
 export interface PlanningPhase {
-  key: ServiceKey
+  /** ServiceKey for a catalog-seeded phase, or a generated id for a
+   * custom item added directly on the Cronograma tab. */
+  key: string
   name: string
   estimatedDays: number
+  /** ISO date (yyyy-mm-dd) this task is scheduled to start. */
+  startDate?: string | null
+  /** ISO date (yyyy-mm-dd) término previsto. Defaults to startDate +
+   * estimatedDays (see getPhaseEndDate) but can be overridden by hand —
+   * when it is, getPhaseScheduleVariance compares it back against that
+   * estimate to show how many days ahead/behind. */
+  endDate?: string | null
+  /** Free-text: which team/person executes this task. */
+  team?: string | null
 }
 
 export interface PlanningData {
@@ -113,7 +143,7 @@ export interface AddressData {
   state: string
 }
 
-export type WizardStep = 1 | 2 | 3 | 4 | 5 | 6
+export type WizardStep = 1 | 2 | 3 | 4 | 5
 
 export type DraftStatus = 'draft' | 'confirmed'
 
@@ -122,7 +152,6 @@ export interface ProjectDraft {
   status: DraftStatus
   step: WizardStep
   info: ProjectInfo
-  scope: ScopeData
   planning: PlanningData
   financial: FinancialData
   client: ClientInfo
@@ -138,7 +167,6 @@ export function createEmptyDraft(id: string, timestamp: string): ProjectDraft {
     status: 'draft',
     step: 1,
     info: { type: null, customType: '', name: '', nameIsCustom: false, areaSqm: null },
-    scope: { services: [], customServiceLabel: '', components: [] },
     planning: { phases: [], complexity: null, isCustomized: false },
     financial: {
       constructionBudget: null,

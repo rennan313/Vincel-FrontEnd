@@ -3,17 +3,19 @@ import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Button } from '@/components/ui/Button'
 
-interface ModalProps {
+interface DrawerProps {
   open: boolean
   onClose: () => void
   title: string
+  subtitle?: string
   children: ReactNode
-  footer?: ReactNode
-  /** 'lg' for content-heavy views (e.g. a material's full "ficha") — defaults to 'md'. */
-  size?: 'md' | 'lg'
 }
 
-export function Modal({ open, onClose, title, children, footer, size = 'md' }: ModalProps) {
+/** Slide-in side panel — same open/close/Escape behavior as Modal, but a
+ * full-height panel anchored to the right instead of a centered dialog.
+ * Used for content best browsed as a list (e.g. a gallery of cards) rather
+ * than a single focused form. */
+export function Drawer({ open, onClose, title, subtitle, children }: DrawerProps) {
   useEffect(() => {
     if (!open) return
 
@@ -32,7 +34,7 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: M
   if (!open) return null
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex justify-end">
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
         onClick={onClose}
@@ -41,18 +43,18 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: M
       <div
         role="dialog"
         aria-modal="true"
-        aria-labelledby="modal-title"
-        className={`relative flex max-h-[90vh] w-full flex-col overflow-hidden rounded-xl border border-(--th-border) bg-(--th-bg-card) shadow-xl ${
-          size === 'lg' ? 'max-w-2xl' : 'max-w-lg'
-        }`}
+        aria-labelledby="drawer-title"
+        className="relative flex h-full w-full max-w-md flex-col overflow-hidden border-l border-(--th-border) bg-(--th-bg-card) shadow-xl"
       >
-        <div className="flex items-center justify-between border-b border-(--th-border) px-5 py-4">
-          <h2
-            id="modal-title"
-            className="text-base font-semibold text-(--th-text)"
-          >
-            {title}
-          </h2>
+        <div className="flex items-start justify-between gap-3 border-b border-(--th-border) px-5 py-4">
+          <div className="min-w-0">
+            <h2 id="drawer-title" className="text-base font-semibold text-(--th-text)">
+              {title}
+            </h2>
+            {subtitle && (
+              <p className="mt-0.5 text-sm text-(--th-text-muted)">{subtitle}</p>
+            )}
+          </div>
           <Button
             type="button"
             variant="ghost"
@@ -63,13 +65,7 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: M
           />
         </div>
 
-        <div className="overflow-y-auto p-5">{children}</div>
-
-        {footer && (
-          <div className="flex items-center justify-end gap-2 border-t border-(--th-border) px-5 py-4">
-            {footer}
-          </div>
-        )}
+        <div className="flex-1 overflow-y-auto p-5">{children}</div>
       </div>
     </div>,
     document.body,
