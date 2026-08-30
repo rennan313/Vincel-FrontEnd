@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ApiError } from '@/lib/apiClient'
 import { ProjectTimeline } from '@/features/projects/detail/ProjectTimeline'
 import { fetchProjectProviders } from '@/features/projects/detail/projectProvidersApi'
@@ -25,6 +26,7 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
   const queryClient = useQueryClient()
   const syncWizardPlanning = useProjectWizardStore((state) => state.syncPlanningFromServer)
   const [phases, setPhases] = useState<PlanningPhase[]>(draft.planning.phases)
+  const [pendingRemoveIndex, setPendingRemoveIndex] = useState<number>()
 
   // Same query key TeamTab uses — the "equipe" select is sourced from the
   // providers already cadastrados on this project's team, not free text.
@@ -123,6 +125,16 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
     commitPhases(nextPhases)
   }
 
+  function handleRemoveItem() {
+    if (pendingRemoveIndex == null) return
+    const nextPhases = phases.filter((_, i) => i !== pendingRemoveIndex)
+    setPhases(nextPhases)
+    commitPhases(nextPhases)
+    setPendingRemoveIndex(undefined)
+  }
+
+  const phaseToRemove = pendingRemoveIndex != null ? phases[pendingRemoveIndex] : undefined
+
   return (
     <Card>
       <ProjectTimeline
@@ -136,6 +148,7 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
         onStartDateChange={handleStartDateChange}
         onEndDateChange={handleEndDateChange}
         onTeamChange={handleTeamChange}
+        onRemove={setPendingRemoveIndex}
         onCommit={handleCommit}
         teamOptions={teamOptions}
       />
@@ -157,6 +170,20 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
           ? 'Informe duração, início, término previsto e equipe de cada etapa — as alterações são salvas automaticamente.'
           : 'Cadastre prestadores na aba Equipe para poder selecioná-los aqui como responsáveis.'}
       </p>
+
+      <ConfirmDialog
+        open={pendingRemoveIndex != null}
+        title="Remover etapa"
+        message={
+          <>
+            Remover{' '}
+            <span className="font-medium text-(--th-text)">{phaseToRemove?.name}</span> do
+            cronograma? Essa ação não pode ser desfeita.
+          </>
+        }
+        onCancel={() => setPendingRemoveIndex(undefined)}
+        onConfirm={handleRemoveItem}
+      />
     </Card>
   )
 }

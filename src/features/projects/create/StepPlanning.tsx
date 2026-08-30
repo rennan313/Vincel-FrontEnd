@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
 import { estimateProjectPlan } from '@/features/projects/create/estimateProjectPlan'
 import type { Complexity } from '@/features/projects/create/types'
@@ -15,11 +16,16 @@ const COMPLEXITY_LABEL: Record<Complexity, string> = {
   HIGH: 'Alta',
 }
 
+function generatePhaseKey() {
+  return `phase_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+}
+
 export function StepPlanning({ onValidityChange }: StepPlanningProps) {
   const info = useProjectWizardStore((state) => state.draft.info)
   const planning = useProjectWizardStore((state) => state.draft.planning)
   const updatePlanning = useProjectWizardStore((state) => state.updatePlanning)
   const seeded = useRef(false)
+  const [pendingRemoveIndex, setPendingRemoveIndex] = useState<number>()
 
   useEffect(() => {
     if (!seeded.current && planning.phases.length === 0) {
@@ -36,6 +42,7 @@ export function StepPlanning({ onValidityChange }: StepPlanningProps) {
 
   const totalDays = planning.phases.reduce((sum, phase) => sum + phase.estimatedDays, 0)
   const isValid = planning.phases.length > 0
+  const isSeeding = !seeded.current && planning.phases.length === 0
 
   useEffect(() => {
     onValidityChange(isValid)
@@ -48,6 +55,35 @@ export function StepPlanning({ onValidityChange }: StepPlanningProps) {
     )
     updatePlanning({ phases, isCustomized: true })
   }
+
+  function handleNameChange(index: number, value: string) {
+    const phases = planning.phases.map((phase, i) =>
+      i === index ? { ...phase, name: value } : phase,
+    )
+    updatePlanning({ phases, isCustomized: true })
+  }
+
+  function handleAddItem() {
+    const phases = [
+      ...planning.phases,
+      {
+        key: generatePhaseKey(),
+        name: `Nova etapa ${planning.phases.length + 1}`,
+        estimatedDays: 1,
+      },
+    ]
+    updatePlanning({ phases, isCustomized: true })
+  }
+
+  function handleRemoveItem() {
+    if (pendingRemoveIndex == null) return
+    const phases = planning.phases.filter((_, i) => i !== pendingRemoveIndex)
+    updatePlanning({ phases, isCustomized: true })
+    setPendingRemoveIndex(undefined)
+  }
+
+  const phaseToRemove =
+    pendingRemoveIndex != null ? planning.phases[pendingRemoveIndex] : undefined
 
   function handleRecalculate() {
     const estimate = estimateProjectPlan({ areaSqm: info.areaSqm })
@@ -69,7 +105,7 @@ export function StepPlanning({ onValidityChange }: StepPlanningProps) {
         </p>
       </div>
 
-      {planning.phases.length === 0 ? (
+      {isSeeding ? (
         <p className="rounded-lg border border-dashed border-(--th-border) p-4 text-center text-sm text-(--th-text-muted)">
           Preparando estimativa inicial...
         </p>
@@ -106,6 +142,12 @@ export function StepPlanning({ onValidityChange }: StepPlanningProps) {
               )}
             </div>
 
+            {planning.phases.length === 0 && (
+              <p className="mb-3 rounded-lg border border-dashed border-(--th-border) p-4 text-center text-sm text-(--th-text-muted)">
+                Nenhuma etapa neste planejamento ainda.
+              </p>
+            )}
+
             <ol className="space-y-0">
               {planning.phases.map((phase, index) => {
                 const isLast = index === planning.phases.length - 1
@@ -118,11 +160,16 @@ export function StepPlanning({ onValidityChange }: StepPlanningProps) {
                       )}
                     </div>
                     <div className="min-w-0 flex-1 pb-5">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-medium text-(--th-text)">
-                          {phase.name}
-                        </p>
-                        <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-3">
+                        <Input
+                          aria-label="Nome da etapa"
+                          value={phase.name}
+                          onChange={(event) =>
+                            handleNameChange(index, event.target.value)
+                          }
+                          className="h-8 flex-1 px-2 text-sm font-medium"
+                        />
+                        <div className="flex shrink-0 items-center gap-1.5">
                           <Input
                             aria-label={`Duração de ${phase.name}`}
                             type="number"
@@ -137,12 +184,31 @@ export function StepPlanning({ onValidityChange }: StepPlanningProps) {
                             dias
                           </span>
                         </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          icon="Trash2"
+                          aria-label={`Remover ${phase.name}`}
+                          onClick={() => setPendingRemoveIndex(index)}
+                        />
                       </div>
                     </div>
                   </li>
                 )
               })}
             </ol>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              icon="Plus"
+              className="mt-2"
+              onClick={handleAddItem}
+            >
+              Adicionar etapa
+            </Button>
           </div>
 
           <p className="text-xs text-(--th-text-muted)">
@@ -151,6 +217,20 @@ export function StepPlanning({ onValidityChange }: StepPlanningProps) {
           </p>
         </>
       )}
+
+      <ConfirmDialog
+        open={pendingRemoveIndex != null}
+        title="Remover etapa"
+        message={
+          <>
+            Remover{' '}
+            <span className="font-medium text-(--th-text)">{phaseToRemove?.name}</span> deste
+            planejamento?
+          </>
+        }
+        onCancel={() => setPendingRemoveIndex(undefined)}
+        onConfirm={handleRemoveItem}
+      />
     </div>
   )
 }
