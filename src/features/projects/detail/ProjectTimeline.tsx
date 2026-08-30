@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
 import { formatDate } from '@/lib/formatDate'
@@ -34,6 +35,8 @@ interface ProjectTimelineProps {
   onStartDateChange?: (index: number, value: string) => void
   onEndDateChange?: (index: number, value: string) => void
   onTeamChange?: (index: number, value: string) => void
+  /** When provided, shows a delete button per phase. */
+  onRemove?: (index: number) => void
   /** Fired when a field edit should be persisted (e.g. on blur). */
   onCommit?: () => void
   disabled?: boolean
@@ -54,6 +57,7 @@ export function ProjectTimeline({
   onStartDateChange,
   onEndDateChange,
   onTeamChange,
+  onRemove,
   onCommit,
   disabled,
   teamOptions = [],
@@ -134,6 +138,17 @@ export function ProjectTimeline({
                     <span className="shrink-0 text-xs text-(--th-text-muted)">
                       {phase.estimatedDays} dias
                     </span>
+                  )}
+                  {onRemove && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      icon="Trash2"
+                      aria-label={`Remover ${phase.name}`}
+                      disabled={disabled}
+                      onClick={() => onRemove(index)}
+                    />
                   )}
                 </div>
 
