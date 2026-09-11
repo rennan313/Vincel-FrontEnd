@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { NavLink, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, LogOut } from 'lucide-react'
+import { ChevronDown, LogOut, UserPlus } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
+import { canManageUsers } from '@/features/users/usersApi'
 
 function getInitials(name: string) {
   return name
@@ -32,6 +33,8 @@ export function UserMenu() {
   }, [])
 
   if (!user) return null
+
+  const showUsers = canManageUsers(user.role)
 
   function handleLogout() {
     logout()
@@ -64,6 +67,18 @@ export function UserMenu() {
               {user.email}
             </p>
           </div>
+          {showUsers && (
+            <div className="border-b border-(--th-border) py-1">
+              <NavLink
+                to="/users"
+                onClick={() => setOpen(false)}
+                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-(--th-text-sub) hover:bg-(--th-bg-elevated) hover:text-(--th-text)"
+              >
+                <UserPlus className="size-3.5 text-(--th-text-muted)" />
+                {t('nav.users')}
+              </NavLink>
+            </div>
+          )}
           <div className="py-1">
             <button
               type="button"
