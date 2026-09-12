@@ -1,5 +1,5 @@
 import { apiFetch } from '@/lib/apiClient'
-import type { ProviderRole, ProviderStatus } from '@/features/projects/create/types'
+import type { ProviderRole } from '@/features/projects/create/types'
 
 export interface Provider {
   id: string
@@ -11,7 +11,6 @@ export interface Provider {
   email?: string | null
   companyName?: string | null
   document?: string | null
-  status: ProviderStatus
   active: boolean
 }
 
@@ -30,7 +29,6 @@ export interface ProviderPayload {
   email?: string
   companyName?: string
   document?: string
-  status?: ProviderStatus
 }
 
 export function fetchProviders(
