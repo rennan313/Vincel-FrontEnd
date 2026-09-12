@@ -35,6 +35,7 @@ export function UsersPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const currentUserRole = useAuthStore((state) => state.user?.role)
+  const currentUserId = useAuthStore((state) => state.user?.id)
   const [{ page, q: search, role }, setQuery] = useQueryStates({
     page: parseAsInteger.withDefault(1),
     q: parseAsString.withDefault(''),
@@ -112,26 +113,28 @@ export function UsersPage() {
               onClick={() => setModalState({ open: true, user })}
             />
           </Tooltip>
-          <Tooltip label={user.active ? t('users.deactivate') : t('users.activate')}>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              icon={user.active ? 'Archive' : 'Check'}
-              aria-label={
-                user.active
-                  ? t('users.deactivateAction', { name: user.name })
-                  : t('users.activateAction', { name: user.name })
-              }
-              loading={
-                toggleActiveMutation.isPending &&
-                toggleActiveMutation.variables?.id === user.id
-              }
-              onClick={() =>
-                toggleActiveMutation.mutate({ id: user.id, active: !user.active })
-              }
-            />
-          </Tooltip>
+          {user.id !== currentUserId && (
+            <Tooltip label={user.active ? t('users.deactivate') : t('users.activate')}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                icon={user.active ? 'Archive' : 'Check'}
+                aria-label={
+                  user.active
+                    ? t('users.deactivateAction', { name: user.name })
+                    : t('users.activateAction', { name: user.name })
+                }
+                loading={
+                  toggleActiveMutation.isPending &&
+                  toggleActiveMutation.variables?.id === user.id
+                }
+                onClick={() =>
+                  toggleActiveMutation.mutate({ id: user.id, active: !user.active })
+                }
+              />
+            </Tooltip>
+          )}
         </div>
       ),
     },
