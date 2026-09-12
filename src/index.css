@@ -64,6 +64,15 @@
      --th-bg-elevated (shared by Button/UserMenu) so tuning one doesn't
      affect the other. */
   --th-row-hover: var(--surface-elevated);
+
+  /* Categorical chart palette — fixed hue order, CVD-validated as a set.
+     Assign slot 1..N to series in this order; never reassign per data. */
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #c98500;
+  --chart-5: #d55181;
+  --chart-6: #008300;
 }
 
 [data-theme="light"] {
@@ -109,6 +118,15 @@
   /* Lighter than --surface-elevated (#eceef6) on purpose — table row hover
      specifically, kept independent from Button/UserMenu's elevated tone. */
   --th-row-hover: #f5f6f9;
+
+  /* Categorical chart palette — fixed hue order, CVD-validated as a set.
+     Assign slot 1..N to series in this order; never reassign per data. */
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
+  --chart-5: #e87ba4;
+  --chart-6: #008300;
 }
 
 @layer base {
