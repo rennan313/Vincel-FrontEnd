@@ -159,7 +159,7 @@
     }
   },
   "agenda": {
-    "subtitle": "Linha do tempo dos projetos do seu escritório.",
+    "subtitle": "Acompanhe as datas dos projetos do seu escritório.",
     "empty": "Nenhum projeto com data de início cadastrada ainda.",
     "today": "Hoje",
     "zoom": {
@@ -167,7 +167,21 @@
       "weeks": "Semanas",
       "months": "Meses"
     },
-    "projectColumn": "Projeto"
+    "projectColumn": "Projeto",
+    "viewSchedule": "Ver cronograma de {{name}}",
+    "backToProjects": "Voltar para todos os projetos",
+    "openProject": "Abrir {{name}}",
+    "tabs": {
+      "timeline": "Linha do Tempo",
+      "calendar": "Calendário"
+    },
+    "calendar": {
+      "previousMonth": "Mês anterior",
+      "nextMonth": "Próximo mês",
+      "more": "+{{count}} mais",
+      "newTask": "Nova tarefa",
+      "newTaskOn": "Agendar tarefa em {{date}}"
+    }
   },
   "table": {
     "pagination": {
@@ -199,10 +213,8 @@
       "trustSignalCount": "340+",
       "trustSignalText": "escritórios de arquitetura no Brasil",
       "mockGoogleToast": "Mock: login com Google não implementado",
-      "mockSuccessToast": "Mock: login efetuado com sucesso",
       "mockForgotPasswordToast": "Mock: recuperação de senha não implementada",
       "errors": {
-        "invalid_credentials": "E-mail ou senha incorretos.",
         "default": "Ocorreu um erro ao entrar. Tente novamente."
       }
     },
