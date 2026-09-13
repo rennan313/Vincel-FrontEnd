@@ -273,5 +273,23 @@
   },
   "subscription": {
     "subtitle": "Gerencie o plano de assinatura do seu escritório."
+  },
+  "timer": {
+    "label": "Timer",
+    "openTooltip": "Abrir timer",
+    "startTitle": "Iniciar atividade",
+    "activityLabel": "Atividade",
+    "activityPlaceholder": "O que você vai fazer?",
+    "projectLabel": "Projeto",
+    "projectPlaceholder": "Selecione um projeto",
+    "start": "Iniciar",
+    "pause": "Pausar",
+    "resume": "Retomar",
+    "stop": "Parar",
+    "today": "Hoje",
+    "totalOfDay": "Total do dia",
+    "emptyToday": "Nenhuma atividade registrada hoje.",
+    "startError": "Não foi possível iniciar o timer.",
+    "actionError": "Não foi possível atualizar o timer."
   }
 }

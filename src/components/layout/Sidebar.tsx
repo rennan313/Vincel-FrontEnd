@@ -8,6 +8,7 @@ import { useSidebarStore } from '@/store/sidebarStore'
 import { useAuthStore } from '@/store/authStore'
 import { useMediaQuery } from '@/lib/useMediaQuery'
 import { canManageUsers } from '@/features/users/usersApi'
+import { TimerWidget } from '@/features/timer/TimerWidget'
 
 interface NavItem {
   labelKey: string
@@ -171,6 +172,8 @@ export function Sidebar() {
             />
           ))}
         </nav>
+
+        <TimerWidget rail={rail} />
       </aside>
     </>
   )
