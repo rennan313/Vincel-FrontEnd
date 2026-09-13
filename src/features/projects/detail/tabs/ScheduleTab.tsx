@@ -11,7 +11,7 @@ import { fetchProjectProviders } from '@/features/projects/detail/projectProvide
 import { updateProject } from '@/features/projects/projectsApi'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
 import { resolveProviderRoleLabel } from '@/features/projects/create/providerRoles'
-import type { PlanningPhase, ProjectDraft } from '@/features/projects/create/types'
+import type { PlanningPhase, ProjectDraft, ProviderStatus } from '@/features/projects/create/types'
 import { getProjectPhaseBars, type ProjectTimelineBar } from '@/features/agenda/agendaDerivations'
 import { ProjectTimeline as AgendaTimeline } from '@/features/agenda/ProjectTimeline'
 import { PhaseFormModal, type PhaseFormInput } from '@/features/projects/detail/tabs/PhaseFormModal'
@@ -52,47 +52,6 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
 
   const totalDays = phases.reduce((sum, phase) => sum + phase.estimatedDays, 0)
 
-  // The same phases the Gantt below plots, replotted live — updates as
-  // soon as the modal saves, no need to reload. Null (nothing to plot)
-  // until the project has an início and at least one etapa, same as the
-  // Agenda page's own empty case.
-  const timelineBar = useMemo<ProjectTimelineBar | null>(() => {
-    if (!draft.schedule.startDate || phases.length === 0) return null
-    const start = draft.schedule.startDate
-    const phaseBars = getProjectPhaseBars(phases, start)
-    return {
-      id: projectId!,
-      name: draft.info.name,
-      // Only used to color a project's bar on the Agenda's multi-project
-      // list — this view is always rendered focused on this one project
-      // (see AgendaTimeline's `embedded` prop below), so that branch never
-      // runs and this value is never actually shown.
-      status: 'in_progress',
-      start,
-      end: draft.schedule.endDate ?? phaseBars.at(-1)?.end ?? start,
-      phases: phaseBars,
-    }
-  }, [draft.info.name, draft.schedule.endDate, draft.schedule.startDate, phases, projectId])
-
-  function scrollTimelineToToday() {
-    const container = timelineScrollRef.current
-    if (!container || !timelineBar) return
-    const dates = [
-      timelineBar.start,
-      timelineBar.end,
-      ...timelineBar.phases.map((phase) => phase.start),
-      ...timelineBar.phases.map((phase) => phase.end),
-    ]
-    const range = computeVisibleRange(dates, zoom)
-    const todayOffsetPx = daysBetweenISO(range.start, todayISO()) * ZOOM_PX_PER_DAY[zoom]
-    container.scrollLeft = TIMELINE_LEFT_COL_WIDTH + todayOffsetPx - container.clientWidth / 2
-  }
-
-  useEffect(() => {
-    scrollTimelineToToday()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zoom, timelineBar])
-
   // Same query key TeamTab uses — the "equipe" select is sourced from the
   // providers already cadastrados on this project's team, not free text.
   const { data: providerLinks = [] } = useQuery({
@@ -117,6 +76,64 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
       }, new Map<string, string[]>())
       .entries(),
   ).map(([name, roles]) => ({ name, roles }))
+
+  // The same phases the Gantt below plots, replotted live — updates as
+  // soon as the modal saves, no need to reload. Null (nothing to plot)
+  // until the project has an início and at least one etapa, same as the
+  // Agenda page's own empty case.
+  const timelineBar = useMemo<ProjectTimelineBar | null>(() => {
+    if (!draft.schedule.startDate || phases.length === 0) return null
+    const start = draft.schedule.startDate
+
+    // First cadastro per name — a prestador isn't expected to hold more
+    // than one status at a time on this project's Equipe.
+    const statusByTeamName = new Map<string, ProviderStatus>()
+    for (const link of providerLinks) {
+      if (!statusByTeamName.has(link.provider.name)) {
+        statusByTeamName.set(link.provider.name, link.status)
+      }
+    }
+
+    // Colors each bar the same way its equipe's status Badge is colored
+    // on the Equipe tab — null (today's neutral bordered look) when the
+    // etapa has no equipe or that name matches no cadastro.
+    const phaseBars = getProjectPhaseBars(phases, start).map((bar, index) => ({
+      ...bar,
+      providerStatus: statusByTeamName.get(phases[index].team ?? '') ?? null,
+    }))
+
+    return {
+      id: projectId!,
+      name: draft.info.name,
+      // Only used to color a project's bar on the Agenda's multi-project
+      // list — this view is always rendered focused on this one project
+      // (see AgendaTimeline's `embedded` prop below), so that branch never
+      // runs and this value is never actually shown.
+      status: 'in_progress',
+      start,
+      end: draft.schedule.endDate ?? phaseBars.at(-1)?.end ?? start,
+      phases: phaseBars,
+    }
+  }, [draft.info.name, draft.schedule.endDate, draft.schedule.startDate, phases, projectId, providerLinks])
+
+  function scrollTimelineToToday() {
+    const container = timelineScrollRef.current
+    if (!container || !timelineBar) return
+    const dates = [
+      timelineBar.start,
+      timelineBar.end,
+      ...timelineBar.phases.map((phase) => phase.start),
+      ...timelineBar.phases.map((phase) => phase.end),
+    ]
+    const range = computeVisibleRange(dates, zoom)
+    const todayOffsetPx = daysBetweenISO(range.start, todayISO()) * ZOOM_PX_PER_DAY[zoom]
+    container.scrollLeft = TIMELINE_LEFT_COL_WIDTH + todayOffsetPx - container.clientWidth / 2
+  }
+
+  useEffect(() => {
+    scrollTimelineToToday()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoom, timelineBar])
 
   const saveMutation = useMutation({
     mutationFn: (nextPhases: PlanningPhase[]) =>

@@ -1,5 +1,5 @@
 import type { Project } from '@/features/projects/projectsApi'
-import type { PlanningPhase } from '@/features/projects/create/types'
+import type { PlanningPhase, ProviderStatus } from '@/features/projects/create/types'
 import { addDaysISO, toISODate } from '@/features/agenda/timelineMath'
 
 export interface ProjectPhaseBar {
@@ -9,6 +9,15 @@ export interface ProjectPhaseBar {
   start: string
   /** ISO date (yyyy-mm-dd), always >= start. */
   end: string
+  /** Status of the prestador assigned as this etapa's "equipe responsável"
+   * (looked up by name against the project's cadastro de prestadores) —
+   * null when the etapa has no equipe or that name matches no prestador.
+   * Colors the bar on the Cronograma tab's Gantt the same way that
+   * status's badge is colored on the Equipe tab. Not populated by
+   * `getProjectTimelineBar` (the Agenda page doesn't load every project's
+   * prestadores) — only the Cronograma tab attaches it, after the fact,
+   * from its own already-loaded provider links. */
+  providerStatus?: ProviderStatus | null
 }
 
 export interface ProjectTimelineBar {

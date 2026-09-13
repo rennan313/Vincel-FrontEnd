@@ -2,9 +2,14 @@ import { forwardRef, useMemo } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, Eye } from 'lucide-react'
+import type { BadgeVariant } from '@/components/ui/Badge'
 import { formatDate } from '@/lib/formatDate'
 import { cn } from '@/lib/cn'
 import type { ProjectTimelineBar } from '@/features/agenda/agendaDerivations'
+import {
+  PROVIDER_STATUS_LABELS,
+  PROVIDER_STATUS_VARIANT,
+} from '@/features/projects/create/providerStatuses'
 import {
   buildTimelineSegments,
   computeVisibleRange,
@@ -24,6 +29,18 @@ const STATUS_BAR_CLASS: Record<ProjectTimelineBar['status'], string> = {
   completed: 'bg-green-500',
   paused: 'bg-amber-500',
   canceled: 'bg-red-500',
+}
+
+// Same coloring the Equipe tab's status Badge uses (Badge.tsx's
+// variantClasses), just solid instead of a tinted background — a phase bar
+// with no equipe/status keeps today's neutral bordered look (the `neutral`
+// entry matches that look exactly).
+const PHASE_STATUS_BAR_CLASS: Record<BadgeVariant, string> = {
+  success: 'bg-green-500 text-white',
+  warning: 'bg-amber-500 text-white',
+  danger: 'bg-red-500 text-white',
+  info: 'bg-(--th-accent) text-white',
+  neutral: 'border border-(--th-border) bg-(--th-bg-elevated) text-(--th-text-sub)',
 }
 
 interface ProjectTimelineProps {
@@ -135,6 +152,13 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
                 const width = Math.max(durationDays * pxPerDay, MIN_BAR_WIDTH)
 
                 const selectable = Boolean(onSelectPhase)
+                const statusClass =
+                  PHASE_STATUS_BAR_CLASS[
+                    phase.providerStatus ? PROVIDER_STATUS_VARIANT[phase.providerStatus] : 'neutral'
+                  ]
+                const title = phase.providerStatus
+                  ? `${phase.name} — ${formatDate(phase.start)} a ${formatDate(phase.end)} · ${PROVIDER_STATUS_LABELS[phase.providerStatus]}`
+                  : `${phase.name} — ${formatDate(phase.start)} a ${formatDate(phase.end)}`
 
                 return (
                   <div
@@ -163,10 +187,11 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
                         type="button"
                         disabled={!selectable}
                         onClick={() => onSelectPhase?.(phase.key)}
-                        title={`${phase.name} — ${formatDate(phase.start)} a ${formatDate(phase.end)}`}
+                        title={title}
                         className={cn(
-                          'absolute top-1/2 flex h-5 -translate-y-1/2 items-center rounded-full border border-(--th-border) bg-(--th-bg-elevated) px-2 text-[11px] font-medium whitespace-nowrap text-(--th-text-sub) transition-colors',
-                          selectable ? 'cursor-pointer hover:bg-(--th-accent)/20' : 'cursor-default',
+                          'absolute top-1/2 flex h-5 -translate-y-1/2 items-center rounded-full px-2 text-[11px] font-medium whitespace-nowrap transition-colors',
+                          statusClass,
+                          selectable ? 'cursor-pointer hover:brightness-110' : 'cursor-default',
                         )}
                         style={{ left, width }}
                       >
