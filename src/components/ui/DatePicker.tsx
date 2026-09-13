@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
@@ -62,14 +63,40 @@ export function DatePicker({
   const [open, setOpen] = useState(false)
   const selectedDate = value ? parseISODate(value) : null
   const [viewDate, setViewDate] = useState(() => selectedDate ?? new Date())
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [position, setPosition] = useState<{ top: number; left: number; width: number } | null>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const popupRef = useRef<HTMLDivElement>(null)
   const min = minDate ? parseISODate(minDate) : null
+
+  useLayoutEffect(() => {
+    if (!open) return
+
+    function updatePosition() {
+      const rect = triggerRef.current?.getBoundingClientRect()
+      if (!rect) return
+      setPosition({ top: rect.bottom + 6, left: rect.left, width: rect.width })
+    }
+
+    updatePosition()
+    // Anchors the portaled popup to the trigger even when it scrolls
+    // inside a clipped ancestor (e.g. a Modal body).
+    window.addEventListener('scroll', updatePosition, true)
+    window.addEventListener('resize', updatePosition)
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true)
+      window.removeEventListener('resize', updatePosition)
+    }
+  }, [open])
 
   useEffect(() => {
     if (!open) return
 
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node
+      if (
+        !triggerRef.current?.contains(target) &&
+        !popupRef.current?.contains(target)
+      ) {
         setOpen(false)
       }
     }
@@ -100,11 +127,12 @@ export function DatePicker({
   const today = new Date()
 
   return (
-    <div ref={containerRef} className="relative">
+    <div className="relative">
       {label && (
         <label className="mb-1 block text-sm text-(--th-text)">{label}</label>
       )}
       <button
+        ref={triggerRef}
         type="button"
         onClick={handleOpen}
         aria-label={
@@ -125,71 +153,78 @@ export function DatePicker({
         </span>
       </button>
 
-      {open && (
-        <div className="absolute z-30 mt-1.5 w-72 rounded-xl border border-(--th-border) bg-(--th-bg-card) p-3 shadow-lg">
-          <div className="mb-2 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() =>
-                setViewDate((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))
-              }
-              aria-label="Mês anterior"
-              className="flex size-7 items-center justify-center rounded-lg text-(--th-text-sub) hover:bg-(--th-bg-elevated)"
-            >
-              <ChevronLeft className="size-4" />
-            </button>
-            <span className="text-sm font-medium text-(--th-text) capitalize">
-              {MONTH_FORMATTER.format(viewDate)}
-            </span>
-            <button
-              type="button"
-              onClick={() =>
-                setViewDate((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))
-              }
-              aria-label="Próximo mês"
-              className="flex size-7 items-center justify-center rounded-lg text-(--th-text-sub) hover:bg-(--th-bg-elevated)"
-            >
-              <ChevronRight className="size-4" />
-            </button>
-          </div>
+      {open &&
+        position &&
+        createPortal(
+          <div
+            ref={popupRef}
+            className="fixed z-[70] w-72 rounded-xl border border-(--th-border) bg-(--th-bg-card) p-3 shadow-lg"
+            style={{ top: position.top, left: position.left }}
+          >
+            <div className="mb-2 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() =>
+                  setViewDate((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))
+                }
+                aria-label="Mês anterior"
+                className="flex size-7 items-center justify-center rounded-lg text-(--th-text-sub) hover:bg-(--th-bg-elevated)"
+              >
+                <ChevronLeft className="size-4" />
+              </button>
+              <span className="text-sm font-medium text-(--th-text) capitalize">
+                {MONTH_FORMATTER.format(viewDate)}
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  setViewDate((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))
+                }
+                aria-label="Próximo mês"
+                className="flex size-7 items-center justify-center rounded-lg text-(--th-text-sub) hover:bg-(--th-bg-elevated)"
+              >
+                <ChevronRight className="size-4" />
+              </button>
+            </div>
 
-          <div className="grid grid-cols-7 gap-1 text-center text-xs text-(--th-text-muted)">
-            {WEEKDAY_LABELS.map((weekday, index) => (
-              <span key={index}>{weekday}</span>
-            ))}
-          </div>
+            <div className="grid grid-cols-7 gap-1 text-center text-xs text-(--th-text-muted)">
+              {WEEKDAY_LABELS.map((weekday, index) => (
+                <span key={index}>{weekday}</span>
+              ))}
+            </div>
 
-          <div className="mt-1 grid grid-cols-7 gap-1">
-            {days.map((day) => {
-              const outsideMonth = day.getMonth() !== viewDate.getMonth()
-              const isSelected = Boolean(selectedDate && isSameDay(day, selectedDate))
-              const isToday = isSameDay(day, today)
-              const disabled = Boolean(min && day < min)
+            <div className="mt-1 grid grid-cols-7 gap-1">
+              {days.map((day) => {
+                const outsideMonth = day.getMonth() !== viewDate.getMonth()
+                const isSelected = Boolean(selectedDate && isSameDay(day, selectedDate))
+                const isToday = isSameDay(day, today)
+                const disabled = Boolean(min && day < min)
 
-              return (
-                <button
-                  key={day.toISOString()}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => selectDay(day)}
-                  aria-label={DISPLAY_FORMATTER.format(day)}
-                  aria-pressed={isSelected}
-                  className={cn(
-                    'flex size-8 items-center justify-center rounded-lg text-sm transition-colors',
-                    outsideMonth ? 'text-(--th-text-muted)' : 'text-(--th-text)',
-                    !isSelected && !disabled && 'hover:bg-(--th-bg-elevated)',
-                    isSelected && 'bg-(--th-accent) text-white',
-                    isToday && !isSelected && 'border border-(--th-accent)/40',
-                    disabled && 'cursor-not-allowed opacity-30',
-                  )}
-                >
-                  {day.getDate()}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
+                return (
+                  <button
+                    key={day.toISOString()}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => selectDay(day)}
+                    aria-label={DISPLAY_FORMATTER.format(day)}
+                    aria-pressed={isSelected}
+                    className={cn(
+                      'flex size-8 items-center justify-center rounded-lg text-sm transition-colors',
+                      outsideMonth ? 'text-(--th-text-muted)' : 'text-(--th-text)',
+                      !isSelected && !disabled && 'hover:bg-(--th-bg-elevated)',
+                      isSelected && 'bg-(--th-accent) text-white',
+                      isToday && !isSelected && 'border border-(--th-accent)/40',
+                      disabled && 'cursor-not-allowed opacity-30',
+                    )}
+                  >
+                    {day.getDate()}
+                  </button>
+                )
+              })}
+            </div>
+          </div>,
+          document.body,
+        )}
 
       {error ? (
         <p className="mt-1 text-xs text-red-500">{error}</p>
