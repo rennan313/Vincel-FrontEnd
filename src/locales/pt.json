@@ -168,6 +168,9 @@
       "months": "Meses"
     },
     "projectColumn": "Projeto",
+    "expandSchedule": "Ver cronograma de {{name}}",
+    "collapseSchedule": "Fechar cronograma de {{name}}",
+    "openProject": "Abrir {{name}}",
     "tabs": {
       "timeline": "Linha do Tempo",
       "calendar": "Calendário"
