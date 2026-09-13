@@ -33,7 +33,7 @@ export function DonutChart({ data, totalLabel, size = 160 }: DonutChartProps) {
   let cumulative = 0
 
   return (
-    <div className="flex flex-wrap items-center gap-6">
+    <div className="flex flex-col items-center gap-4">
       <div className="relative shrink-0" style={{ width: size, height: size }}>
         <svg viewBox="0 0 100 100" width={size} height={size} className="-rotate-90">
           <circle
@@ -78,17 +78,15 @@ export function DonutChart({ data, totalLabel, size = 160 }: DonutChartProps) {
         </div>
       </div>
 
-      <ul className="min-w-40 flex-1 space-y-1.5">
+      <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5">
         {data.map((d) => (
-          <li key={d.key} className="flex items-center justify-between gap-3 text-sm">
-            <span className="flex items-center gap-2 text-(--th-text-sub)">
-              <span
-                aria-hidden="true"
-                className="size-2.5 shrink-0 rounded-full"
-                style={{ backgroundColor: d.color }}
-              />
-              {d.label}
-            </span>
+          <li key={d.key} className="flex items-center gap-1.5 text-sm text-(--th-text-sub)">
+            <span
+              aria-hidden="true"
+              className="size-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: d.color }}
+            />
+            {d.label}
             <span className="font-medium text-(--th-text) tabular-nums">{d.value}</span>
           </li>
         ))}
