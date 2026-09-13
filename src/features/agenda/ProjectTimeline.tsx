@@ -38,10 +38,17 @@ interface ProjectTimelineProps {
    * projeto" controls — which only make sense when navigating between
    * projects — are replaced with a plain column label. */
   embedded?: boolean
+  /** When set, each phase row (only rendered while `focusedBar` is set)
+   * becomes clickable and fires this with the phase's key — the Cronograma
+   * tab uses it to open that etapa for editing. */
+  onSelectPhase?: (phaseKey: string) => void
 }
 
 export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
-  function ProjectTimeline({ bars, zoom, focusedBar, onFocusProject, embedded = false }, scrollRef) {
+  function ProjectTimeline(
+    { bars, zoom, focusedBar, onFocusProject, embedded = false, onSelectPhase },
+    scrollRef,
+  ) {
     const { t } = useTranslation()
     const pxPerDay = ZOOM_PX_PER_DAY[zoom]
     const today = todayISO()
@@ -127,6 +134,8 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
                 const left = offsetDays * pxPerDay
                 const width = Math.max(durationDays * pxPerDay, MIN_BAR_WIDTH)
 
+                const selectable = Boolean(onSelectPhase)
+
                 return (
                   <div
                     key={phase.key}
@@ -137,16 +146,32 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
                       className="sticky left-0 z-10 flex shrink-0 items-center border-r border-(--th-border) bg-(--th-bg-card) px-3"
                       style={{ width: LEFT_COL_WIDTH }}
                     >
-                      <span className="truncate text-sm text-(--th-text)">{phase.name}</span>
+                      {selectable ? (
+                        <button
+                          type="button"
+                          onClick={() => onSelectPhase!(phase.key)}
+                          className="truncate rounded-md text-left text-sm text-(--th-text) hover:text-(--th-accent) hover:underline"
+                        >
+                          {phase.name}
+                        </button>
+                      ) : (
+                        <span className="truncate text-sm text-(--th-text)">{phase.name}</span>
+                      )}
                     </div>
                     <div className="relative" style={{ width: timelineWidth }}>
-                      <div
+                      <button
+                        type="button"
+                        disabled={!selectable}
+                        onClick={() => onSelectPhase?.(phase.key)}
                         title={`${phase.name} — ${formatDate(phase.start)} a ${formatDate(phase.end)}`}
-                        className="absolute top-1/2 flex h-5 -translate-y-1/2 items-center rounded-full border border-(--th-border) bg-(--th-bg-elevated) px-2 text-[11px] font-medium whitespace-nowrap text-(--th-text-sub)"
+                        className={cn(
+                          'absolute top-1/2 flex h-5 -translate-y-1/2 items-center rounded-full border border-(--th-border) bg-(--th-bg-elevated) px-2 text-[11px] font-medium whitespace-nowrap text-(--th-text-sub) transition-colors',
+                          selectable ? 'cursor-pointer hover:bg-(--th-accent)/20' : 'cursor-default',
+                        )}
                         style={{ left, width }}
                       >
                         <span className="truncate">{width > 60 ? phase.name : ''}</span>
-                      </div>
+                      </button>
                     </div>
                   </div>
                 )

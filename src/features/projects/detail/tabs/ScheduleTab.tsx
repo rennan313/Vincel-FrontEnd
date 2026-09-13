@@ -5,9 +5,8 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ApiError } from '@/lib/apiClient'
-import { ProjectTimeline } from '@/features/projects/detail/ProjectTimeline'
+import { formatDate } from '@/lib/formatDate'
 import { fetchProjectProviders } from '@/features/projects/detail/projectProvidersApi'
 import { updateProject } from '@/features/projects/projectsApi'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
@@ -15,7 +14,7 @@ import { resolveProviderRoleLabel } from '@/features/projects/create/providerRol
 import type { PlanningPhase, ProjectDraft } from '@/features/projects/create/types'
 import { getProjectPhaseBars, type ProjectTimelineBar } from '@/features/agenda/agendaDerivations'
 import { ProjectTimeline as AgendaTimeline } from '@/features/agenda/ProjectTimeline'
-import { PhaseFormModal, type NewPhaseInput } from '@/features/projects/detail/tabs/PhaseFormModal'
+import { PhaseFormModal, type PhaseFormInput } from '@/features/projects/detail/tabs/PhaseFormModal'
 import {
   computeVisibleRange,
   daysBetweenISO,
@@ -43,15 +42,20 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
   const queryClient = useQueryClient()
   const syncWizardPlanning = useProjectWizardStore((state) => state.syncPlanningFromServer)
   const [phases, setPhases] = useState<PlanningPhase[]>(draft.planning.phases)
-  const [pendingRemoveIndex, setPendingRemoveIndex] = useState<number>()
   const [zoom, setZoom] = useState<TimelineZoom>('weeks')
-  const [phaseModalOpen, setPhaseModalOpen] = useState(false)
+  // The etapa being edited (its index in `phases`), 'new' while creating
+  // one, or null while the modal is closed. Etapas are only ever created
+  // and edited through this modal — clicking a bar on the Gantt below
+  // opens it pre-filled with that etapa's data.
+  const [phaseModalTarget, setPhaseModalTarget] = useState<number | 'new' | null>(null)
   const timelineScrollRef = useRef<HTMLDivElement>(null)
 
-  // The same phases the editor below shows, replotted as a Gantt bar per
-  // etapa — updates live as they're edited, no need to save first. Null
-  // (nothing to plot) until the project has an início and at least one
-  // etapa, same as the Agenda page's own empty case.
+  const totalDays = phases.reduce((sum, phase) => sum + phase.estimatedDays, 0)
+
+  // The same phases the Gantt below plots, replotted live — updates as
+  // soon as the modal saves, no need to reload. Null (nothing to plot)
+  // until the project has an início and at least one etapa, same as the
+  // Agenda page's own empty case.
   const timelineBar = useMemo<ProjectTimelineBar | null>(() => {
     if (!draft.schedule.startDate || phases.length === 0) return null
     const start = draft.schedule.startDate
@@ -136,99 +140,55 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
     saveMutation.mutate(nextPhases)
   }
 
-  function updatePhaseField<K extends keyof PlanningPhase>(
-    index: number,
-    key: K,
-    value: PlanningPhase[K],
-  ) {
-    setPhases((current) =>
-      current.map((phase, i) => (i === index ? { ...phase, [key]: value } : phase)),
-    )
+  function handleSavePhaseModal(input: PhaseFormInput) {
+    if (typeof phaseModalTarget === 'number') {
+      const nextPhases = phases.map((phase, i) =>
+        i === phaseModalTarget ? { ...phase, ...input } : phase,
+      )
+      setPhases(nextPhases)
+      commitPhases(nextPhases)
+    } else {
+      const nextPhases = [...phases, { key: generatePhaseKey(), ...input }]
+      setPhases(nextPhases)
+      commitPhases(nextPhases)
+    }
   }
 
-  function handleNameChange(index: number, value: string) {
-    updatePhaseField(index, 'name', value)
-  }
-
-  function handleDurationChange(index: number, value: string) {
-    updatePhaseField(index, 'estimatedDays', Math.max(1, Number(value) || 1))
-  }
-
-  function handleStartDateChange(index: number, value: string) {
-    updatePhaseField(index, 'startDate', value || null)
-  }
-
-  function handleEndDateChange(index: number, value: string) {
-    updatePhaseField(index, 'endDate', value || null)
-  }
-
-  function handleTeamChange(index: number, value: string) {
-    updatePhaseField(index, 'team', value || null)
-  }
-
-  function handleEstimatedHoursChange(index: number, value: string) {
-    updatePhaseField(index, 'estimatedHours', value === '' ? null : Math.max(0, Number(value) || 0))
-  }
-
-  function handleLoggedHoursChange(index: number, value: string) {
-    updatePhaseField(index, 'loggedHours', value === '' ? null : Math.max(0, Number(value) || 0))
-  }
-
-  function handleCommit() {
-    commitPhases(phases)
-  }
-
-  function handleAddItem() {
-    const nextPhases = [
-      ...phases,
-      {
-        key: generatePhaseKey(),
-        name: `Nova etapa ${phases.length + 1}`,
-        estimatedDays: 1,
-        startDate: null,
-        endDate: null,
-        team: null,
-        estimatedHours: null,
-        loggedHours: null,
-      },
-    ]
+  function handleRemovePhase(index: number) {
+    const nextPhases = phases.filter((_, i) => i !== index)
     setPhases(nextPhases)
     commitPhases(nextPhases)
   }
 
-  // Same append-and-save as handleAddItem — just pre-filled from the modal's
-  // fields instead of starting blank.
-  function handleAddPhaseFromModal(input: NewPhaseInput) {
-    const nextPhases = [
-      ...phases,
-      {
-        key: generatePhaseKey(),
-        name: input.name,
-        estimatedDays: input.estimatedDays,
-        startDate: input.startDate,
-        endDate: input.endDate,
-        team: input.team,
-        estimatedHours: input.estimatedHours,
-        loggedHours: null,
-      },
-    ]
-    setPhases(nextPhases)
-    commitPhases(nextPhases)
+  function handleSelectTimelinePhase(phaseKey: string) {
+    const index = phases.findIndex((phase) => phase.key === phaseKey)
+    if (index !== -1) setPhaseModalTarget(index)
   }
 
-  function handleRemoveItem() {
-    if (pendingRemoveIndex == null) return
-    const nextPhases = phases.filter((_, i) => i !== pendingRemoveIndex)
-    setPhases(nextPhases)
-    commitPhases(nextPhases)
-    setPendingRemoveIndex(undefined)
-  }
-
-  const phaseToRemove = pendingRemoveIndex != null ? phases[pendingRemoveIndex] : undefined
+  const editingPhase = typeof phaseModalTarget === 'number' ? phases[phaseModalTarget] : undefined
 
   return (
     <>
-      <Card className="mb-6">
+      <Card>
+        <div className="mb-5 grid grid-cols-3 gap-3 text-sm">
+          <div>
+            <p className="text-xs text-(--th-text-muted) uppercase">Início</p>
+            <p className="mt-0.5 font-medium text-(--th-text)">
+              {draft.schedule.startDate ? formatDate(draft.schedule.startDate) : '—'}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-(--th-text-muted) uppercase">Término previsto</p>
+            <p className="mt-0.5 font-medium text-(--th-text)">
+              {draft.schedule.endDate ? formatDate(draft.schedule.endDate) : '—'}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-(--th-text-muted) uppercase">Prazo total</p>
+            <p className="mt-0.5 font-medium text-(--th-text)">{totalDays} dias</p>
+          </div>
+        </div>
+
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-medium text-(--th-text)">{t('agenda.tabs.timeline')}</h3>
           <div className="flex flex-wrap items-center gap-2">
@@ -237,7 +197,7 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
               variant="outline"
               size="sm"
               icon="Plus"
-              onClick={() => setPhaseModalOpen(true)}
+              onClick={() => setPhaseModalTarget('new')}
             >
               Nova etapa
             </Button>
@@ -277,6 +237,7 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
             zoom={zoom}
             focusedBar={timelineBar}
             onFocusProject={() => {}}
+            onSelectPhase={handleSelectTimelinePhase}
             embedded
           />
         ) : (
@@ -287,63 +248,15 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
       </Card>
 
       <PhaseFormModal
-        open={phaseModalOpen}
-        onClose={() => setPhaseModalOpen(false)}
-        onSave={handleAddPhaseFromModal}
+        open={phaseModalTarget !== null}
+        onClose={() => setPhaseModalTarget(null)}
+        onSave={handleSavePhaseModal}
+        phase={editingPhase}
+        onRemove={
+          typeof phaseModalTarget === 'number' ? () => handleRemovePhase(phaseModalTarget) : undefined
+        }
         teamOptions={teamOptions}
       />
-
-      <Card>
-        <ProjectTimeline
-          phases={phases}
-          showSummary
-          startDate={draft.schedule.startDate}
-          endDate={draft.schedule.endDate}
-          totalDays={phases.reduce((sum, phase) => sum + phase.estimatedDays, 0)}
-          onNameChange={handleNameChange}
-          onDurationChange={handleDurationChange}
-          onStartDateChange={handleStartDateChange}
-          onEndDateChange={handleEndDateChange}
-          onTeamChange={handleTeamChange}
-          onEstimatedHoursChange={handleEstimatedHoursChange}
-          onLoggedHoursChange={handleLoggedHoursChange}
-          onRemove={setPendingRemoveIndex}
-          onCommit={handleCommit}
-          teamOptions={teamOptions}
-        />
-
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          icon="Plus"
-          className="mt-4"
-          onClick={handleAddItem}
-          disabled={saveMutation.isPending}
-        >
-          Adicionar item
-        </Button>
-
-        <p className="mt-3 text-xs text-(--th-text-muted)">
-          {teamOptions.length > 0
-            ? 'Informe duração, início, término previsto e equipe de cada etapa — as alterações são salvas automaticamente.'
-            : 'Cadastre prestadores na aba Equipe para poder selecioná-los aqui como responsáveis.'}
-        </p>
-
-        <ConfirmDialog
-          open={pendingRemoveIndex != null}
-          title="Remover etapa"
-          message={
-            <>
-              Remover{' '}
-              <span className="font-medium text-(--th-text)">{phaseToRemove?.name}</span> do
-              cronograma? Essa ação não pode ser desfeita.
-            </>
-          }
-          onCancel={() => setPendingRemoveIndex(undefined)}
-          onConfirm={handleRemoveItem}
-        />
-      </Card>
     </>
   )
 }

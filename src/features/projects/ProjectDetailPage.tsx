@@ -109,7 +109,7 @@ export function ProjectDetailPage() {
       : { variant: 'neutral', label: 'Rascunho' }
 
   return (
-    <div className="mx-auto max-w-5xl p-6">
+    <div className="p-6">
       <ProjectHeader
         draft={draft}
         statusLabel={status.label}
