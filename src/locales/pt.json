@@ -159,7 +159,7 @@
     }
   },
   "agenda": {
-    "subtitle": "Linha do tempo dos projetos do seu escritório.",
+    "subtitle": "Acompanhe as datas dos projetos do seu escritório.",
     "empty": "Nenhum projeto com data de início cadastrada ainda.",
     "today": "Hoje",
     "zoom": {
@@ -167,7 +167,16 @@
       "weeks": "Semanas",
       "months": "Meses"
     },
-    "projectColumn": "Projeto"
+    "projectColumn": "Projeto",
+    "tabs": {
+      "timeline": "Linha do Tempo",
+      "calendar": "Calendário"
+    },
+    "calendar": {
+      "previousMonth": "Mês anterior",
+      "nextMonth": "Próximo mês",
+      "more": "+{{count}} mais"
+    }
   },
   "table": {
     "pagination": {
