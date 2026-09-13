@@ -9,8 +9,8 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ApiError } from '@/lib/apiClient'
 import { formatDate } from '@/lib/formatDate'
 import type { ProjectTimelineBar } from '@/features/agenda/agendaDerivations'
-import { daysBetweenISO, maxISO, minISO, todayISO } from '@/features/agenda/timelineMath'
-import { addMonthsISO, buildMonthGrid, formatMonthYear, monthStartISO, type CalendarDay } from '@/features/agenda/calendarMath'
+import { todayISO } from '@/features/agenda/timelineMath'
+import { addMonthsISO, buildMonthGrid, formatMonthYear, monthStartISO } from '@/features/agenda/calendarMath'
 import { fetchAgendaTasks, deleteAgendaTask, type AgendaTask } from '@/features/agenda/agendaTasksApi'
 import { AgendaTaskModal } from '@/features/agenda/AgendaTaskModal'
 
@@ -18,7 +18,7 @@ type CalendarItem =
   | { kind: 'project'; id: string; name: string; start: string; end: string; status: ProjectTimelineBar['status'] }
   | { kind: 'task'; id: string; name: string; start: string; end: string }
 
-const STATUS_BAR_CLASS: Record<ProjectTimelineBar['status'], string> = {
+const STATUS_PILL_CLASS: Record<ProjectTimelineBar['status'], string> = {
   in_progress: 'bg-(--th-accent)',
   completed: 'bg-green-500',
   paused: 'bg-amber-500',
@@ -28,68 +28,7 @@ const STATUS_BAR_CLASS: Record<ProjectTimelineBar['status'], string> = {
 const TASK_CLASS = 'bg-violet-500'
 
 const WEEKDAY_LABELS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
-const MAX_VISIBLE_ROWS = 3
-
-interface WeekItemSegment {
-  item: CalendarItem
-  startCol: number
-  span: number
-  row: number
-  continuesLeft: boolean
-  continuesRight: boolean
-}
-
-/**
- * Lays out one week's items into stacked rows — an item occupies the
- * columns it spans within this week (clipped to Sun–Sat), and shares a row
- * with any other item whose columns don't overlap it, the same greedy
- * interval-packing a real calendar (Jira's included) uses.
- */
-function buildWeekSegments(
-  weekDays: CalendarDay[],
-  items: CalendarItem[],
-): { segments: WeekItemSegment[]; hiddenCount: number } {
-  const weekStart = weekDays[0].date
-  const weekEnd = weekDays[6].date
-
-  const clipped = items
-    .filter((item) => item.start <= weekEnd && item.end >= weekStart)
-    .map((item) => {
-      const clippedStart = maxISO(item.start, weekStart)
-      const clippedEnd = minISO(item.end, weekEnd)
-      return {
-        item,
-        startCol: daysBetweenISO(weekStart, clippedStart),
-        endCol: daysBetweenISO(weekStart, clippedEnd),
-        continuesLeft: item.start < weekStart,
-        continuesRight: item.end > weekEnd,
-      }
-    })
-    .sort((a, b) => a.startCol - b.startCol || b.endCol - b.startCol - (a.endCol - a.startCol))
-
-  const rowEnds: number[] = []
-  const placed: WeekItemSegment[] = []
-  for (const seg of clipped) {
-    let row = rowEnds.findIndex((end) => end < seg.startCol)
-    if (row === -1) {
-      row = rowEnds.length
-      rowEnds.push(seg.endCol)
-    } else {
-      rowEnds[row] = seg.endCol
-    }
-    placed.push({
-      item: seg.item,
-      startCol: seg.startCol,
-      span: seg.endCol - seg.startCol + 1,
-      row,
-      continuesLeft: seg.continuesLeft,
-      continuesRight: seg.continuesRight,
-    })
-  }
-
-  const segments = placed.filter((seg) => seg.row < MAX_VISIBLE_ROWS)
-  return { segments, hiddenCount: placed.length - segments.length }
-}
+const MAX_VISIBLE_PER_DAY = 3
 
 interface CalendarViewProps {
   bars: ProjectTimelineBar[]
@@ -124,7 +63,7 @@ export function CalendarView({ bars }: CalendarViewProps) {
     },
   })
 
-  const items: CalendarItem[] = useMemo(() => {
+  const itemsByDay = useMemo(() => {
     const projectItems: CalendarItem[] = bars.map((bar) => ({
       kind: 'project',
       id: bar.id,
@@ -137,14 +76,15 @@ export function CalendarView({ bars }: CalendarViewProps) {
       const date = task.date.slice(0, 10)
       return { kind: 'task', id: task.id, name: task.name, start: date, end: date }
     })
-    return [...projectItems, ...taskItems]
-  }, [bars, tasks])
+    const items = [...projectItems, ...taskItems]
 
-  const weeks = useMemo(() => {
-    const rows: CalendarDay[][] = []
-    for (let i = 0; i < grid.length; i += 7) rows.push(grid.slice(i, i + 7))
-    return rows
-  }, [grid])
+    const map = new Map<string, CalendarItem[]>()
+    for (const day of grid) {
+      const active = items.filter((item) => item.start <= day.date && day.date <= item.end)
+      if (active.length > 0) map.set(day.date, active)
+    }
+    return map
+  }, [grid, bars, tasks])
 
   return (
     <div className="overflow-hidden rounded-xl border border-(--th-border) bg-(--th-bg-card)">
@@ -187,91 +127,78 @@ export function CalendarView({ bars }: CalendarViewProps) {
         ))}
       </div>
 
-      {weeks.map((weekDays) => {
-        const { segments, hiddenCount } = buildWeekSegments(weekDays, items)
-        const rowCount = segments.reduce((max, seg) => Math.max(max, seg.row + 1), 0)
+      <div className="grid grid-cols-7">
+        {grid.map((day) => {
+          const dayItems = itemsByDay.get(day.date) ?? []
+          const isToday = day.date === today
+          const hiddenCount = dayItems.length - MAX_VISIBLE_PER_DAY
 
-        return (
-          <div key={weekDays[0].date} className="border-b border-(--th-border) last:border-b-0">
-            <div className="grid grid-cols-7">
-              {weekDays.map((day) => {
-                const isToday = day.date === today
-                return (
-                  <button
-                    key={day.date}
-                    type="button"
-                    onClick={() => setTaskModalDate(day.date)}
-                    aria-label={t('agenda.calendar.newTaskOn', { date: formatDate(day.date) })}
-                    className="group border-r border-(--th-border) px-1.5 pt-1.5 text-left last:border-r-0 hover:bg-(--th-bg-elevated)"
-                  >
-                    <span
+          return (
+            <div
+              key={day.date}
+              className={cn(
+                'min-h-[104px] border-r border-b border-(--th-border) p-1.5 last:border-r-0',
+                !day.inCurrentMonth && 'bg-(--th-bg)',
+              )}
+            >
+              <button
+                type="button"
+                onClick={() => setTaskModalDate(day.date)}
+                aria-label={t('agenda.calendar.newTaskOn', { date: formatDate(day.date) })}
+                className={cn(
+                  'inline-flex size-6 items-center justify-center rounded-full text-xs transition-colors',
+                  isToday
+                    ? 'bg-(--th-accent) font-semibold text-white'
+                    : day.inCurrentMonth
+                      ? 'text-(--th-text) hover:bg-(--th-bg-elevated)'
+                      : 'text-(--th-text-muted) hover:bg-(--th-bg-elevated)',
+                )}
+              >
+                {Number(day.date.slice(8, 10))}
+              </button>
+
+              <div className="mt-1 space-y-1">
+                {dayItems.slice(0, MAX_VISIBLE_PER_DAY).map((item) =>
+                  item.kind === 'project' ? (
+                    <Link
+                      key={`project-${item.id}`}
+                      to={`/projects/${item.id}`}
+                      title={item.name}
                       className={cn(
-                        'inline-flex size-6 items-center justify-center rounded-full text-xs',
-                        isToday
-                          ? 'bg-(--th-accent) font-semibold text-white'
-                          : day.inCurrentMonth
-                            ? 'text-(--th-text) group-hover:text-(--th-accent)'
-                            : 'text-(--th-text-muted)',
+                        'block truncate rounded px-1.5 py-0.5 text-[11px] font-medium text-white opacity-90 hover:opacity-100',
+                        STATUS_PILL_CLASS[item.status],
                       )}
                     >
-                      {Number(day.date.slice(8, 10))}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-
-            {rowCount > 0 && (
-              <div className="grid auto-rows-[22px] grid-cols-7 gap-y-1 px-1.5 pt-1 pb-1.5">
-                {segments.map((segment) => {
-                  const style = {
-                    gridColumn: `${segment.startCol + 1} / span ${segment.span}`,
-                    gridRow: segment.row + 1,
-                  }
-                  const className = cn(
-                    'flex items-center truncate px-2 text-[11px] font-medium text-white opacity-90 hover:opacity-100',
-                    segment.item.kind === 'project' ? STATUS_BAR_CLASS[segment.item.status] : TASK_CLASS,
-                    segment.continuesLeft ? 'rounded-l-none' : 'rounded-l-full',
-                    segment.continuesRight ? 'rounded-r-none' : 'rounded-r-full',
-                  )
-
-                  return segment.item.kind === 'project' ? (
-                    <Link
-                      key={`project-${segment.item.id}`}
-                      to={`/projects/${segment.item.id}`}
-                      title={segment.item.name}
-                      style={style}
-                      className={className}
-                    >
-                      {segment.item.name}
+                      {item.name}
                     </Link>
                   ) : (
                     <button
-                      key={`task-${segment.item.id}`}
+                      key={`task-${item.id}`}
                       type="button"
-                      title={segment.item.name}
-                      style={style}
-                      className={className}
+                      title={item.name}
+                      className={cn(
+                        'block w-full truncate rounded px-1.5 py-0.5 text-left text-[11px] font-medium text-white opacity-90 hover:opacity-100',
+                        TASK_CLASS,
+                      )}
                       onClick={() => {
-                        const task = tasks.find((t) => t.id === segment.item.id)
+                        const task = tasks.find((t) => t.id === item.id)
                         if (task) setTaskToDelete(task)
                       }}
                     >
-                      {segment.item.name}
+                      {item.name}
                     </button>
-                  )
-                })}
+                  ),
+                )}
+                {hiddenCount > 0 && (
+                  <p className="px-1.5 text-[11px] text-(--th-text-muted)">
+                    {t('agenda.calendar.more', { count: hiddenCount })}
+                  </p>
+                )}
               </div>
-            )}
-
-            {hiddenCount > 0 && (
-              <p className="px-2 pb-1.5 text-[11px] text-(--th-text-muted)">
-                {t('agenda.calendar.more', { count: hiddenCount })}
-              </p>
-            )}
-          </div>
-        )
-      })}
+            </div>
+          )
+        })}
+      </div>
 
       <AgendaTaskModal
         open={taskModalDate !== undefined}
