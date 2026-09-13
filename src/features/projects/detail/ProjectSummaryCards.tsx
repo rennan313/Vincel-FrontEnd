@@ -17,6 +17,9 @@ interface StatCard {
   icon: IconName
   label: string
   value: string
+  /** Fixed per KPI — never reassigned by value — so each tile keeps a
+   * stable identity, matching the chart palette used elsewhere on the page. */
+  color: string
 }
 
 interface ProjectSummaryCardsProps {
@@ -38,24 +41,28 @@ export function ProjectSummaryCards({ draft }: ProjectSummaryCardsProps) {
       icon: 'CalendarClock',
       label: 'Prazo estimado',
       value: `${getTotalDays(draft)} dias`,
+      color: 'var(--chart-1)',
     },
     {
       key: 'fee',
       icon: 'Wallet',
       label: 'Honorários',
       value: formatBRLAmount(draft.financial.feeAmount ?? 0),
+      color: 'var(--chart-6)',
     },
     {
       key: 'progress',
       icon: 'Layers',
       label: 'Progresso',
       value: `${getProjectProgress(providerLinks)}%`,
+      color: 'var(--chart-3)',
     },
     {
       key: 'complexity',
       icon: 'SlidersHorizontal',
       label: 'Complexidade',
       value: draft.planning.complexity ? COMPLEXITY_LABEL[draft.planning.complexity] : '—',
+      color: 'var(--chart-2)',
     },
   ]
 
@@ -64,16 +71,17 @@ export function ProjectSummaryCards({ draft }: ProjectSummaryCardsProps) {
       {stats.map((stat) => {
         const Icon = ICONS[stat.icon]
         return (
-          <Card key={stat.key} className="p-4">
-            <div className="flex items-center gap-2 text-(--th-text-muted)">
-              <Icon className="size-4" />
-              <span className="text-xs font-medium tracking-wide uppercase">
-                {stat.label}
-              </span>
+          <Card key={stat.key} className="flex items-start gap-3 p-4">
+            <div
+              className="flex size-10 shrink-0 items-center justify-center rounded-lg"
+              style={{ backgroundColor: `color-mix(in srgb, ${stat.color} 14%, transparent)` }}
+            >
+              <Icon className="size-5" style={{ color: stat.color }} />
             </div>
-            <p className="mt-2 text-xl font-semibold text-(--th-text)">
-              {stat.value}
-            </p>
+            <div className="min-w-0 pt-0.5">
+              <p className="text-xl font-semibold text-(--th-text)">{stat.value}</p>
+              <p className="mt-0.5 truncate text-xs text-(--th-text-muted)">{stat.label}</p>
+            </div>
           </Card>
         )
       })}
