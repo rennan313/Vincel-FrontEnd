@@ -35,6 +35,8 @@ interface ProjectTimelineProps {
   onStartDateChange?: (index: number, value: string) => void
   onEndDateChange?: (index: number, value: string) => void
   onTeamChange?: (index: number, value: string) => void
+  onEstimatedHoursChange?: (index: number, value: string) => void
+  onLoggedHoursChange?: (index: number, value: string) => void
   /** When provided, shows a delete button per phase. */
   onRemove?: (index: number) => void
   /** Fired when a field edit should be persisted (e.g. on blur). */
@@ -57,6 +59,8 @@ export function ProjectTimeline({
   onStartDateChange,
   onEndDateChange,
   onTeamChange,
+  onEstimatedHoursChange,
+  onLoggedHoursChange,
   onRemove,
   onCommit,
   disabled,
@@ -196,12 +200,54 @@ export function ProjectTimeline({
                     </select>
                   </div>
                 )}
+                {editable && (
+                  <div className="mt-2 flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs text-(--th-text-muted)">Horas estimadas</span>
+                      <Input
+                        aria-label={`Horas estimadas de ${phase.name}`}
+                        type="number"
+                        min={0}
+                        step={0.5}
+                        value={phase.estimatedHours ?? ''}
+                        disabled={disabled}
+                        onChange={(event) =>
+                          onEstimatedHoursChange?.(index, event.target.value)
+                        }
+                        onBlur={onCommit}
+                        className="h-8 w-16 px-2 text-right text-xs"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs text-(--th-text-muted)">Horas realizadas</span>
+                      <Input
+                        aria-label={`Horas realizadas de ${phase.name}`}
+                        type="number"
+                        min={0}
+                        step={0.5}
+                        value={phase.loggedHours ?? ''}
+                        disabled={disabled}
+                        onChange={(event) =>
+                          onLoggedHoursChange?.(index, event.target.value)
+                        }
+                        onBlur={onCommit}
+                        className="h-8 w-16 px-2 text-right text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
                 {editable && <PhaseVarianceNote phase={phase} />}
                 {!editable && (
                   (() => {
                     const effectiveEndDate = phase.endDate ?? getPhaseEndDate(phase)
+                    const hoursNote =
+                      phase.estimatedHours != null
+                        ? `${phase.loggedHours ?? 0}h de ${phase.estimatedHours}h`
+                        : phase.loggedHours != null
+                          ? `${phase.loggedHours}h realizadas`
+                          : null
                     return (
-                      (phase.startDate || phase.team) && (
+                      (phase.startDate || phase.team || hoursNote) && (
                         <>
                           <p className="mt-1 text-xs text-(--th-text-muted)">
                             {[
@@ -209,6 +255,7 @@ export function ProjectTimeline({
                               effectiveEndDate &&
                                 `Término previsto: ${formatDate(effectiveEndDate)}`,
                               phase.team && `Equipe: ${phase.team}`,
+                              hoursNote,
                             ]
                               .filter(Boolean)
                               .join(' · ')}

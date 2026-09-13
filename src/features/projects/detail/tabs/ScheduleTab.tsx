@@ -105,6 +105,14 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
     updatePhaseField(index, 'team', value || null)
   }
 
+  function handleEstimatedHoursChange(index: number, value: string) {
+    updatePhaseField(index, 'estimatedHours', value === '' ? null : Math.max(0, Number(value) || 0))
+  }
+
+  function handleLoggedHoursChange(index: number, value: string) {
+    updatePhaseField(index, 'loggedHours', value === '' ? null : Math.max(0, Number(value) || 0))
+  }
+
   function handleCommit() {
     commitPhases(phases)
   }
@@ -119,6 +127,8 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
         startDate: null,
         endDate: null,
         team: null,
+        estimatedHours: null,
+        loggedHours: null,
       },
     ]
     setPhases(nextPhases)
@@ -148,6 +158,8 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
         onStartDateChange={handleStartDateChange}
         onEndDateChange={handleEndDateChange}
         onTeamChange={handleTeamChange}
+        onEstimatedHoursChange={handleEstimatedHoursChange}
+        onLoggedHoursChange={handleLoggedHoursChange}
         onRemove={setPendingRemoveIndex}
         onCommit={handleCommit}
         teamOptions={teamOptions}

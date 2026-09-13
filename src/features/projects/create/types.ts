@@ -84,6 +84,12 @@ export interface PlanningPhase {
   endDate?: string | null
   /** Free-text: which team/person executes this task. */
   team?: string | null
+  /** How many hours this task is expected to take — relevant for projects
+   * billed per_hour, but tracked on every phase. */
+  estimatedHours?: number | null
+  /** Hours already worked on this task. Manually edited for now; a future
+   * sidebar timer will be able to add to this automatically instead. */
+  loggedHours?: number | null
 }
 
 export interface PlanningData {
