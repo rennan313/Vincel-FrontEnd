@@ -15,6 +15,7 @@ import { resolveProviderRoleLabel } from '@/features/projects/create/providerRol
 import type { PlanningPhase, ProjectDraft } from '@/features/projects/create/types'
 import { getProjectPhaseBars, type ProjectTimelineBar } from '@/features/agenda/agendaDerivations'
 import { ProjectTimeline as AgendaTimeline } from '@/features/agenda/ProjectTimeline'
+import { PhaseFormModal, type NewPhaseInput } from '@/features/projects/detail/tabs/PhaseFormModal'
 import {
   computeVisibleRange,
   daysBetweenISO,
@@ -44,6 +45,7 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
   const [phases, setPhases] = useState<PlanningPhase[]>(draft.planning.phases)
   const [pendingRemoveIndex, setPendingRemoveIndex] = useState<number>()
   const [zoom, setZoom] = useState<TimelineZoom>('weeks')
+  const [phaseModalOpen, setPhaseModalOpen] = useState(false)
   const timelineScrollRef = useRef<HTMLDivElement>(null)
 
   // The same phases the editor below shows, replotted as a Gantt bar per
@@ -194,6 +196,26 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
     commitPhases(nextPhases)
   }
 
+  // Same append-and-save as handleAddItem — just pre-filled from the modal's
+  // fields instead of starting blank.
+  function handleAddPhaseFromModal(input: NewPhaseInput) {
+    const nextPhases = [
+      ...phases,
+      {
+        key: generatePhaseKey(),
+        name: input.name,
+        estimatedDays: input.estimatedDays,
+        startDate: input.startDate,
+        endDate: input.endDate,
+        team: input.team,
+        estimatedHours: input.estimatedHours,
+        loggedHours: null,
+      },
+    ]
+    setPhases(nextPhases)
+    commitPhases(nextPhases)
+  }
+
   function handleRemoveItem() {
     if (pendingRemoveIndex == null) return
     const nextPhases = phases.filter((_, i) => i !== pendingRemoveIndex)
@@ -206,38 +228,49 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
 
   return (
     <>
-      {timelineBar && (
-        <Card className="mb-6">
-          <div className="mb-4 flex items-center justify-between gap-2">
-            <h3 className="text-sm font-medium text-(--th-text)">
-              {t('agenda.tabs.timeline')}
-            </h3>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                icon="CalendarClock"
-                onClick={scrollTimelineToToday}
-              >
-                {t('agenda.today')}
-              </Button>
-              <div className="flex items-center gap-0.5 rounded-lg border border-(--th-border) p-0.5">
-                {ZOOM_OPTIONS.map((option) => (
-                  <Button
-                    key={option}
-                    type="button"
-                    variant={zoom === option ? 'primary' : 'ghost'}
-                    size="sm"
-                    onClick={() => setZoom(option)}
-                  >
-                    {t(`agenda.zoom.${option}`)}
-                  </Button>
-                ))}
-              </div>
-            </div>
+      <Card className="mb-6">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-sm font-medium text-(--th-text)">{t('agenda.tabs.timeline')}</h3>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              icon="Plus"
+              onClick={() => setPhaseModalOpen(true)}
+            >
+              Nova etapa
+            </Button>
+            {timelineBar && (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  icon="CalendarClock"
+                  onClick={scrollTimelineToToday}
+                >
+                  {t('agenda.today')}
+                </Button>
+                <div className="flex items-center gap-0.5 rounded-lg border border-(--th-border) p-0.5">
+                  {ZOOM_OPTIONS.map((option) => (
+                    <Button
+                      key={option}
+                      type="button"
+                      variant={zoom === option ? 'primary' : 'ghost'}
+                      size="sm"
+                      onClick={() => setZoom(option)}
+                    >
+                      {t(`agenda.zoom.${option}`)}
+                    </Button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
+        </div>
 
+        {timelineBar ? (
           <AgendaTimeline
             ref={timelineScrollRef}
             bars={[timelineBar]}
@@ -246,8 +279,19 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
             onFocusProject={() => {}}
             embedded
           />
-        </Card>
-      )}
+        ) : (
+          <p className="rounded-lg border border-dashed border-(--th-border) p-4 text-center text-sm text-(--th-text-muted)">
+            Nenhuma etapa cadastrada ainda.
+          </p>
+        )}
+      </Card>
+
+      <PhaseFormModal
+        open={phaseModalOpen}
+        onClose={() => setPhaseModalOpen(false)}
+        onSave={handleAddPhaseFromModal}
+        teamOptions={teamOptions}
+      />
 
       <Card>
         <ProjectTimeline
