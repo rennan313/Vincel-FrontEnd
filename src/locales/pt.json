@@ -175,7 +175,9 @@
     "calendar": {
       "previousMonth": "Mês anterior",
       "nextMonth": "Próximo mês",
-      "more": "+{{count}} mais"
+      "more": "+{{count}} mais",
+      "newTask": "Nova tarefa",
+      "newTaskOn": "Agendar tarefa em {{date}}"
     }
   },
   "table": {
