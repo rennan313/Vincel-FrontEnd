@@ -168,8 +168,8 @@
       "months": "Meses"
     },
     "projectColumn": "Projeto",
-    "expandSchedule": "Ver cronograma de {{name}}",
-    "collapseSchedule": "Fechar cronograma de {{name}}",
+    "viewSchedule": "Ver cronograma de {{name}}",
+    "backToProjects": "Voltar para todos os projetos",
     "openProject": "Abrir {{name}}",
     "tabs": {
       "timeline": "Linha do Tempo",
@@ -213,10 +213,8 @@
       "trustSignalCount": "340+",
       "trustSignalText": "escritórios de arquitetura no Brasil",
       "mockGoogleToast": "Mock: login com Google não implementado",
-      "mockSuccessToast": "Mock: login efetuado com sucesso",
       "mockForgotPasswordToast": "Mock: recuperação de senha não implementada",
       "errors": {
-        "invalid_credentials": "E-mail ou senha incorretos.",
         "default": "Ocorreu um erro ao entrar. Tente novamente."
       }
     },

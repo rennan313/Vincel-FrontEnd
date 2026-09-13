@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { useQueryState, parseAsStringLiteral } from 'nuqs'
@@ -45,13 +45,27 @@ export function AgendaPage() {
     [data],
   )
 
+  // When set, the timeline shows only this project's Cronograma phases
+  // instead of every project.
+  const [focusedProjectId, setFocusedProjectId] = useState<string | null>(null)
+  const focusedBar = useMemo(
+    () => bars.find((bar) => bar.id === focusedProjectId) ?? null,
+    [bars, focusedProjectId],
+  )
+
   function scrollToToday() {
     const container = scrollRef.current
-    if (!container || bars.length === 0) return
-    const range = computeVisibleRange(
-      [...bars.map((b) => b.start), ...bars.map((b) => b.end)],
-      zoom,
-    )
+    if (!container) return
+    const dates = focusedBar
+      ? [
+          focusedBar.start,
+          focusedBar.end,
+          ...focusedBar.phases.map((p) => p.start),
+          ...focusedBar.phases.map((p) => p.end),
+        ]
+      : [...bars.map((b) => b.start), ...bars.map((b) => b.end)]
+    if (dates.length === 0) return
+    const range = computeVisibleRange(dates, zoom)
     const todayOffsetPx = daysBetweenISO(range.start, todayISO()) * ZOOM_PX_PER_DAY[zoom]
     container.scrollLeft = LEFT_COL_WIDTH + todayOffsetPx - container.clientWidth / 2
   }
@@ -59,7 +73,7 @@ export function AgendaPage() {
   useEffect(() => {
     if (view === 'timeline') scrollToToday()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zoom, view, bars.length])
+  }, [zoom, view, bars.length, focusedProjectId])
 
   return (
     <div className="p-6">
@@ -108,7 +122,13 @@ export function AgendaPage() {
                 description="Datas de início entram na Agenda assim que um projeto é criado ou editado."
               />
             ) : (
-              <ProjectTimeline ref={scrollRef} bars={bars} zoom={zoom} />
+              <ProjectTimeline
+                ref={scrollRef}
+                bars={bars}
+                zoom={zoom}
+                focusedBar={focusedBar}
+                onFocusProject={setFocusedProjectId}
+              />
             )}
           </div>
         </>
