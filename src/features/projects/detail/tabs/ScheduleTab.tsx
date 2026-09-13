@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -12,6 +13,20 @@ import { updateProject } from '@/features/projects/projectsApi'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
 import { resolveProviderRoleLabel } from '@/features/projects/create/providerRoles'
 import type { PlanningPhase, ProjectDraft } from '@/features/projects/create/types'
+import { getProjectPhaseBars, type ProjectTimelineBar } from '@/features/agenda/agendaDerivations'
+import { ProjectTimeline as AgendaTimeline } from '@/features/agenda/ProjectTimeline'
+import {
+  computeVisibleRange,
+  daysBetweenISO,
+  todayISO,
+  ZOOM_PX_PER_DAY,
+  type TimelineZoom,
+} from '@/features/agenda/timelineMath'
+
+const ZOOM_OPTIONS: TimelineZoom[] = ['days', 'weeks', 'months']
+// Matches AgendaTimeline's own (unexported) left-column width — AgendaPage
+// duplicates the same constant locally for the same reason.
+const TIMELINE_LEFT_COL_WIDTH = 220
 
 interface ScheduleTabProps {
   draft: ProjectDraft
@@ -22,11 +37,55 @@ function generatePhaseKey() {
 }
 
 export function ScheduleTab({ draft }: ScheduleTabProps) {
+  const { t } = useTranslation()
   const { projectId } = useParams()
   const queryClient = useQueryClient()
   const syncWizardPlanning = useProjectWizardStore((state) => state.syncPlanningFromServer)
   const [phases, setPhases] = useState<PlanningPhase[]>(draft.planning.phases)
   const [pendingRemoveIndex, setPendingRemoveIndex] = useState<number>()
+  const [zoom, setZoom] = useState<TimelineZoom>('weeks')
+  const timelineScrollRef = useRef<HTMLDivElement>(null)
+
+  // The same phases the editor below shows, replotted as a Gantt bar per
+  // etapa — updates live as they're edited, no need to save first. Null
+  // (nothing to plot) until the project has an início and at least one
+  // etapa, same as the Agenda page's own empty case.
+  const timelineBar = useMemo<ProjectTimelineBar | null>(() => {
+    if (!draft.schedule.startDate || phases.length === 0) return null
+    const start = draft.schedule.startDate
+    const phaseBars = getProjectPhaseBars(phases, start)
+    return {
+      id: projectId!,
+      name: draft.info.name,
+      // Only used to color a project's bar on the Agenda's multi-project
+      // list — this view is always rendered focused on this one project
+      // (see AgendaTimeline's `embedded` prop below), so that branch never
+      // runs and this value is never actually shown.
+      status: 'in_progress',
+      start,
+      end: draft.schedule.endDate ?? phaseBars.at(-1)?.end ?? start,
+      phases: phaseBars,
+    }
+  }, [draft.info.name, draft.schedule.endDate, draft.schedule.startDate, phases, projectId])
+
+  function scrollTimelineToToday() {
+    const container = timelineScrollRef.current
+    if (!container || !timelineBar) return
+    const dates = [
+      timelineBar.start,
+      timelineBar.end,
+      ...timelineBar.phases.map((phase) => phase.start),
+      ...timelineBar.phases.map((phase) => phase.end),
+    ]
+    const range = computeVisibleRange(dates, zoom)
+    const todayOffsetPx = daysBetweenISO(range.start, todayISO()) * ZOOM_PX_PER_DAY[zoom]
+    container.scrollLeft = TIMELINE_LEFT_COL_WIDTH + todayOffsetPx - container.clientWidth / 2
+  }
+
+  useEffect(() => {
+    scrollTimelineToToday()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoom, timelineBar])
 
   // Same query key TeamTab uses — the "equipe" select is sourced from the
   // providers already cadastrados on this project's team, not free text.
@@ -146,56 +205,101 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
   const phaseToRemove = pendingRemoveIndex != null ? phases[pendingRemoveIndex] : undefined
 
   return (
-    <Card>
-      <ProjectTimeline
-        phases={phases}
-        showSummary
-        startDate={draft.schedule.startDate}
-        endDate={draft.schedule.endDate}
-        totalDays={phases.reduce((sum, phase) => sum + phase.estimatedDays, 0)}
-        onNameChange={handleNameChange}
-        onDurationChange={handleDurationChange}
-        onStartDateChange={handleStartDateChange}
-        onEndDateChange={handleEndDateChange}
-        onTeamChange={handleTeamChange}
-        onEstimatedHoursChange={handleEstimatedHoursChange}
-        onLoggedHoursChange={handleLoggedHoursChange}
-        onRemove={setPendingRemoveIndex}
-        onCommit={handleCommit}
-        teamOptions={teamOptions}
-      />
+    <>
+      {timelineBar && (
+        <Card className="mb-6">
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <h3 className="text-sm font-medium text-(--th-text)">
+              {t('agenda.tabs.timeline')}
+            </h3>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                icon="CalendarClock"
+                onClick={scrollTimelineToToday}
+              >
+                {t('agenda.today')}
+              </Button>
+              <div className="flex items-center gap-0.5 rounded-lg border border-(--th-border) p-0.5">
+                {ZOOM_OPTIONS.map((option) => (
+                  <Button
+                    key={option}
+                    type="button"
+                    variant={zoom === option ? 'primary' : 'ghost'}
+                    size="sm"
+                    onClick={() => setZoom(option)}
+                  >
+                    {t(`agenda.zoom.${option}`)}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
 
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        icon="Plus"
-        className="mt-4"
-        onClick={handleAddItem}
-        disabled={saveMutation.isPending}
-      >
-        Adicionar item
-      </Button>
+          <AgendaTimeline
+            ref={timelineScrollRef}
+            bars={[timelineBar]}
+            zoom={zoom}
+            focusedBar={timelineBar}
+            onFocusProject={() => {}}
+            embedded
+          />
+        </Card>
+      )}
 
-      <p className="mt-3 text-xs text-(--th-text-muted)">
-        {teamOptions.length > 0
-          ? 'Informe duração, início, término previsto e equipe de cada etapa — as alterações são salvas automaticamente.'
-          : 'Cadastre prestadores na aba Equipe para poder selecioná-los aqui como responsáveis.'}
-      </p>
+      <Card>
+        <ProjectTimeline
+          phases={phases}
+          showSummary
+          startDate={draft.schedule.startDate}
+          endDate={draft.schedule.endDate}
+          totalDays={phases.reduce((sum, phase) => sum + phase.estimatedDays, 0)}
+          onNameChange={handleNameChange}
+          onDurationChange={handleDurationChange}
+          onStartDateChange={handleStartDateChange}
+          onEndDateChange={handleEndDateChange}
+          onTeamChange={handleTeamChange}
+          onEstimatedHoursChange={handleEstimatedHoursChange}
+          onLoggedHoursChange={handleLoggedHoursChange}
+          onRemove={setPendingRemoveIndex}
+          onCommit={handleCommit}
+          teamOptions={teamOptions}
+        />
 
-      <ConfirmDialog
-        open={pendingRemoveIndex != null}
-        title="Remover etapa"
-        message={
-          <>
-            Remover{' '}
-            <span className="font-medium text-(--th-text)">{phaseToRemove?.name}</span> do
-            cronograma? Essa ação não pode ser desfeita.
-          </>
-        }
-        onCancel={() => setPendingRemoveIndex(undefined)}
-        onConfirm={handleRemoveItem}
-      />
-    </Card>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          icon="Plus"
+          className="mt-4"
+          onClick={handleAddItem}
+          disabled={saveMutation.isPending}
+        >
+          Adicionar item
+        </Button>
+
+        <p className="mt-3 text-xs text-(--th-text-muted)">
+          {teamOptions.length > 0
+            ? 'Informe duração, início, término previsto e equipe de cada etapa — as alterações são salvas automaticamente.'
+            : 'Cadastre prestadores na aba Equipe para poder selecioná-los aqui como responsáveis.'}
+        </p>
+
+        <ConfirmDialog
+          open={pendingRemoveIndex != null}
+          title="Remover etapa"
+          message={
+            <>
+              Remover{' '}
+              <span className="font-medium text-(--th-text)">{phaseToRemove?.name}</span> do
+              cronograma? Essa ação não pode ser desfeita.
+            </>
+          }
+          onCancel={() => setPendingRemoveIndex(undefined)}
+          onConfirm={handleRemoveItem}
+        />
+      </Card>
+    </>
   )
 }

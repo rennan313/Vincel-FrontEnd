@@ -32,10 +32,16 @@ interface ProjectTimelineProps {
   /** When set, only this project's Cronograma phases are shown. */
   focusedBar: ProjectTimelineBar | null
   onFocusProject: (id: string | null) => void
+  /** Used when this timeline is embedded on the Cronograma tab (Project
+   * Details) instead of the Agenda page: `focusedBar` is always set there
+   * (a single project, never a list to pick from), so the "voltar"/"abrir
+   * projeto" controls — which only make sense when navigating between
+   * projects — are replaced with a plain column label. */
+  embedded?: boolean
 }
 
 export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
-  function ProjectTimeline({ bars, zoom, focusedBar, onFocusProject }, scrollRef) {
+  function ProjectTimeline({ bars, zoom, focusedBar, onFocusProject, embedded = false }, scrollRef) {
     const { t } = useTranslation()
     const pxPerDay = ZOOM_PX_PER_DAY[zoom]
     const today = todayISO()
@@ -73,7 +79,9 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
               className="sticky left-0 z-30 flex shrink-0 items-center gap-1 border-r border-(--th-border) bg-(--th-bg-card) px-1.5 text-xs font-medium tracking-wide text-(--th-text-muted) uppercase"
               style={{ width: LEFT_COL_WIDTH }}
             >
-              {focusedBar ? (
+              {embedded ? (
+                <span className="px-1.5">{t('agenda.phaseColumn')}</span>
+              ) : focusedBar ? (
                 <>
                   <button
                     type="button"
