@@ -5,7 +5,11 @@ import type { AuthUser } from '@/features/auth/authApi'
 interface AuthState {
   user: AuthUser | null
   accessToken: string | null
-  login: (user: AuthUser, accessToken?: string) => void
+  refreshToken: string | null
+  login: (user: AuthUser, accessToken?: string, refreshToken?: string) => void
+  // Swaps in a freshly-rotated token pair without touching `user` — used by
+  // apiClient's silent refresh, which never re-fetches the profile.
+  setTokens: (accessToken: string, refreshToken: string) => void
   logout: () => void
 }
 
@@ -14,12 +18,19 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       accessToken: null,
-      login: (user, accessToken) => set({ user, accessToken: accessToken ?? null }),
-      logout: () => set({ user: null, accessToken: null }),
+      refreshToken: null,
+      login: (user, accessToken, refreshToken) =>
+        set({ user, accessToken: accessToken ?? null, refreshToken: refreshToken ?? null }),
+      setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
+      logout: () => set({ user: null, accessToken: null, refreshToken: null }),
     }),
     {
       name: 'vincel-auth',
-      partialize: (state) => ({ user: state.user, accessToken: state.accessToken }),
+      partialize: (state) => ({
+        user: state.user,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+      }),
     },
   ),
 )

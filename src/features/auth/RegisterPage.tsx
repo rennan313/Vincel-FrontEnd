@@ -93,7 +93,7 @@ export function RegisterPage() {
       })
 
       toast.success(t('auth.register.successToast'))
-      login(response.user, response.accessToken)
+      login(response.user, response.accessToken, response.refreshToken)
       navigate('/dashboard')
     } catch (error) {
       setBannerError(

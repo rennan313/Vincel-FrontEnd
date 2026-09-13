@@ -15,15 +15,16 @@ export function AuthCallbackPage() {
 
     const params = new URLSearchParams(window.location.search)
     const token = params.get('token')
+    const refreshToken = params.get('refreshToken')
 
-    if (!token) {
+    if (!token || !refreshToken) {
       navigate('/', { replace: true })
       return
     }
 
     fetchMe(token)
       .then((user) => {
-        login(user, token)
+        login(user, token, refreshToken)
         navigate('/dashboard', { replace: true })
       })
       .catch(() => {
