@@ -10,11 +10,7 @@ import {
   PROVIDER_ROLE_LABELS,
   PROVIDER_ROLE_ORDER,
 } from '@/features/projects/create/providerRoles'
-import {
-  PROVIDER_STATUS_LABELS,
-  PROVIDER_STATUS_ORDER,
-} from '@/features/projects/create/providerStatuses'
-import type { ProviderRole, ProviderStatus } from '@/features/projects/create/types'
+import type { ProviderRole } from '@/features/projects/create/types'
 import {
   createProvider,
   updateProvider,
@@ -32,7 +28,6 @@ interface FormValues {
   name: string
   role: ProviderRole[]
   customRole: string
-  status: ProviderStatus
   phone: string
   email: string
   companyName: string
@@ -43,7 +38,6 @@ const EMPTY_VALUES: FormValues = {
   name: '',
   role: [],
   customRole: '',
-  status: 'A_CONTRATAR',
   phone: '',
   email: '',
   companyName: '',
@@ -56,7 +50,6 @@ function toFormValues(provider?: Provider): FormValues {
     name: provider.name,
     role: provider.role,
     customRole: provider.customRole ?? '',
-    status: provider.status,
     phone: provider.phone ?? '',
     email: provider.email ?? '',
     companyName: provider.companyName ?? '',
@@ -145,7 +138,6 @@ export function ProviderFormModal({ open, onClose, provider }: ProviderFormModal
       name: values.name.trim(),
       role: values.role,
       customRole: values.role.includes('OUTRO') ? values.customRole.trim() || undefined : undefined,
-      status: values.status,
       phone: values.phone.trim() || undefined,
       email: values.email.trim() || undefined,
       companyName: values.companyName.trim() || undefined,
@@ -213,24 +205,6 @@ export function ProviderFormModal({ open, onClose, provider }: ProviderFormModal
             ))}
           </div>
           {roleError && <p className="mt-1 text-xs text-red-500">{roleError}</p>}
-        </div>
-
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-(--th-text)">
-            Status
-          </label>
-          <select
-            aria-label="Status"
-            value={values.status}
-            onChange={(event) => updateField('status', event.target.value as ProviderStatus)}
-            className="h-10 w-full rounded-lg border border-(--th-border) bg-(--th-bg-card) px-3 text-sm text-(--th-text) outline-none transition-colors focus:ring-2 focus:ring-(--th-border-focus)"
-          >
-            {PROVIDER_STATUS_ORDER.map((status) => (
-              <option key={status} value={status}>
-                {PROVIDER_STATUS_LABELS[status]}
-              </option>
-            ))}
-          </select>
         </div>
 
         {values.role.includes('OUTRO') && (

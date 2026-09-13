@@ -119,11 +119,11 @@ export function ProjectDetailPage() {
       />
 
       <div className="mt-6">
-        <ProjectSummaryCards draft={draft} />
+        <ProjectTabs active={tab} onChange={setTab} />
       </div>
 
       <div className="mt-6">
-        <ProjectTabs active={tab} onChange={setTab} />
+        <ProjectSummaryCards draft={draft} />
       </div>
 
       <div className="mt-6">

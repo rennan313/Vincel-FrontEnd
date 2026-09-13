@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useQueryState, useQueryStates, parseAsBoolean, parseAsInteger, parseAsString } from 'nuqs'
-import { toast } from 'sonner'
 import { PageTitle } from '@/components/ui/PageTitle'
 import { PageSubtitle } from '@/components/ui/PageSubtitle'
 import { Table, type TableColumn } from '@/components/ui/Table'
@@ -9,22 +8,10 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Tooltip } from '@/components/ui/Tooltip'
-import { ApiError } from '@/lib/apiClient'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { resolveProviderRoleLabel } from '@/features/projects/create/providerRoles'
-import {
-  fetchProviders,
-  updateProvider,
-  type Provider,
-} from '@/features/providers/providersApi'
+import { fetchProviders, type Provider } from '@/features/providers/providersApi'
 import { ProviderFormModal } from '@/features/providers/ProviderFormModal'
-import { StatusBadgeMenu } from '@/components/ui/StatusBadgeMenu'
-import {
-  PROVIDER_STATUS_LABELS,
-  PROVIDER_STATUS_ORDER,
-  PROVIDER_STATUS_VARIANT,
-} from '@/features/projects/create/providerStatuses'
-import type { ProviderStatus } from '@/features/projects/create/types'
 
 const PAGE_SIZE = 8
 
@@ -34,7 +21,6 @@ interface ModalState {
 }
 
 export function ProvidersPage() {
-  const queryClient = useQueryClient()
   const [{ page, q: search }, setQuery] = useQueryStates({
     page: parseAsInteger.withDefault(1),
     q: parseAsString.withDefault(''),
@@ -63,19 +49,6 @@ export function ProvidersPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['providers', page, search],
     queryFn: () => fetchProviders(page, PAGE_SIZE, search),
-  })
-
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: ProviderStatus }) =>
-      updateProvider(id, { status }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['providers'] })
-    },
-    onError: (error) => {
-      toast.error(
-        error instanceof ApiError ? error.message : 'Não foi possível atualizar o prestador.',
-      )
-    },
   })
 
   const columns: TableColumn<Provider>[] = [
@@ -112,19 +85,6 @@ export function ProvidersPage() {
           <p className="text-(--th-text)">{provider.email || '—'}</p>
           <p className="text-xs text-(--th-text-muted)">{provider.phone || '—'}</p>
         </div>
-      ),
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      render: (provider) => (
-        <StatusBadgeMenu
-          status={provider.status}
-          options={PROVIDER_STATUS_ORDER}
-          labels={PROVIDER_STATUS_LABELS}
-          variants={PROVIDER_STATUS_VARIANT}
-          onChange={(status) => updateStatusMutation.mutate({ id: provider.id, status })}
-        />
       ),
     },
     {
