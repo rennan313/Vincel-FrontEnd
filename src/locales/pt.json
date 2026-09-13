@@ -12,6 +12,7 @@
     "clients": "Clientes",
     "providers": "Prestadores",
     "projects": "Projetos",
+    "agenda": "Agenda",
     "users": "Usuários",
     "subscription": "Assinatura"
   },
@@ -156,6 +157,17 @@
       "paused": "Pausado",
       "canceled": "Cancelado"
     }
+  },
+  "agenda": {
+    "subtitle": "Linha do tempo dos projetos do seu escritório.",
+    "empty": "Nenhum projeto com data de início cadastrada ainda.",
+    "today": "Hoje",
+    "zoom": {
+      "weeks": "Semanas",
+      "months": "Meses",
+      "quarters": "Trimestres"
+    },
+    "projectColumn": "Projeto"
   },
   "table": {
     "pagination": {

@@ -12,6 +12,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/clients': 'nav.clients',
   '/providers': 'nav.providers',
   '/projects': 'nav.projects',
+  '/agenda': 'nav.agenda',
 }
 
 export function Header() {

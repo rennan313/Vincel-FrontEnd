@@ -20,6 +20,7 @@ const BASE_NAV_ITEMS: NavItem[] = [
   { labelKey: 'nav.clients', to: '/clients', icon: 'Users' },
   { labelKey: 'nav.providers', to: '/providers', icon: 'Briefcase' },
   { labelKey: 'nav.projects', to: '/projects', icon: 'FolderOpen' },
+  { labelKey: 'nav.agenda', to: '/agenda', icon: 'CalendarRange' },
 ]
 
 const SUBSCRIPTION_NAV_ITEM: NavItem = { labelKey: 'nav.subscription', to: '/assinatura', icon: 'Wallet' }
