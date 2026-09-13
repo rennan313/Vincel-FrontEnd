@@ -66,23 +66,25 @@ export function OverviewTab({ draft }: OverviewTabProps) {
         </Card>
       </div>
 
-      <Card>
-        <p className="mb-4 text-xs font-medium tracking-wide text-(--th-text-muted) uppercase">
-          Prestadores por status
-        </p>
-        {providerLinks.length > 0 ? (
-          <DonutChart data={statusData} totalLabel="Prestadores" />
-        ) : (
-          <p className="text-sm text-(--th-text-muted)">Nenhum prestador vinculado ainda.</p>
-        )}
-      </Card>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <p className="mb-4 text-xs font-medium tracking-wide text-(--th-text-muted) uppercase">
+            Prestadores por status
+          </p>
+          {providerLinks.length > 0 ? (
+            <DonutChart data={statusData} totalLabel="Prestadores" />
+          ) : (
+            <p className="text-sm text-(--th-text-muted)">Nenhum prestador vinculado ainda.</p>
+          )}
+        </Card>
 
-      <Card>
-        <p className="mb-4 text-xs font-medium tracking-wide text-(--th-text-muted) uppercase">
-          Linha do tempo
-        </p>
-        <ProjectTimeline phases={draft.planning.phases} />
-      </Card>
+        <Card>
+          <p className="mb-4 text-xs font-medium tracking-wide text-(--th-text-muted) uppercase">
+            Linha do tempo
+          </p>
+          <ProjectTimeline phases={draft.planning.phases} />
+        </Card>
+      </div>
     </div>
   )
 }

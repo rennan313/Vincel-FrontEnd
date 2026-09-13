@@ -1,4 +1,5 @@
 import type { Project } from '@/features/projects/projectsApi'
+import type { PlanningPhase, ProviderStatus } from '@/features/projects/create/types'
 import { addDaysISO, toISODate } from '@/features/agenda/timelineMath'
 
 export interface ProjectPhaseBar {
@@ -8,6 +9,15 @@ export interface ProjectPhaseBar {
   start: string
   /** ISO date (yyyy-mm-dd), always >= start. */
   end: string
+  /** Status of the prestador assigned as this etapa's "equipe responsável"
+   * (looked up by name against the project's cadastro de prestadores) —
+   * null when the etapa has no equipe or that name matches no prestador.
+   * Colors the bar on the Cronograma tab's Gantt the same way that
+   * status's badge is colored on the Equipe tab. Not populated by
+   * `getProjectTimelineBar` (the Agenda page doesn't load every project's
+   * prestadores) — only the Cronograma tab attaches it, after the fact,
+   * from its own already-loaded provider links. */
+  providerStatus?: ProviderStatus | null
 }
 
 export interface ProjectTimelineBar {
@@ -24,16 +34,20 @@ export interface ProjectTimelineBar {
 }
 
 /**
- * A project's Cronograma phases, each given a plottable date range: a
- * phase's own início/término when set on the Cronograma tab, otherwise
- * stacked sequentially from the project's início using its estimatedDays
- * (the same estimate `getTotalDays`/the wizard's schedule step use) — no
- * fabricated precision, just the same "prazo estimado" logic already
- * shown elsewhere, broken down per phase.
+ * A set of Cronograma phases, each given a plottable date range: a phase's
+ * own início/término when set on the Cronograma tab, otherwise stacked
+ * sequentially from `rangeStart` using its estimatedDays (the same
+ * estimate `getTotalDays`/the wizard's schedule step use) — no fabricated
+ * precision, just the same "prazo estimado" logic already shown
+ * elsewhere, broken down per phase.
+ *
+ * Exported so the Cronograma tab (Project Details) can plot the same
+ * project's phases live, from its in-editor draft, without waiting for a
+ * full `Project` reload.
  */
-function getProjectPhaseBars(project: Project, projectStart: string): ProjectPhaseBar[] {
-  let cursor = projectStart
-  return (project.planningPhases ?? []).map((phase) => {
+export function getProjectPhaseBars(phases: PlanningPhase[], rangeStart: string): ProjectPhaseBar[] {
+  let cursor = rangeStart
+  return phases.map((phase) => {
     const start = phase.startDate ? toISODate(phase.startDate) : cursor
     const end = phase.endDate
       ? toISODate(phase.endDate)
@@ -53,7 +67,7 @@ function getProjectPhaseBars(project: Project, projectStart: string): ProjectPha
 export function getProjectTimelineBar(project: Project): ProjectTimelineBar | null {
   if (!project.startDate) return null
   const start = toISODate(project.startDate)
-  const phases = getProjectPhaseBars(project, start)
+  const phases = getProjectPhaseBars(project.planningPhases ?? [], start)
 
   if (project.endDate) {
     const end = toISODate(project.endDate)

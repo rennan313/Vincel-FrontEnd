@@ -1,9 +1,15 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { useAuthStore } from '@/store/authStore'
 import '@/lib/i18n'
+
+const loginAccount = vi.fn()
+vi.mock('@/features/auth/authApi', async () => {
+  const actual = await vi.importActual('@/features/auth/authApi')
+  return { ...actual, loginAccount: (...args: unknown[]) => loginAccount(...args) }
+})
 
 function renderLoginPage() {
   return render(
@@ -18,7 +24,8 @@ function renderLoginPage() {
 }
 
 afterEach(() => {
-  useAuthStore.setState({ user: null })
+  useAuthStore.setState({ user: null, accessToken: null, refreshToken: null })
+  loginAccount.mockReset()
 })
 
 describe('LoginPage', () => {
@@ -29,7 +36,10 @@ describe('LoginPage', () => {
     expect(screen.getByLabelText('Senha')).toBeInTheDocument()
   })
 
-  it('shows an error banner for wrong mock credentials', async () => {
+  it('shows a banner error when the API rejects the credentials', async () => {
+    const { ApiError } = await import('@/lib/apiClient')
+    loginAccount.mockRejectedValue(new ApiError(401, 'E-mail ou senha inválidos.'))
+
     renderLoginPage()
     fireEvent.change(screen.getByLabelText('E-mail'), {
       target: { value: 'wrong@example.com' },
@@ -40,30 +50,48 @@ describe('LoginPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Entrar com e-mail' }))
 
     await waitFor(() =>
-      expect(screen.getByText('E-mail ou senha incorretos.')).toBeInTheDocument(),
+      expect(screen.getByText('E-mail ou senha inválidos.')).toBeInTheDocument(),
     )
   })
 
-  it('logs in and navigates to the dashboard with the mock credentials', async () => {
+  it('logs in and navigates to the dashboard on valid credentials', async () => {
+    loginAccount.mockResolvedValue({
+      accessToken: 'fake-access-token',
+      refreshToken: 'fake-refresh-token',
+      user: {
+        id: 'user-1',
+        name: 'Ana Souza',
+        email: 'ana@example.com',
+        role: 'ADMIN',
+        companyId: 'company-1',
+      },
+    })
+
     renderLoginPage()
     fireEvent.change(screen.getByLabelText('E-mail'), {
-      target: { value: 'demo@vincel.studio' },
+      target: { value: 'ana@example.com' },
     })
     fireEvent.change(screen.getByLabelText('Senha'), {
-      target: { value: 'demo1234' },
+      target: { value: 'Senha1234' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Entrar com e-mail' }))
 
     await waitFor(() =>
       expect(screen.getByText('Dashboard mock')).toBeInTheDocument(),
     )
-    expect(useAuthStore.getState().user).toEqual({
-      id: 'mock-user',
-      name: 'Alexandre Soares',
-      email: 'demo@vincel.studio',
-      role: 'ADMIN',
-      companyId: null,
+    expect(loginAccount).toHaveBeenCalledWith({
+      email: 'ana@example.com',
+      password: 'Senha1234',
     })
+    expect(useAuthStore.getState().user).toEqual({
+      id: 'user-1',
+      name: 'Ana Souza',
+      email: 'ana@example.com',
+      role: 'ADMIN',
+      companyId: 'company-1',
+    })
+    expect(useAuthStore.getState().accessToken).toBe('fake-access-token')
+    expect(useAuthStore.getState().refreshToken).toBe('fake-refresh-token')
   })
 
   it('navigates to /register when clicking "Criar conta grátis"', () => {

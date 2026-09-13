@@ -11,17 +11,9 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { PasswordInput } from '@/components/ui/PasswordInput'
 import { loginSchema } from '@/features/auth/loginSchema'
+import { loginAccount } from '@/features/auth/authApi'
 import { useAuthStore } from '@/store/authStore'
-import { API_URL } from '@/lib/apiClient'
-
-const MOCK_CREDENTIALS = { email: 'demo@vincel.studio', password: 'demo1234' }
-const MOCK_USER = {
-  id: 'mock-user',
-  name: 'Alexandre Soares',
-  email: MOCK_CREDENTIALS.email,
-  role: 'ADMIN',
-  companyId: null,
-}
+import { API_URL, ApiError } from '@/lib/apiClient'
 
 interface FieldErrors {
   email?: string
@@ -77,18 +69,16 @@ export function LoginPage() {
     }
 
     setLoadingEmail(true)
-    await new Promise((resolve) => setTimeout(resolve, 700))
-    setLoadingEmail(false)
-
-    if (
-      parsed.data.email === MOCK_CREDENTIALS.email &&
-      parsed.data.password === MOCK_CREDENTIALS.password
-    ) {
-      toast.success(t('auth.login.mockSuccessToast'))
-      login(MOCK_USER)
+    try {
+      const response = await loginAccount(parsed.data)
+      login(response.user, response.accessToken, response.refreshToken)
       navigate('/dashboard')
-    } else {
-      setBannerError('invalid_credentials')
+    } catch (error) {
+      setBannerError(
+        error instanceof ApiError ? error.message : t('auth.login.errors.default'),
+      )
+    } finally {
+      setLoadingEmail(false)
     }
   }
 
@@ -166,7 +156,7 @@ export function LoginPage() {
 
           {(bannerError || googleBannerError) && (
             <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
-              {googleBannerError ?? t(`auth.login.errors.${bannerError}`)}
+              {googleBannerError ?? bannerError}
             </div>
           )}
 

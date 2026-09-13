@@ -67,7 +67,7 @@ export function CompleteGoogleRegistrationPage() {
         companyDocumentType: DOCUMENT_TYPE_MAP[companyType],
       })
       toast.success(t('auth.googleComplete.successToast'))
-      login(response.user, response.accessToken)
+      login(response.user, response.accessToken, response.refreshToken)
       navigate('/dashboard')
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Não foi possível concluir o cadastro.')

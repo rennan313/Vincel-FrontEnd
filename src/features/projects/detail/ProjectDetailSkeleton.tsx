@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/Skeleton'
  */
 export function ProjectDetailSkeleton() {
   return (
-    <div className="mx-auto max-w-5xl p-6">
+    <div className="p-6">
       <Skeleton className="h-4 w-40" />
       <div className="mt-3 flex items-start justify-between gap-4">
         <div>

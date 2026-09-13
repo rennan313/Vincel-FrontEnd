@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { ChevronDown, LogOut, UserPlus } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { canManageUsers } from '@/features/users/usersApi'
+import { logoutSession } from '@/features/auth/authApi'
 
 function getInitials(name: string) {
   return name
@@ -37,6 +38,12 @@ export function UserMenu() {
   const showUsers = canManageUsers(user.role)
 
   function handleLogout() {
+    // Revoke server-side so the refresh token can't be used again even if it
+    // leaked — best-effort: local logout must still happen even if this fails.
+    const { refreshToken } = useAuthStore.getState()
+    if (refreshToken) {
+      logoutSession(refreshToken).catch(() => {})
+    }
     logout()
     navigate('/')
   }

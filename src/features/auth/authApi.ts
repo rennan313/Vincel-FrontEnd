@@ -1,4 +1,4 @@
-import { apiFetch } from '@/lib/apiClient'
+import { API_URL, apiFetch } from '@/lib/apiClient'
 
 export type CompanyDocumentType = 'CNPJ' | 'CPF'
 
@@ -20,6 +20,7 @@ export interface AuthUser {
 
 export interface RegisterResponse {
   accessToken: string
+  refreshToken: string
   user: AuthUser
   company: {
     id: string
@@ -31,6 +32,24 @@ export interface RegisterResponse {
 
 export function registerAccount(payload: RegisterPayload): Promise<RegisterResponse> {
   return apiFetch<RegisterResponse>('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export interface LoginPayload {
+  email: string
+  password: string
+}
+
+export interface LoginResponse {
+  accessToken: string
+  refreshToken: string
+  user: AuthUser
+}
+
+export function loginAccount(payload: LoginPayload): Promise<LoginResponse> {
+  return apiFetch<LoginResponse>('/auth/login', {
     method: 'POST',
     body: JSON.stringify(payload),
   })
@@ -50,6 +69,7 @@ export interface CompleteGoogleRegistrationPayload {
 
 export interface CompleteGoogleRegistrationResponse {
   accessToken: string
+  refreshToken: string
   user: AuthUser
 }
 
@@ -60,4 +80,15 @@ export function completeGoogleRegistration(
     method: 'POST',
     body: JSON.stringify(payload),
   })
+}
+
+// The silent refresh-and-retry itself lives in apiClient (it needs to sit
+// inside apiFetch's own request flow) — this is only for an explicit,
+// one-off server-side revoke on logout.
+export function logoutSession(refreshToken: string): Promise<void> {
+  return fetch(`${API_URL}/auth/logout`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refreshToken }),
+  }).then(() => undefined)
 }
