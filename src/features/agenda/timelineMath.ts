@@ -1,4 +1,4 @@
-export type TimelineZoom = 'weeks' | 'months' | 'quarters'
+export type TimelineZoom = 'days' | 'weeks' | 'months'
 
 export interface TimelineRange {
   /** ISO date (yyyy-mm-dd), inclusive. */
@@ -19,6 +19,7 @@ const MSK_PER_DAY = 86_400_000
 
 const MONTH_FORMATTER = new Intl.DateTimeFormat('pt-BR', { month: 'long', timeZone: 'UTC' })
 const MONTH_ABBR_FORMATTER = new Intl.DateTimeFormat('pt-BR', { month: 'short', timeZone: 'UTC' })
+const WEEKDAY_ABBR_FORMATTER = new Intl.DateTimeFormat('pt-BR', { weekday: 'short', timeZone: 'UTC' })
 
 function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1)
@@ -80,27 +81,27 @@ function startOfMonthISO(iso: string): string {
   return `${year}-${month}-01`
 }
 
-function startOfQuarterISO(iso: string): string {
-  const [year, month] = iso.split('-').map(Number)
-  const quarterStartMonth = Math.floor((month - 1) / 3) * 3 + 1
-  return `${year}-${String(quarterStartMonth).padStart(2, '0')}-01`
-}
-
 function segmentStart(iso: string, zoom: TimelineZoom): string {
+  if (zoom === 'days') return iso
   if (zoom === 'weeks') return startOfWeekISO(iso)
-  if (zoom === 'months') return startOfMonthISO(iso)
-  return startOfQuarterISO(iso)
+  return startOfMonthISO(iso)
 }
 
 function nextSegmentStart(iso: string, zoom: TimelineZoom): string {
+  if (zoom === 'days') return addDaysISO(iso, 1)
   if (zoom === 'weeks') return addDaysISO(iso, 7)
   const date = toUTCDate(iso)
-  const monthsToAdd = zoom === 'months' ? 1 : 3
-  date.setUTCMonth(date.getUTCMonth() + monthsToAdd)
+  date.setUTCMonth(date.getUTCMonth() + 1)
   return fromUTCDate(date)
 }
 
 function segmentLabel(startISO: string, endExclusiveISO: string, zoom: TimelineZoom): string {
+  if (zoom === 'days') {
+    const start = toUTCDate(startISO)
+    const weekday = capitalize(WEEKDAY_ABBR_FORMATTER.format(start)).replace('.', '')
+    return `${weekday} ${start.getUTCDate()}`
+  }
+
   if (zoom === 'weeks') {
     const start = toUTCDate(startISO)
     const end = toUTCDate(addDaysISO(endExclusiveISO, -1))
@@ -113,33 +114,25 @@ function segmentLabel(startISO: string, endExclusiveISO: string, zoom: TimelineZ
       : `${startDay} ${startMonth} – ${endDay} ${endMonth}`
   }
 
-  if (zoom === 'months') {
-    const start = toUTCDate(startISO)
-    return `${capitalize(MONTH_FORMATTER.format(start))} ${start.getUTCFullYear()}`
-  }
-
   const start = toUTCDate(startISO)
-  const end = toUTCDate(addDaysISO(endExclusiveISO, -1))
-  const startMonth = capitalize(MONTH_ABBR_FORMATTER.format(start)).replace('.', '')
-  const endMonth = capitalize(MONTH_ABBR_FORMATTER.format(end)).replace('.', '')
-  return `${startMonth} – ${endMonth} ${end.getUTCFullYear()}`
+  return `${capitalize(MONTH_FORMATTER.format(start))} ${start.getUTCFullYear()}`
 }
 
 /** Pixels-per-day for each zoom level — wide enough that bars/labels stay
  * legible, narrow enough that a multi-month range doesn't force excessive
  * horizontal scrolling. */
 export const ZOOM_PX_PER_DAY: Record<TimelineZoom, number> = {
+  days: 64,
   weeks: 26,
   months: 7,
-  quarters: 2.6,
 }
 
 /** How far to pad the visible range beyond the earliest/latest project date
  * (or today, if that's wider), per zoom level. */
 const ZOOM_PAD_DAYS: Record<TimelineZoom, number> = {
+  days: 5,
   weeks: 14,
   months: 45,
-  quarters: 120,
 }
 
 /**
@@ -168,7 +161,7 @@ export function buildTimelineSegments(range: TimelineRange, zoom: TimelineZoom):
   const segments: TimelineSegment[] = []
   let cursor = range.start
   let guard = 0
-  while (cursor < range.end && guard < 400) {
+  while (cursor < range.end && guard < 2000) {
     const next = nextSegmentStart(cursor, zoom)
     segments.push({
       key: cursor,

@@ -74,13 +74,11 @@ describe('buildTimelineSegments', () => {
     expect(segments[0].label).toMatch(/\d+ – \d+/)
   })
 
-  it('labels each quarter segment spanning three months', () => {
-    const range = computeVisibleRange(['2026-09-15'], 'quarters')
-    const segments = buildTimelineSegments(range, 'quarters')
+  it('labels each day segment with a weekday and day number', () => {
+    const range = computeVisibleRange(['2026-09-15'], 'days')
+    const segments = buildTimelineSegments(range, 'days')
 
-    for (const segment of segments) {
-      expect(segment.days).toBeGreaterThanOrEqual(89)
-      expect(segment.days).toBeLessThanOrEqual(92)
-    }
+    expect(segments.every((s) => s.days === 1)).toBe(true)
+    expect(segments[0].label).toMatch(/^\S+ \d+$/)
   })
 })

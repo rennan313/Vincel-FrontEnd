@@ -163,9 +163,9 @@
     "empty": "Nenhum projeto com data de início cadastrada ainda.",
     "today": "Hoje",
     "zoom": {
+      "days": "Dias",
       "weeks": "Semanas",
-      "months": "Meses",
-      "quarters": "Trimestres"
+      "months": "Meses"
     },
     "projectColumn": "Projeto"
   },

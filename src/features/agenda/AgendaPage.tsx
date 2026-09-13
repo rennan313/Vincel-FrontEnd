@@ -17,7 +17,7 @@ import {
   type TimelineZoom,
 } from '@/features/agenda/timelineMath'
 
-const ZOOM_OPTIONS: TimelineZoom[] = ['weeks', 'months', 'quarters']
+const ZOOM_OPTIONS: TimelineZoom[] = ['days', 'weeks', 'months']
 const LEFT_COL_WIDTH = 220
 
 export function AgendaPage() {
@@ -25,7 +25,7 @@ export function AgendaPage() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [zoom, setZoom] = useQueryState(
     'zoom',
-    parseAsStringLiteral(ZOOM_OPTIONS).withDefault('months'),
+    parseAsStringLiteral(ZOOM_OPTIONS).withDefault('weeks'),
   )
 
   // A single page-sized request (the backend caps pageSize at 100) — an
