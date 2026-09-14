@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useQueryState, useQueryStates, parseAsBoolean, parseAsInteger, parseAsString } from 'nuqs'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { PageTitle } from '@/components/ui/PageTitle'
 import { PageSubtitle } from '@/components/ui/PageSubtitle'
 import { Table, type TableColumn } from '@/components/ui/Table'
@@ -10,6 +11,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
+import { useAuthStore } from '@/store/authStore'
 import { fetchClients, type Client } from '@/features/clients/clientsApi'
 import { ClientFormModal } from '@/features/clients/ClientFormModal'
 
@@ -22,6 +24,7 @@ interface ModalState {
 
 export function ClientsPage() {
   const { t } = useTranslation()
+  const companyId = useAuthStore((state) => state.user?.companyId)
   const [{ page, q: search }, setQuery] = useQueryStates({
     page: parseAsInteger.withDefault(1),
     q: parseAsString.withDefault(''),
@@ -51,6 +54,17 @@ export function ClientsPage() {
     queryKey: ['clients', page, search],
     queryFn: () => fetchClients(page, PAGE_SIZE, search),
   })
+
+  async function handleCopyInviteLink() {
+    if (!companyId) return
+    const inviteUrl = `${window.location.origin}/convite/${companyId}`
+    try {
+      await navigator.clipboard.writeText(inviteUrl)
+      toast.success(t('clients.inviteCopied'))
+    } catch {
+      toast.error(t('clients.inviteCopyError'))
+    }
+  }
 
   const columns: TableColumn<Client>[] = [
     {
@@ -107,14 +121,26 @@ export function ClientsPage() {
           <PageTitle>{t('nav.clients')}</PageTitle>
           <PageSubtitle>{t('clients.subtitle')}</PageSubtitle>
         </div>
-        <Button
-          type="button"
-          variant="primary"
-          icon="Plus"
-          onClick={() => setModalState({ open: true })}
-        >
-          {t('clients.new')}
-        </Button>
+        <div className="flex items-center gap-2">
+          {companyId && (
+            <Button
+              type="button"
+              variant="outline"
+              icon="Copy"
+              onClick={handleCopyInviteLink}
+            >
+              {t('clients.inviteButton')}
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="primary"
+            icon="Plus"
+            onClick={() => setModalState({ open: true })}
+          >
+            {t('clients.new')}
+          </Button>
+        </div>
       </div>
 
       <div className="mt-4 mb-6">

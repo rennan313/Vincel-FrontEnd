@@ -50,6 +50,9 @@
     "editAction": "Editar {{name}}",
     "searchPlaceholder": "Buscar por nome ou e-mail",
     "new": "Novo cliente",
+    "inviteButton": "Convidar clientes",
+    "inviteCopied": "Link de convite copiado!",
+    "inviteCopyError": "Não foi possível copiar o link.",
     "columns": {
       "name": "Nome",
       "contact": "Contato",
