@@ -1,7 +1,8 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import fetchCep from 'cep-promise'
+import { Building2 } from 'lucide-react'
 import { PageTitle } from '@/components/ui/PageTitle'
 import { PageSubtitle } from '@/components/ui/PageSubtitle'
 import { Card } from '@/components/ui/Card'
@@ -12,10 +13,15 @@ import { formatCEP, formatCNPJ, formatCPF, formatPhone } from '@/lib/masks'
 import { ApiError } from '@/lib/apiClient'
 import {
   fetchMyCompany,
+  removeCompanyLogo,
   updateMyCompany,
+  uploadCompanyLogo,
   type Company,
   type UpdateCompanyPayload,
 } from '@/features/company/companyApi'
+
+const LOGO_MAX_BYTES = 5 * 1024 * 1024
+const ALLOWED_LOGO_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp'])
 
 interface AddressFormState {
   zip: string
@@ -31,7 +37,6 @@ interface CompanyFormState {
   name: string
   contactEmail: string
   contactPhone: string
-  logoUrl: string
   address: AddressFormState
 }
 
@@ -49,7 +54,6 @@ const EMPTY_FORM: CompanyFormState = {
   name: '',
   contactEmail: '',
   contactPhone: '',
-  logoUrl: '',
   address: EMPTY_ADDRESS,
 }
 
@@ -58,7 +62,6 @@ function toFormState(company: Company): CompanyFormState {
     name: company.name,
     contactEmail: company.contactEmail ?? '',
     contactPhone: company.contactPhone ?? '',
-    logoUrl: company.logoUrl ?? '',
     address: {
       zip: company.address?.zip ?? '',
       street: company.address?.street ?? '',
@@ -76,7 +79,6 @@ function toPayload(form: CompanyFormState): UpdateCompanyPayload {
     name: form.name.trim(),
     contactEmail: form.contactEmail.trim() || undefined,
     contactPhone: form.contactPhone.trim() || undefined,
-    logoUrl: form.logoUrl.trim() || undefined,
     address: form.address,
   }
 }
@@ -115,6 +117,51 @@ export function CompanyPage() {
       )
     },
   })
+
+  const logoInputRef = useRef<HTMLInputElement>(null)
+
+  const uploadLogoMutation = useMutation({
+    mutationFn: (file: File) => uploadCompanyLogo(file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['company', 'me'] })
+      toast.success('Logo atualizado.')
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof ApiError ? error.message : 'Não foi possível enviar o logo.',
+      )
+    },
+  })
+
+  const removeLogoMutation = useMutation({
+    mutationFn: removeCompanyLogo,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['company', 'me'] })
+      toast.success('Logo removido.')
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof ApiError ? error.message : 'Não foi possível remover o logo.',
+      )
+    },
+  })
+
+  function handleLogoFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    if (!ALLOWED_LOGO_TYPES.has(file.type)) {
+      toast.error('Formato inválido — envie um PNG, JPEG ou WEBP.')
+      return
+    }
+    if (file.size > LOGO_MAX_BYTES) {
+      toast.error('Imagem muito grande — o limite é 5MB.')
+      return
+    }
+
+    uploadLogoMutation.mutate(file)
+  }
 
   function updateField<K extends keyof CompanyFormState>(field: K, value: CompanyFormState[K]) {
     setForm((current) => ({ ...current, [field]: value }))
@@ -224,25 +271,57 @@ export function CompanyPage() {
                   hint="Opcional"
                 />
               </div>
-              <div className="flex items-end gap-3">
-                <Input
-                  label="Logo"
-                  className="flex-1"
-                  value={form.logoUrl}
-                  onChange={(event) => updateField('logoUrl', event.target.value)}
-                  placeholder="https://..."
-                  hint="Opcional — URL de uma imagem já hospedada"
-                />
-                {form.logoUrl && (
-                  <img
-                    src={form.logoUrl}
-                    alt="Prévia do logo"
-                    className="size-10 shrink-0 rounded-lg border border-(--th-border) object-contain"
-                    onError={(event) => {
-                      event.currentTarget.style.visibility = 'hidden'
-                    }}
+              <div>
+                <label className="mb-1 block text-sm text-(--th-text)">Logo</label>
+                <div className="flex items-center gap-3">
+                  {company.logoUrl ? (
+                    <img
+                      src={company.logoUrl}
+                      alt="Logo do escritório"
+                      className="size-14 shrink-0 rounded-xl border border-(--th-border) object-contain"
+                    />
+                  ) : (
+                    <div className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-dashed border-(--th-border) text-(--th-text-muted)">
+                      <Building2 className="size-6" />
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        loading={uploadLogoMutation.isPending}
+                        onClick={() => logoInputRef.current?.click()}
+                      >
+                        {company.logoUrl ? 'Trocar logo' : 'Enviar logo'}
+                      </Button>
+                      {company.logoUrl && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          loading={removeLogoMutation.isPending}
+                          onClick={() => removeLogoMutation.mutate()}
+                        >
+                          Remover
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-xs text-(--th-text-muted)">
+                      PNG, JPEG ou WEBP, até 5MB. Redimensionado automaticamente.
+                    </p>
+                  </div>
+
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={handleLogoFileChange}
                   />
-                )}
+                </div>
               </div>
             </div>
           </Card>
