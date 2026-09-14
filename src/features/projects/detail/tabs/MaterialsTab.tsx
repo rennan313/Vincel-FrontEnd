@@ -175,7 +175,11 @@ export function MaterialsTab() {
 
   function handleCreateManually() {
     setDrawerOpen(false)
-    setModalState({ open: true })
+    // An empty (but present) initialDraft is what tells MaterialModal to
+    // skip straight to its blank "edit" form instead of the link/catálogo
+    // picker — passing nothing here would land back on that picker, making
+    // this button look like it does nothing.
+    setModalState({ open: true, initialDraft: {} })
   }
 
   const columns: TableColumn<ProjectMaterial>[] = [
