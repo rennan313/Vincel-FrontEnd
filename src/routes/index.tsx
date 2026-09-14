@@ -5,6 +5,7 @@ import { LoginPage } from '@/features/auth/LoginPage'
 import { RegisterPage } from '@/features/auth/RegisterPage'
 import { AuthCallbackPage } from '@/features/auth/AuthCallbackPage'
 import { CompleteGoogleRegistrationPage } from '@/features/auth/CompleteGoogleRegistrationPage'
+import { ClientInvitePage } from '@/features/clientInvite/ClientInvitePage'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { ClientsPage } from '@/features/clients/ClientsPage'
@@ -25,6 +26,7 @@ export const router = createBrowserRouter([
       { path: '/register', element: <RegisterPage /> },
       { path: '/auth/callback', element: <AuthCallbackPage /> },
       { path: '/register/complete', element: <CompleteGoogleRegistrationPage /> },
+      { path: '/convite/:companyId', element: <ClientInvitePage /> },
       {
         element: <DashboardLayout />,
         children: [
