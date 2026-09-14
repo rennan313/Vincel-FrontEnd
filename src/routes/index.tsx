@@ -16,6 +16,7 @@ import { ProjectDetailPage } from '@/features/projects/ProjectDetailPage'
 import { CreateProjectPage } from '@/features/projects/create/CreateProjectPage'
 import { UsersPage } from '@/features/users/UsersPage'
 import { SubscriptionPage } from '@/features/subscription/SubscriptionPage'
+import { CompanyPage } from '@/features/company/CompanyPage'
 
 export const router = createBrowserRouter([
   {
@@ -33,6 +34,7 @@ export const router = createBrowserRouter([
           { path: '/dashboard', element: <DashboardPage /> },
           { path: '/users', element: <UsersPage /> },
           { path: '/assinatura', element: <SubscriptionPage /> },
+          { path: '/empresa', element: <CompanyPage /> },
           { path: '/clients', element: <ClientsPage /> },
           { path: '/providers', element: <ProvidersPage /> },
           { path: '/projects', element: <ProjectsPage /> },

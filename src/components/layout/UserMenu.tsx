@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, LogOut, UserPlus } from 'lucide-react'
+import { Building2, ChevronDown, LogOut, UserPlus } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { canManageUsers } from '@/features/users/usersApi'
 import { logoutSession } from '@/features/auth/authApi'
@@ -36,6 +36,10 @@ export function UserMenu() {
   if (!user) return null
 
   const showUsers = canManageUsers(user.role)
+  // Matches the backend's own restriction on GET/PATCH /companies/me —
+  // VINCEL_ADMIN has no escritório of its own, so it's ADMIN-only, unlike
+  // showUsers above.
+  const showCompanySettings = user.role === 'ADMIN'
 
   function handleLogout() {
     // Revoke server-side so the refresh token can't be used again even if it
@@ -74,16 +78,28 @@ export function UserMenu() {
               {user.email}
             </p>
           </div>
-          {showUsers && (
+          {(showUsers || showCompanySettings) && (
             <div className="border-b border-(--th-border) py-1">
-              <NavLink
-                to="/users"
-                onClick={() => setOpen(false)}
-                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-(--th-text-sub) hover:bg-(--th-bg-elevated) hover:text-(--th-text)"
-              >
-                <UserPlus className="size-3.5 text-(--th-text-muted)" />
-                {t('nav.users')}
-              </NavLink>
+              {showCompanySettings && (
+                <NavLink
+                  to="/empresa"
+                  onClick={() => setOpen(false)}
+                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-(--th-text-sub) hover:bg-(--th-bg-elevated) hover:text-(--th-text)"
+                >
+                  <Building2 className="size-3.5 text-(--th-text-muted)" />
+                  Configurações do escritório
+                </NavLink>
+              )}
+              {showUsers && (
+                <NavLink
+                  to="/users"
+                  onClick={() => setOpen(false)}
+                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-(--th-text-sub) hover:bg-(--th-bg-elevated) hover:text-(--th-text)"
+                >
+                  <UserPlus className="size-3.5 text-(--th-text-muted)" />
+                  {t('nav.users')}
+                </NavLink>
+              )}
             </div>
           )}
           <div className="py-1">
