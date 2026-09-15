@@ -265,14 +265,14 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
             </div>
             {scheduleStatusCategories.length > 0 && (
               <select
-                aria-label="Status do cronograma (manual)"
+                aria-label="Status do cronograma"
                 value={project?.scheduleStatusCategoryId ?? ''}
                 onChange={(event) =>
                   statusCategoryMutation.mutate(event.target.value || null)
                 }
                 className="mt-1.5 h-7 w-full rounded-md border border-(--th-border) bg-(--th-bg-card) px-1.5 text-xs text-(--th-text-sub) outline-none transition-colors focus:ring-2 focus:ring-(--th-border-focus)"
               >
-                <option value="">Automático</option>
+                <option value="">Selecione</option>
                 {scheduleStatusCategories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.label}
