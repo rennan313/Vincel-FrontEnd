@@ -115,7 +115,14 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
                   >
                     <ChevronLeft className="size-4" />
                   </button>
-                  <span className="truncate text-sm font-medium text-(--th-text) normal-case">
+                  <span
+                    className="truncate text-sm font-medium text-(--th-text) normal-case"
+                    style={
+                      focusedBar.scheduleStatusColor
+                        ? { color: focusedBar.scheduleStatusColor }
+                        : undefined
+                    }
+                  >
                     {focusedBar.name}
                   </span>
                   <Link
@@ -225,7 +232,16 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
                         aria-label={t('agenda.viewSchedule', { name: bar.name })}
                         className="flex min-w-0 flex-1 items-center gap-1 rounded-md py-1 pl-1 text-left hover:bg-(--th-bg-elevated) disabled:hover:bg-transparent"
                       >
-                        <span className="truncate text-sm text-(--th-text)">{bar.name}</span>
+                        <span
+                          className="truncate text-sm text-(--th-text)"
+                          style={
+                            bar.scheduleStatusColor
+                              ? { color: bar.scheduleStatusColor }
+                              : undefined
+                          }
+                        >
+                          {bar.name}
+                        </span>
                         <ChevronRight
                           className={cn(
                             'ml-auto size-3.5 shrink-0 text-(--th-text-muted)',

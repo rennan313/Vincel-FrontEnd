@@ -31,6 +31,12 @@ export interface ProjectTimelineBar {
   /** The project's own Cronograma, broken into its phases — shown inline
    * when the project row is expanded on the Agenda timeline. */
   phases: ProjectPhaseBar[]
+  /** Hex color of the project's manually-pinned ScheduleStatusCategory
+   * (Cronograma tab) — colors the project's name on the Agenda timeline.
+   * Null when no category is pinned. Not populated by
+   * `getProjectTimelineBar` itself (needs the company's category list,
+   * which the Agenda page loads separately) — attached after the fact. */
+  scheduleStatusColor?: string | null
 }
 
 /**

@@ -50,6 +50,9 @@
     "editAction": "Editar {{name}}",
     "searchPlaceholder": "Buscar por nome ou e-mail",
     "new": "Novo cliente",
+    "inviteButton": "Convidar clientes",
+    "inviteCopied": "Link de convite copiado!",
+    "inviteCopyError": "Não foi possível copiar o link.",
     "columns": {
       "name": "Nome",
       "contact": "Contato",
@@ -90,6 +93,24 @@
       "mockCreateToast": "Cliente cadastrado com sucesso!",
       "mockUpdateToast": "Cliente atualizado com sucesso!"
     }
+  },
+  "clientInvite": {
+    "loading": "Carregando...",
+    "notFound": "Este link de convite não é válido.",
+    "subtitle": "Preencha seus dados para se cadastrar como cliente.",
+    "name": "Nome",
+    "email": "E-mail",
+    "phone": "Telefone",
+    "type": {
+      "PF": "Pessoa física",
+      "PJ": "Pessoa jurídica"
+    },
+    "submit": "Enviar cadastro",
+    "submitting": "Enviando...",
+    "genericError": "Não foi possível enviar seu cadastro. Tente novamente.",
+    "successTitle": "Cadastro enviado!",
+    "successSubtitle": "{{company}} recebeu seus dados e vai entrar em contato em breve.",
+    "poweredBy": "Feito com"
   },
   "users": {
     "subtitle": "Gerencie os usuários do seu escritório.",

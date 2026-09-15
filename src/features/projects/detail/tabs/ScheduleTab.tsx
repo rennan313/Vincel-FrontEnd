@@ -8,13 +8,14 @@ import { Card } from '@/components/ui/Card'
 import { ApiError } from '@/lib/apiClient'
 import { formatDate } from '@/lib/formatDate'
 import { fetchProjectProviders } from '@/features/projects/detail/projectProvidersApi'
-import { updateProject } from '@/features/projects/projectsApi'
+import { fetchProjectById, updateProject } from '@/features/projects/projectsApi'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
 import { resolveProviderRoleLabel } from '@/features/projects/create/providerRoles'
 import type { PlanningPhase, ProjectDraft, ProviderStatus } from '@/features/projects/create/types'
 import { getProjectPhaseBars, type ProjectTimelineBar } from '@/features/agenda/agendaDerivations'
 import { ProjectTimeline as AgendaTimeline } from '@/features/agenda/ProjectTimeline'
 import { PhaseFormModal, type PhaseFormInput } from '@/features/projects/detail/tabs/PhaseFormModal'
+import { fetchScheduleStatusCategories } from '@/features/scheduleStatus/scheduleStatusApi'
 import {
   computeVisibleRange,
   daysBetweenISO,
@@ -135,6 +136,40 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zoom, timelineBar])
 
+  // Same query key ProjectDetailPage uses for a confirmed project — reads
+  // its shared cache instead of firing its own request in that case. Fires
+  // independently right after creating/editing (isCurrentDraft), since the
+  // manual pin lives on the real persisted Project, not the wizard draft.
+  const { data: project } = useQuery({
+    queryKey: ['project', projectId],
+    queryFn: () => fetchProjectById(projectId!),
+    enabled: Boolean(projectId),
+  })
+
+  const { data: scheduleStatusCategories = [] } = useQuery({
+    queryKey: ['schedule-status-categories'],
+    queryFn: fetchScheduleStatusCategories,
+  })
+
+  // Manual-only for now — no automatic (delay-based) fallback. Kept as a
+  // one-line change to flip back on: `?? (delay-based resolveScheduleStatus)`.
+  const scheduleStatus = scheduleStatusCategories.find(
+    (category) => category.id === project?.scheduleStatusCategoryId,
+  )
+
+  const statusCategoryMutation = useMutation({
+    mutationFn: (scheduleStatusCategoryId: string | null) =>
+      updateProject(projectId!, { scheduleStatusCategoryId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] })
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof ApiError ? error.message : 'Não foi possível atualizar o status.',
+      )
+    },
+  })
+
   const saveMutation = useMutation({
     mutationFn: (nextPhases: PlanningPhase[]) =>
       updateProject(projectId!, { planningPhases: nextPhases }),
@@ -187,7 +222,7 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
   return (
     <>
       <Card>
-        <div className="mb-5 grid grid-cols-3 gap-3 text-sm">
+        <div className="mb-5 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           <div>
             <p className="text-xs text-(--th-text-muted) uppercase">Início</p>
             <p className="mt-0.5 font-medium text-(--th-text)">
@@ -203,6 +238,48 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
           <div>
             <p className="text-xs text-(--th-text-muted) uppercase">Prazo total</p>
             <p className="mt-0.5 font-medium text-(--th-text)">{totalDays} dias</p>
+          </div>
+          <div>
+            <p className="text-xs text-(--th-text-muted) uppercase">Status do cronograma</p>
+            <div className="mt-1 flex items-center gap-1.5">
+              {scheduleStatus ? (
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
+                  style={{
+                    backgroundColor: `${scheduleStatus.color}1a`,
+                    color: scheduleStatus.color,
+                  }}
+                >
+                  <span
+                    aria-hidden="true"
+                    className="size-1.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: scheduleStatus.color }}
+                  />
+                  {scheduleStatus.label}
+                </span>
+              ) : (
+                <span className="text-sm text-(--th-text-muted)">
+                  {project?.status === 'completed' ? 'Concluído' : '—'}
+                </span>
+              )}
+            </div>
+            {scheduleStatusCategories.length > 0 && (
+              <select
+                aria-label="Status do cronograma (manual)"
+                value={project?.scheduleStatusCategoryId ?? ''}
+                onChange={(event) =>
+                  statusCategoryMutation.mutate(event.target.value || null)
+                }
+                className="mt-1.5 h-7 w-full rounded-md border border-(--th-border) bg-(--th-bg-card) px-1.5 text-xs text-(--th-text-sub) outline-none transition-colors focus:ring-2 focus:ring-(--th-border-focus)"
+              >
+                <option value="">Automático</option>
+                {scheduleStatusCategories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.label}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         </div>
 
