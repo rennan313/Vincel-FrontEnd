@@ -8,6 +8,7 @@ const TAB_LABELS: Record<ProjectTabKey, string> = {
   materials: 'Materiais',
   financial: 'Financeiro',
   documents: 'Documentos',
+  briefing: 'Brifing',
 }
 
 interface ProjectTabsProps {

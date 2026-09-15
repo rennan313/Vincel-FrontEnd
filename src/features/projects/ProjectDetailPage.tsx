@@ -23,6 +23,7 @@ import { TeamTab } from '@/features/projects/detail/tabs/TeamTab'
 import { MaterialsTab } from '@/features/projects/detail/tabs/MaterialsTab'
 import { FinancialTab } from '@/features/projects/detail/tabs/FinancialTab'
 import { DocumentsTab } from '@/features/projects/detail/tabs/DocumentsTab'
+import { BriefingTab } from '@/features/projects/detail/tabs/BriefingTab'
 
 export function ProjectDetailPage() {
   const { t } = useTranslation()
@@ -133,6 +134,7 @@ export function ProjectDetailPage() {
         {tab === 'materials' && <MaterialsTab />}
         {tab === 'financial' && <FinancialTab draft={draft} />}
         {tab === 'documents' && <DocumentsTab />}
+        {tab === 'briefing' && <BriefingTab />}
       </div>
     </div>
   )

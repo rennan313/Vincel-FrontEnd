@@ -20,6 +20,7 @@ import {
   type UpdateCompanyPayload,
 } from '@/features/company/companyApi'
 import { ScheduleStatusSettingsCard } from '@/features/scheduleStatus/ScheduleStatusSettingsCard'
+import { BriefingQuestionsCard } from '@/features/company/BriefingQuestionsCard'
 
 const LOGO_MAX_BYTES = 5 * 1024 * 1024
 const ALLOWED_LOGO_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp'])
@@ -386,6 +387,10 @@ export function CompanyPage() {
           triggers that unrelated submit. */}
       <div className="mt-6">
         <ScheduleStatusSettingsCard />
+      </div>
+
+      <div className="mt-6">
+        <BriefingQuestionsCard />
       </div>
     </div>
   )
