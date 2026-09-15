@@ -22,6 +22,7 @@ const TYPE_LABELS: Record<BriefingQuestionType, string> = {
   NUMBER: 'Número',
   DATE: 'Data',
   LINKS: 'Links (um por linha)',
+  PHOTOS: 'Fotos',
 }
 
 const EMPTY_QUESTION: BriefingQuestionInput = { section: '', label: '', type: 'TEXT' }

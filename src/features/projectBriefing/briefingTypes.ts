@@ -2,7 +2,7 @@
 // briefing form itself (public page + in-app tab), since both speak the
 // same BriefingQuestion/BriefingAnswer shapes the backend returns.
 
-export type BriefingQuestionType = 'TEXT' | 'TEXTAREA' | 'NUMBER' | 'DATE' | 'LINKS'
+export type BriefingQuestionType = 'TEXT' | 'TEXTAREA' | 'NUMBER' | 'DATE' | 'LINKS' | 'PHOTOS'
 
 export interface BriefingQuestion {
   id: string

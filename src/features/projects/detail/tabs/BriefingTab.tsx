@@ -108,13 +108,27 @@ export function BriefingTab() {
                     {question.label}
                   </p>
                   {display.length > 0 ? (
-                    <div className="mt-1 space-y-0.5">
-                      {display.map((line, index) => (
-                        <p key={index} className="text-sm whitespace-pre-wrap text-(--th-text)">
-                          {line}
-                        </p>
-                      ))}
-                    </div>
+                    question.type === 'PHOTOS' ? (
+                      <div className="mt-1.5 flex flex-wrap gap-2">
+                        {display.map((url) => (
+                          <a key={url} href={url} target="_blank" rel="noreferrer">
+                            <img
+                              src={url}
+                              alt=""
+                              className="size-20 rounded-lg border border-(--th-border) object-cover"
+                            />
+                          </a>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="mt-1 space-y-0.5">
+                        {display.map((line, index) => (
+                          <p key={index} className="text-sm whitespace-pre-wrap text-(--th-text)">
+                            {line}
+                          </p>
+                        ))}
+                      </div>
+                    )
                   ) : (
                     <p className="mt-1 text-sm text-(--th-text-muted)">Não respondido</p>
                   )}
