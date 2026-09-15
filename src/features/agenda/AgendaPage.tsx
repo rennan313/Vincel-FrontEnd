@@ -11,6 +11,7 @@ import { fetchProjects } from '@/features/projects/projectsApi'
 import { getProjectTimelineBar } from '@/features/agenda/agendaDerivations'
 import { ProjectTimeline } from '@/features/agenda/ProjectTimeline'
 import { CalendarView } from '@/features/agenda/CalendarView'
+import { fetchScheduleStatusCategories } from '@/features/scheduleStatus/scheduleStatusApi'
 import {
   computeVisibleRange,
   daysBetweenISO,
@@ -40,10 +41,26 @@ export function AgendaPage() {
     queryFn: () => fetchProjects(1, 100),
   })
 
-  const bars = useMemo(
-    () => (data?.data ?? []).flatMap((project) => getProjectTimelineBar(project) ?? []),
-    [data],
-  )
+  const { data: statusCategories = [] } = useQuery({
+    queryKey: ['schedule-status-categories'],
+    queryFn: fetchScheduleStatusCategories,
+  })
+
+  const bars = useMemo(() => {
+    const colorById = new Map(statusCategories.map((category) => [category.id, category.color]))
+    return (data?.data ?? []).flatMap((project) => {
+      const bar = getProjectTimelineBar(project)
+      if (!bar) return []
+      return [
+        {
+          ...bar,
+          scheduleStatusColor: project.scheduleStatusCategoryId
+            ? (colorById.get(project.scheduleStatusCategoryId) ?? null)
+            : null,
+        },
+      ]
+    })
+  }, [data, statusCategories])
 
   // When set, the timeline shows only this project's Cronograma phases
   // instead of every project.
