@@ -15,10 +15,7 @@ import type { PlanningPhase, ProjectDraft, ProviderStatus } from '@/features/pro
 import { getProjectPhaseBars, type ProjectTimelineBar } from '@/features/agenda/agendaDerivations'
 import { ProjectTimeline as AgendaTimeline } from '@/features/agenda/ProjectTimeline'
 import { PhaseFormModal, type PhaseFormInput } from '@/features/projects/detail/tabs/PhaseFormModal'
-import {
-  fetchScheduleStatusCategories,
-  resolveScheduleStatus,
-} from '@/features/scheduleStatus/scheduleStatusApi'
+import { fetchScheduleStatusCategories } from '@/features/scheduleStatus/scheduleStatusApi'
 import {
   computeVisibleRange,
   daysBetweenISO,
@@ -154,21 +151,11 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
     queryFn: fetchScheduleStatusCategories,
   })
 
-  // Days late the project's efetivo término previsto (the same date the
-  // Gantt plots) is against hoje — positive means atrasado. Null when
-  // there's nothing to compare yet (no início/etapas).
-  const delayDays = timelineBar ? daysBetweenISO(timelineBar.end, todayISO()) : null
-
-  const manualStatusCategory = scheduleStatusCategories.find(
+  // Manual-only for now — no automatic (delay-based) fallback. Kept as a
+  // one-line change to flip back on: `?? (delay-based resolveScheduleStatus)`.
+  const scheduleStatus = scheduleStatusCategories.find(
     (category) => category.id === project?.scheduleStatusCategoryId,
   )
-  // The manual pin always wins; automatic resolution only makes sense
-  // while the project is still running and has a delay to measure.
-  const scheduleStatus =
-    manualStatusCategory ??
-    (project?.status !== 'completed' && delayDays != null
-      ? resolveScheduleStatus(scheduleStatusCategories, delayDays)
-      : null)
 
   const statusCategoryMutation = useMutation({
     mutationFn: (scheduleStatusCategoryId: string | null) =>
