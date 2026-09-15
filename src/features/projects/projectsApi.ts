@@ -31,6 +31,9 @@ export interface Project {
   installments?: Installment[]
   startDate?: string | null
   endDate?: string | null
+  /** Manual pin onto a ScheduleStatusCategory (Cronograma tab) — null means
+   * "automatic", resolved from schedule delay instead of a fixed choice. */
+  scheduleStatusCategoryId?: string | null
   address?: AddressData | null
   active: boolean
   createdAt: string
@@ -64,6 +67,8 @@ export interface ProjectPayload {
   startDate?: string
   /** ISO date (yyyy-mm-dd). */
   endDate?: string
+  /** Send null to clear the manual pin back to automatic resolution. */
+  scheduleStatusCategoryId?: string | null
   address?: AddressData
 }
 

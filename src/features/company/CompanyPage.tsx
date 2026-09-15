@@ -19,6 +19,7 @@ import {
   type Company,
   type UpdateCompanyPayload,
 } from '@/features/company/companyApi'
+import { ScheduleStatusSettingsCard } from '@/features/scheduleStatus/ScheduleStatusSettingsCard'
 
 const LOGO_MAX_BYTES = 5 * 1024 * 1024
 const ALLOWED_LOGO_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp'])
@@ -379,6 +380,13 @@ export function CompanyPage() {
           </div>
         </form>
       )}
+
+      {/* Outside the form above (own save-on-blur, not the "Salvar
+          alterações" submit) so pressing Enter in one of its fields never
+          triggers that unrelated submit. */}
+      <div className="mt-6">
+        <ScheduleStatusSettingsCard />
+      </div>
     </div>
   )
 }
