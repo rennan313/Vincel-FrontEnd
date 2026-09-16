@@ -3,13 +3,15 @@ import { useParams } from 'react-router'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
-import { Building2, Check, Loader2, Mail, Phone } from 'lucide-react'
+import { Building2, Check, Loader2, Mail, Phone, Circle } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { formatPhone } from '@/lib/masks'
 import { ApiError } from '@/lib/apiClient'
 import { Logo } from '@/components/ui/Logo'
 import { Input } from '@/components/ui/Input'
+import { PasswordInput } from '@/components/ui/PasswordInput'
 import { Button } from '@/components/ui/Button'
+import { PASSWORD_CRITERIA } from '@/features/auth/passwordCriteria'
 import {
   clientInviteSchema,
   emptyClientInviteFormValues,
@@ -20,7 +22,9 @@ import {
   registerPublicClient,
 } from '@/features/clientInvite/clientInviteApi'
 
-type FieldErrors = Partial<Record<'name' | 'email' | 'phone', string>>
+type FieldErrors = Partial<
+  Record<'name' | 'email' | 'phone' | 'password' | 'confirmPassword', string>
+>
 
 export function ClientInvitePage() {
   const { t } = useTranslation()
@@ -38,7 +42,14 @@ export function ClientInvitePage() {
 
   const mutation = useMutation({
     mutationFn: (payload: ClientInviteFormValues) =>
-      registerPublicClient({ ...payload, companyId: companyId! }),
+      registerPublicClient({
+        companyId: companyId!,
+        name: payload.name,
+        email: payload.email,
+        phone: payload.phone,
+        type: payload.type,
+        password: payload.password,
+      }),
     onError: (error) => {
       setBannerError(
         error instanceof ApiError ? error.message : t('clientInvite.genericError'),
@@ -64,6 +75,8 @@ export function ClientInvitePage() {
         name: fieldErrors.name?.[0],
         email: fieldErrors.email?.[0],
         phone: fieldErrors.phone?.[0],
+        password: fieldErrors.password?.[0],
+        confirmPassword: fieldErrors.confirmPassword?.[0],
       })
       return
     }
@@ -190,6 +203,45 @@ export function ClientInvitePage() {
                 onChange={(event) => updateField('phone', formatPhone(event.target.value))}
                 placeholder="(11) 98765-4321"
                 error={errors.phone}
+              />
+
+              <div>
+                <PasswordInput
+                  label={t('clientInvite.password')}
+                  autoComplete="new-password"
+                  value={values.password}
+                  onChange={(event) => updateField('password', event.target.value)}
+                  error={errors.password}
+                />
+                <ul className="mt-1.5 space-y-1">
+                  {PASSWORD_CRITERIA.map((criterion) => {
+                    const met = criterion.test(values.password)
+                    return (
+                      <li
+                        key={criterion.id}
+                        className={cn(
+                          'flex items-center gap-1.5 text-xs',
+                          met ? 'text-green-500' : 'text-(--th-text-muted)',
+                        )}
+                      >
+                        {met ? (
+                          <Check className="size-3.5 shrink-0" />
+                        ) : (
+                          <Circle className="size-3.5 shrink-0" />
+                        )}
+                        {t(criterion.labelKey)}
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+
+              <PasswordInput
+                label={t('clientInvite.confirmPassword')}
+                autoComplete="new-password"
+                value={values.confirmPassword}
+                onChange={(event) => updateField('confirmPassword', event.target.value)}
+                error={errors.confirmPassword}
               />
 
               <Button

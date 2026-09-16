@@ -15,6 +15,7 @@ export interface PublicClientPayload {
   email: string
   phone: string
   type: ClientType
+  password: string
 }
 
 export function fetchCompanyPublicProfile(companyId: string): Promise<CompanyPublicProfile> {

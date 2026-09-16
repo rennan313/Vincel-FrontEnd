@@ -101,6 +101,8 @@
     "name": "Nome",
     "email": "E-mail",
     "phone": "Telefone",
+    "password": "Senha",
+    "confirmPassword": "Confirmar senha",
     "type": {
       "PF": "Pessoa física",
       "PJ": "Pessoa jurídica"
