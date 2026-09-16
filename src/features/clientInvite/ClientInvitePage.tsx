@@ -7,6 +7,7 @@ import { Building2, Check, Loader2, Mail, Phone, Circle } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { formatPhone } from '@/lib/masks'
 import { ApiError } from '@/lib/apiClient'
+import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { Logo } from '@/components/ui/Logo'
 import { Input } from '@/components/ui/Input'
 import { PasswordInput } from '@/components/ui/PasswordInput'
@@ -20,9 +21,12 @@ import {
   type ClientInviteFormValues,
 } from '@/features/clientInvite/clientInviteSchema'
 import {
+  checkClientEmailExists,
   fetchCompanyPublicProfile,
   registerPublicClient,
 } from '@/features/clientInvite/clientInviteApi'
+
+const EMAIL_FORMAT = z.email()
 
 type FieldErrors = Partial<
   Record<'name' | 'email' | 'phone' | 'password' | 'confirmPassword', string>
@@ -36,6 +40,10 @@ export function ClientInvitePage() {
   const [values, setValues] = useState<ClientInviteFormValues>(emptyClientInviteFormValues)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [bannerError, setBannerError] = useState<string | null>(null)
+  // Only set on a submit-time 409 (duplicate e-mail) — a fallback for the
+  // rare case where the debounced live check below didn't resolve before
+  // they hit submit, so the "ir para login" option is still offered.
+  const [submitEmailConflict, setSubmitEmailConflict] = useState(false)
   // Registration succeeded but the follow-up auto-login call failed — rare
   // (same credentials just used to register), but the account does exist,
   // so we still show the success screen with a manual link to /portal/login
@@ -48,6 +56,18 @@ export function ClientInvitePage() {
     enabled: !!companyId,
     retry: false,
   })
+
+  // Warn as soon as they type an e-mail that already has portal access,
+  // instead of only after they fill out the whole form and hit a 409.
+  const debouncedEmail = useDebouncedValue(values.email, 500)
+  const emailLooksValid = EMAIL_FORMAT.safeParse(debouncedEmail).success
+  const emailExistsQuery = useQuery({
+    queryKey: ['client-email-exists', companyId, debouncedEmail],
+    queryFn: () => checkClientEmailExists(companyId!, debouncedEmail),
+    enabled: !!companyId && emailLooksValid,
+    retry: false,
+  })
+  const emailAlreadyRegistered = emailLooksValid && emailExistsQuery.data?.exists === true
 
   const mutation = useMutation({
     mutationFn: async (payload: ClientInviteFormValues) => {
@@ -76,6 +96,7 @@ export function ClientInvitePage() {
         setRegisteredButLoginFailed(true)
         return
       }
+      setSubmitEmailConflict(error instanceof ApiError && error.status === 409)
       setBannerError(
         error instanceof ApiError ? error.message : t('clientInvite.genericError'),
       )
@@ -92,6 +113,7 @@ export function ClientInvitePage() {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setBannerError(null)
+    setSubmitEmailConflict(false)
 
     const parsed = clientInviteSchema.safeParse(values)
     if (!parsed.success) {
@@ -194,8 +216,18 @@ export function ClientInvitePage() {
             </p>
 
             {bannerError && (
-              <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
-                {bannerError}
+              <div className="mb-5 flex flex-col items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+                <p>{bannerError}</p>
+                {submitEmailConflict && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate('/portal/login')}
+                  >
+                    {t('clientInvite.goToLogin')}
+                  </Button>
+                )}
               </div>
             )}
 
@@ -224,13 +256,28 @@ export function ClientInvitePage() {
                 onChange={(event) => updateField('name', event.target.value)}
                 error={errors.name}
               />
-              <Input
-                label={t('clientInvite.email')}
-                type="email"
-                value={values.email}
-                onChange={(event) => updateField('email', event.target.value)}
-                error={errors.email}
-              />
+              <div>
+                <Input
+                  label={t('clientInvite.email')}
+                  type="email"
+                  value={values.email}
+                  onChange={(event) => updateField('email', event.target.value)}
+                  error={errors.email}
+                />
+                {emailAlreadyRegistered && (
+                  <div className="mt-1.5 flex flex-col items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
+                    <p>{t('clientInvite.emailAlreadyExists')}</p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate('/portal/login')}
+                    >
+                      {t('clientInvite.goToLogin')}
+                    </Button>
+                  </div>
+                )}
+              </div>
               <Input
                 label={t('clientInvite.phone')}
                 value={values.phone}

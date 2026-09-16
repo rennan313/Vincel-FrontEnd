@@ -28,3 +28,11 @@ export function registerPublicClient(payload: PublicClientPayload): Promise<void
     body: JSON.stringify(payload),
   })
 }
+
+export function checkClientEmailExists(
+  companyId: string,
+  email: string,
+): Promise<{ exists: boolean }> {
+  const params = new URLSearchParams({ companyId, email })
+  return apiFetch<{ exists: boolean }>(`/clients/public/email-exists?${params}`)
+}
