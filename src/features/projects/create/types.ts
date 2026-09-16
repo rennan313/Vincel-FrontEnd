@@ -69,6 +69,19 @@ export interface ProjectInfo {
 
 export type Complexity = 'LOW' | 'MEDIUM' | 'HIGH'
 
+/** A single checklist-style item on a PlanningPhase's own task board — the
+ * etapa is the "card" (Cronograma tab, Jira-like), this is one of its
+ * tasks. id/createdAt are generated client-side, same as PlanningPhase's
+ * own key. */
+export interface PhaseTask {
+  id: string
+  title: string
+  description?: string | null
+  done: boolean
+  /** ISO datetime. */
+  createdAt: string
+}
+
 export interface PlanningPhase {
   /** ServiceKey for a catalog-seeded phase, or a generated id for a
    * custom item added directly on the Cronograma tab. */
@@ -90,6 +103,9 @@ export interface PlanningPhase {
   /** Hours already worked on this task. Manually edited for now; a future
    * sidebar timer will be able to add to this automatically instead. */
   loggedHours?: number | null
+  /** This etapa's own task board (Cronograma tab) — a Jira-card-style
+   * checklist, shown in an accordion per etapa. */
+  tasks?: PhaseTask[]
 }
 
 export interface PlanningData {

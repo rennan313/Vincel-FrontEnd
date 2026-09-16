@@ -1,7 +1,7 @@
-import { forwardRef, useMemo } from 'react'
+import { forwardRef, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { ChevronLeft, ChevronRight, Eye } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, Eye, Plus, Trash2 } from 'lucide-react'
 import type { BadgeVariant } from '@/components/ui/Badge'
 import { formatDate } from '@/lib/formatDate'
 import { cn } from '@/lib/cn'
@@ -59,16 +59,34 @@ interface ProjectTimelineProps {
    * becomes clickable and fires this with the phase's key — the Cronograma
    * tab uses it to open that etapa for editing. */
   onSelectPhase?: (phaseKey: string) => void
+  /** Opens the "nova task" modal for this etapa (the "+" on its column and
+   * inside its accordion). Showing the accordion toggle/tasks at all only
+   * makes sense once the Cronograma tab wires this up, so it also gates
+   * onToggleTask/onRemoveTask below. */
+  onAddTask?: (phaseKey: string) => void
+  onToggleTask?: (phaseKey: string, taskId: string) => void
+  onRemoveTask?: (phaseKey: string, taskId: string) => void
 }
 
 export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
   function ProjectTimeline(
-    { bars, zoom, focusedBar, onFocusProject, embedded = false, onSelectPhase },
+    {
+      bars,
+      zoom,
+      focusedBar,
+      onFocusProject,
+      embedded = false,
+      onSelectPhase,
+      onAddTask,
+      onToggleTask,
+      onRemoveTask,
+    },
     scrollRef,
   ) {
     const { t } = useTranslation()
     const pxPerDay = ZOOM_PX_PER_DAY[zoom]
     const today = todayISO()
+    const [expandedPhaseKey, setExpandedPhaseKey] = useState<string | null>(null)
 
     const range = useMemo(() => {
       const dates = focusedBar
@@ -85,8 +103,6 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
     const totalDays = daysBetweenISO(range.start, range.end)
     const timelineWidth = totalDays * pxPerDay
     const todayOffset = daysBetweenISO(range.start, today) * pxPerDay
-    const rowCount = focusedBar ? focusedBar.phases.length : bars.length
-    const contentHeight = HEADER_HEIGHT + rowCount * ROW_HEIGHT
 
     return (
       <div ref={scrollRef} className="max-h-[70vh] overflow-auto rounded-xl border border-(--th-border)">
@@ -167,44 +183,151 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
                   ? `${phase.name} — ${formatDate(phase.start)} a ${formatDate(phase.end)} · ${PROVIDER_STATUS_LABELS[phase.providerStatus]}`
                   : `${phase.name} — ${formatDate(phase.start)} a ${formatDate(phase.end)}`
 
+                // Tasks are only wired up where the caller passes onAddTask
+                // (the Cronograma tab) — the Agenda page's own drill-down
+                // into a project's phases has no save path for them, so it
+                // keeps the plain name-only row it always had.
+                const tasksEnabled = Boolean(onAddTask)
+                const expanded = tasksEnabled && expandedPhaseKey === phase.key
+                const doneCount = phase.tasks.filter((task) => task.done).length
+
                 return (
-                  <div
-                    key={phase.key}
-                    className="flex border-b border-(--th-border) last:border-b-0"
-                    style={{ height: ROW_HEIGHT }}
-                  >
+                  <div key={phase.key}>
                     <div
-                      className="sticky left-0 z-10 flex shrink-0 items-center border-r border-(--th-border) bg-(--th-bg-card) px-3"
-                      style={{ width: LEFT_COL_WIDTH }}
+                      className="flex border-b border-(--th-border) last:border-b-0"
+                      style={{ height: ROW_HEIGHT }}
                     >
-                      {selectable ? (
+                      <div
+                        className="sticky left-0 z-10 flex shrink-0 items-center gap-1 border-r border-(--th-border) bg-(--th-bg-card) px-2"
+                        style={{ width: LEFT_COL_WIDTH }}
+                      >
+                        {tasksEnabled && (
+                          <button
+                            type="button"
+                            onClick={() => setExpandedPhaseKey(expanded ? null : phase.key)}
+                            aria-label={
+                              expanded
+                                ? `Recolher tasks de ${phase.name}`
+                                : `Ver tasks de ${phase.name}`
+                            }
+                            aria-expanded={expanded}
+                            className="flex size-5 shrink-0 items-center justify-center rounded text-(--th-text-muted) hover:bg-(--th-bg-elevated) hover:text-(--th-text)"
+                          >
+                            <ChevronDown
+                              className={cn('size-3.5 transition-transform', !expanded && '-rotate-90')}
+                            />
+                          </button>
+                        )}
+                        {selectable ? (
+                          <button
+                            type="button"
+                            onClick={() => onSelectPhase!(phase.key)}
+                            className="min-w-0 flex-1 truncate rounded-md text-left text-sm text-(--th-text) hover:text-(--th-accent) hover:underline"
+                          >
+                            {phase.name}
+                          </button>
+                        ) : (
+                          <span className="min-w-0 flex-1 truncate text-sm text-(--th-text)">
+                            {phase.name}
+                          </span>
+                        )}
+                        {tasksEnabled && phase.tasks.length > 0 && (
+                          <span className="shrink-0 text-[10px] text-(--th-text-muted) tabular-nums">
+                            {doneCount}/{phase.tasks.length}
+                          </span>
+                        )}
+                        {onAddTask && (
+                          <button
+                            type="button"
+                            onClick={() => onAddTask(phase.key)}
+                            aria-label={`Adicionar task em ${phase.name}`}
+                            className="flex size-5 shrink-0 items-center justify-center rounded text-(--th-text-muted) hover:bg-(--th-bg-elevated) hover:text-(--th-accent)"
+                          >
+                            <Plus className="size-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      <div className="relative" style={{ width: timelineWidth }}>
                         <button
                           type="button"
-                          onClick={() => onSelectPhase!(phase.key)}
-                          className="truncate rounded-md text-left text-sm text-(--th-text) hover:text-(--th-accent) hover:underline"
+                          disabled={!selectable}
+                          onClick={() => onSelectPhase?.(phase.key)}
+                          title={title}
+                          className={cn(
+                            'absolute top-1/2 flex h-5 -translate-y-1/2 items-center rounded-full px-2 text-[11px] font-medium whitespace-nowrap transition-colors',
+                            statusClass,
+                            selectable ? 'cursor-pointer hover:brightness-110' : 'cursor-default',
+                          )}
+                          style={{ left, width }}
                         >
-                          {phase.name}
+                          <span className="truncate">{width > 60 ? phase.name : ''}</span>
                         </button>
-                      ) : (
-                        <span className="truncate text-sm text-(--th-text)">{phase.name}</span>
-                      )}
+                      </div>
                     </div>
-                    <div className="relative" style={{ width: timelineWidth }}>
-                      <button
-                        type="button"
-                        disabled={!selectable}
-                        onClick={() => onSelectPhase?.(phase.key)}
-                        title={title}
-                        className={cn(
-                          'absolute top-1/2 flex h-5 -translate-y-1/2 items-center rounded-full px-2 text-[11px] font-medium whitespace-nowrap transition-colors',
-                          statusClass,
-                          selectable ? 'cursor-pointer hover:brightness-110' : 'cursor-default',
-                        )}
-                        style={{ left, width }}
-                      >
-                        <span className="truncate">{width > 60 ? phase.name : ''}</span>
-                      </button>
-                    </div>
+
+                    {expanded && (
+                      <div className="flex border-b border-(--th-border) bg-(--th-bg-elevated)/40 last:border-b-0">
+                        <div
+                          className="sticky left-0 z-10 shrink-0 border-r border-(--th-border) bg-(--th-bg-card) px-3 py-2.5"
+                          style={{ width: LEFT_COL_WIDTH }}
+                        >
+                          {phase.tasks.length === 0 ? (
+                            <p className="text-xs text-(--th-text-muted)">Nenhuma task ainda.</p>
+                          ) : (
+                            <ul className="space-y-1.5">
+                              {phase.tasks.map((task) => (
+                                <li key={task.id} className="flex items-start gap-1.5">
+                                  <input
+                                    type="checkbox"
+                                    checked={task.done}
+                                    onChange={() => onToggleTask?.(phase.key, task.id)}
+                                    className="mt-0.5 size-3.5 shrink-0 accent-(--th-accent)"
+                                  />
+                                  <div className="min-w-0 flex-1">
+                                    <p
+                                      className={cn(
+                                        'truncate text-xs text-(--th-text)',
+                                        task.done && 'text-(--th-text-muted) line-through',
+                                      )}
+                                      title={task.title}
+                                    >
+                                      {task.title}
+                                    </p>
+                                    {task.description && (
+                                      <p
+                                        className="truncate text-[11px] text-(--th-text-muted)"
+                                        title={task.description}
+                                      >
+                                        {task.description}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => onRemoveTask?.(phase.key, task.id)}
+                                    aria-label={`Remover ${task.title}`}
+                                    className="shrink-0 text-(--th-text-muted) hover:text-red-500"
+                                  >
+                                    <Trash2 className="size-3.5" />
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                          {onAddTask && (
+                            <button
+                              type="button"
+                              onClick={() => onAddTask(phase.key)}
+                              className="mt-2 flex items-center gap-1 text-xs font-medium text-(--th-accent) hover:underline"
+                            >
+                              <Plus className="size-3.5" />
+                              Adicionar task
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex-1" />
+                      </div>
+                    )}
                   </div>
                 )
               })
@@ -278,11 +401,13 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
                 )
               })}
 
-          {/* Today marker */}
+          {/* Today marker — top/bottom (not a computed height) so it still
+              spans the full column when an etapa's accordion is open and
+              grows that row past ROW_HEIGHT. */}
           {todayOffset >= 0 && todayOffset <= timelineWidth && (
             <div
-              className="pointer-events-none absolute top-0 z-10 w-px bg-red-400"
-              style={{ left: LEFT_COL_WIDTH + todayOffset, height: contentHeight }}
+              className="pointer-events-none absolute top-0 bottom-0 z-10 w-px bg-red-400"
+              style={{ left: LEFT_COL_WIDTH + todayOffset }}
             >
               <span className="absolute top-0 left-1 rounded bg-red-400 px-1 py-0.5 text-[10px] leading-none font-medium whitespace-nowrap text-white">
                 {t('agenda.today')}
