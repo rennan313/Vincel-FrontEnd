@@ -1,5 +1,6 @@
 import { API_URL, ApiError, apiFetch } from '@/lib/apiClient'
 import { useAuthStore } from '@/store/authStore'
+import type { BriefingQuestion, BriefingQuestionInput } from '@/features/projectBriefing/briefingTypes'
 
 export interface CompanyAddress {
   zip?: string | null
@@ -68,4 +69,17 @@ export async function uploadCompanyLogo(file: File): Promise<Company> {
 
 export function removeCompanyLogo(): Promise<Company> {
   return apiFetch<Company>('/companies/me/logo', { method: 'DELETE' })
+}
+
+export function fetchBriefingQuestions(): Promise<BriefingQuestion[]> {
+  return apiFetch<BriefingQuestion[]>('/companies/me/briefing-questions')
+}
+
+export function replaceBriefingQuestions(
+  questions: BriefingQuestionInput[],
+): Promise<BriefingQuestion[]> {
+  return apiFetch<BriefingQuestion[]>('/companies/me/briefing-questions', {
+    method: 'PUT',
+    body: JSON.stringify({ questions }),
+  })
 }

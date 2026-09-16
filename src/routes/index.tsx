@@ -6,6 +6,11 @@ import { RegisterPage } from '@/features/auth/RegisterPage'
 import { AuthCallbackPage } from '@/features/auth/AuthCallbackPage'
 import { CompleteGoogleRegistrationPage } from '@/features/auth/CompleteGoogleRegistrationPage'
 import { ClientInvitePage } from '@/features/clientInvite/ClientInvitePage'
+import { ClientLoginPage } from '@/features/clientPortal/ClientLoginPage'
+import { ClientPortalLayout } from '@/features/clientPortal/ClientPortalLayout'
+import { ClientProjectsPage } from '@/features/clientPortal/ClientProjectsPage'
+import { ClientAccountPage } from '@/features/clientPortal/ClientAccountPage'
+import { ProjectBriefingPage } from '@/features/projectBriefing/ProjectBriefingPage'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { ClientsPage } from '@/features/clients/ClientsPage'
@@ -28,6 +33,15 @@ export const router = createBrowserRouter([
       { path: '/auth/callback', element: <AuthCallbackPage /> },
       { path: '/register/complete', element: <CompleteGoogleRegistrationPage /> },
       { path: '/convite/:companyId', element: <ClientInvitePage /> },
+      { path: '/brifing/:projectId', element: <ProjectBriefingPage /> },
+      { path: '/portal/login', element: <ClientLoginPage /> },
+      {
+        element: <ClientPortalLayout />,
+        children: [
+          { path: '/portal', element: <ClientProjectsPage /> },
+          { path: '/portal/conta', element: <ClientAccountPage /> },
+        ],
+      },
       {
         element: <DashboardLayout />,
         children: [

@@ -11,10 +11,19 @@ import { fetchProjectProviders } from '@/features/projects/detail/projectProvide
 import { fetchProjectById, updateProject } from '@/features/projects/projectsApi'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
 import { resolveProviderRoleLabel } from '@/features/projects/create/providerRoles'
-import type { PlanningPhase, ProjectDraft, ProviderStatus } from '@/features/projects/create/types'
+import type {
+  PhaseTask,
+  PlanningPhase,
+  ProjectDraft,
+  ProviderStatus,
+} from '@/features/projects/create/types'
 import { getProjectPhaseBars, type ProjectTimelineBar } from '@/features/agenda/agendaDerivations'
 import { ProjectTimeline as AgendaTimeline } from '@/features/agenda/ProjectTimeline'
 import { PhaseFormModal, type PhaseFormInput } from '@/features/projects/detail/tabs/PhaseFormModal'
+import {
+  PhaseTaskFormModal,
+  type PhaseTaskInput,
+} from '@/features/projects/detail/tabs/PhaseTaskFormModal'
 import { fetchScheduleStatusCategories } from '@/features/scheduleStatus/scheduleStatusApi'
 import {
   computeVisibleRange,
@@ -37,6 +46,10 @@ function generatePhaseKey() {
   return `phase_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 }
 
+function generateTaskId() {
+  return `task_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+}
+
 export function ScheduleTab({ draft }: ScheduleTabProps) {
   const { t } = useTranslation()
   const { projectId } = useParams()
@@ -49,6 +62,8 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
   // and edited through this modal — clicking a bar on the Gantt below
   // opens it pre-filled with that etapa's data.
   const [phaseModalTarget, setPhaseModalTarget] = useState<number | 'new' | null>(null)
+  // Which etapa the "nova task" modal is adding to — null while closed.
+  const [taskModalPhaseKey, setTaskModalPhaseKey] = useState<string | null>(null)
   const timelineScrollRef = useRef<HTMLDivElement>(null)
 
   const totalDays = phases.reduce((sum, phase) => sum + phase.estimatedDays, 0)
@@ -217,7 +232,40 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
     if (index !== -1) setPhaseModalTarget(index)
   }
 
+  // A task always rides along inside its etapa's own `tasks` array — there's
+  // no dedicated endpoint, the whole `phases` array is what gets saved.
+  function updatePhaseTasks(phaseKey: string, updateTasks: (tasks: PhaseTask[]) => PhaseTask[]) {
+    const nextPhases = phases.map((phase) =>
+      phase.key === phaseKey ? { ...phase, tasks: updateTasks(phase.tasks ?? []) } : phase,
+    )
+    setPhases(nextPhases)
+    commitPhases(nextPhases)
+  }
+
+  function handleSaveTask(input: PhaseTaskInput) {
+    if (!taskModalPhaseKey) return
+    const task: PhaseTask = {
+      id: generateTaskId(),
+      title: input.title,
+      description: input.description || null,
+      done: false,
+      createdAt: new Date().toISOString(),
+    }
+    updatePhaseTasks(taskModalPhaseKey, (tasks) => [...tasks, task])
+  }
+
+  function handleToggleTask(phaseKey: string, taskId: string) {
+    updatePhaseTasks(phaseKey, (tasks) =>
+      tasks.map((task) => (task.id === taskId ? { ...task, done: !task.done } : task)),
+    )
+  }
+
+  function handleRemoveTask(phaseKey: string, taskId: string) {
+    updatePhaseTasks(phaseKey, (tasks) => tasks.filter((task) => task.id !== taskId))
+  }
+
   const editingPhase = typeof phaseModalTarget === 'number' ? phases[phaseModalTarget] : undefined
+  const taskModalPhase = phases.find((phase) => phase.key === taskModalPhaseKey)
 
   return (
     <>
@@ -265,14 +313,14 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
             </div>
             {scheduleStatusCategories.length > 0 && (
               <select
-                aria-label="Status do cronograma (manual)"
+                aria-label="Status do cronograma"
                 value={project?.scheduleStatusCategoryId ?? ''}
                 onChange={(event) =>
                   statusCategoryMutation.mutate(event.target.value || null)
                 }
                 className="mt-1.5 h-7 w-full rounded-md border border-(--th-border) bg-(--th-bg-card) px-1.5 text-xs text-(--th-text-sub) outline-none transition-colors focus:ring-2 focus:ring-(--th-border-focus)"
               >
-                <option value="">Automático</option>
+                <option value="">Selecione</option>
                 {scheduleStatusCategories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.label}
@@ -332,6 +380,9 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
             focusedBar={timelineBar}
             onFocusProject={() => {}}
             onSelectPhase={handleSelectTimelinePhase}
+            onAddTask={setTaskModalPhaseKey}
+            onToggleTask={handleToggleTask}
+            onRemoveTask={handleRemoveTask}
             embedded
           />
         ) : (
@@ -350,6 +401,13 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
           typeof phaseModalTarget === 'number' ? () => handleRemovePhase(phaseModalTarget) : undefined
         }
         teamOptions={teamOptions}
+      />
+
+      <PhaseTaskFormModal
+        open={taskModalPhaseKey != null}
+        onClose={() => setTaskModalPhaseKey(null)}
+        onSave={handleSaveTask}
+        phaseName={taskModalPhase?.name}
       />
     </>
   )

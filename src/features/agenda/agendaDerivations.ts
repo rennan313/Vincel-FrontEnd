@@ -1,5 +1,5 @@
 import type { Project } from '@/features/projects/projectsApi'
-import type { PlanningPhase, ProviderStatus } from '@/features/projects/create/types'
+import type { PhaseTask, PlanningPhase, ProviderStatus } from '@/features/projects/create/types'
 import { addDaysISO, toISODate } from '@/features/agenda/timelineMath'
 
 export interface ProjectPhaseBar {
@@ -18,6 +18,8 @@ export interface ProjectPhaseBar {
    * prestadores) — only the Cronograma tab attaches it, after the fact,
    * from its own already-loaded provider links. */
   providerStatus?: ProviderStatus | null
+  /** This etapa's own task board (Cronograma tab's accordion per etapa). */
+  tasks: PhaseTask[]
 }
 
 export interface ProjectTimelineBar {
@@ -60,7 +62,7 @@ export function getProjectPhaseBars(phases: PlanningPhase[], rangeStart: string)
       : addDaysISO(start, Math.max(phase.estimatedDays ?? 0, 0))
     const safeEnd = end >= start ? end : start
     cursor = safeEnd
-    return { key: phase.key, name: phase.name, start, end: safeEnd }
+    return { key: phase.key, name: phase.name, start, end: safeEnd, tasks: phase.tasks ?? [] }
   })
 }
 
