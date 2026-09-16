@@ -52,6 +52,10 @@ export interface UpdateClientPasswordPayload {
   newPassword: string
 }
 
+export interface CreateProjectRequestPayload {
+  message?: string
+}
+
 // Deliberately not apiClient's apiFetch — that one's wired to the staff
 // session (useAuthStore) and its 15-min-access/refresh-token dance. The
 // client portal token has no refresh token at all (see client-auth.service
@@ -98,6 +102,13 @@ export function fetchClientProjects(): Promise<ClientPortalProject[]> {
 export function updateClientPassword(payload: UpdateClientPasswordPayload): Promise<void> {
   return clientApiFetch<void>('/client-auth/me/password', {
     method: 'PATCH',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function createProjectRequest(payload: CreateProjectRequestPayload): Promise<void> {
+  return clientApiFetch<void>('/client-auth/me/project-requests', {
+    method: 'POST',
     body: JSON.stringify(payload),
   })
 }

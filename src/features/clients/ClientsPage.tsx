@@ -14,6 +14,7 @@ import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { useAuthStore } from '@/store/authStore'
 import { fetchClients, type Client } from '@/features/clients/clientsApi'
 import { ClientFormModal } from '@/features/clients/ClientFormModal'
+import { ProjectRequestsCard } from '@/features/clients/ProjectRequestsCard'
 
 const PAGE_SIZE = 8
 
@@ -141,6 +142,10 @@ export function ClientsPage() {
             {t('clients.new')}
           </Button>
         </div>
+      </div>
+
+      <div className="mt-6">
+        <ProjectRequestsCard />
       </div>
 
       <div className="mt-4 mb-6">

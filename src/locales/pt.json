@@ -111,7 +111,8 @@
     "submitting": "Enviando...",
     "genericError": "Não foi possível enviar seu cadastro. Tente novamente.",
     "successTitle": "Cadastro enviado!",
-    "successSubtitle": "{{company}} recebeu seus dados e vai entrar em contato em breve.",
+    "successLoginFallback": "Seu cadastro foi criado, mas não foi possível entrar automaticamente. Acesse o portal do cliente com seu e-mail e senha.",
+    "goToLogin": "Ir para o portal do cliente",
     "poweredBy": "Feito com"
   },
   "users": {

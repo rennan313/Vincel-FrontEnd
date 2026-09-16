@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { PageTitle } from '@/components/ui/PageTitle'
 import { PageSubtitle } from '@/components/ui/PageSubtitle'
@@ -11,6 +12,7 @@ import {
   fetchClientProjects,
   type ClientPortalProject,
 } from '@/features/clientPortal/clientPortalApi'
+import { RequestProjectModal } from '@/features/clientPortal/RequestProjectModal'
 
 const STATUS_LABEL: Record<ClientPortalProject['status'], string> = {
   in_progress: 'Em andamento',
@@ -89,6 +91,7 @@ function ProjectCard({ project }: { project: ClientPortalProject }) {
 }
 
 export function ClientProjectsPage() {
+  const [requestModalOpen, setRequestModalOpen] = useState(false)
   const { data: projects, isLoading } = useQuery({
     queryKey: ['client-portal', 'projects'],
     queryFn: fetchClientProjects,
@@ -111,12 +114,17 @@ export function ClientProjectsPage() {
           <EmptyState
             icon="FolderOpen"
             title="Nenhum projeto ainda"
-            description="Assim que seu escritório de arquitetura vincular um projeto a você, ele aparece aqui."
+            description="Assim que seu escritório de arquitetura vincular um projeto a você, ele aparece aqui. Já tem algo em mente?"
+            actionLabel="Solicitar um projeto"
+            actionIcon="Plus"
+            onAction={() => setRequestModalOpen(true)}
           />
         ) : (
           projects.map((project) => <ProjectCard key={project.id} project={project} />)
         )}
       </div>
+
+      <RequestProjectModal open={requestModalOpen} onClose={() => setRequestModalOpen(false)} />
     </div>
   )
 }

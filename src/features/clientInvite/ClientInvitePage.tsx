@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
@@ -11,6 +11,8 @@ import { Logo } from '@/components/ui/Logo'
 import { Input } from '@/components/ui/Input'
 import { PasswordInput } from '@/components/ui/PasswordInput'
 import { Button } from '@/components/ui/Button'
+import { useClientAuthStore } from '@/store/clientAuthStore'
+import { clientLogin } from '@/features/clientPortal/clientPortalApi'
 import { PASSWORD_CRITERIA } from '@/features/auth/passwordCriteria'
 import {
   clientInviteSchema,
@@ -28,10 +30,17 @@ type FieldErrors = Partial<
 
 export function ClientInvitePage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
+  const clientLoginToStore = useClientAuthStore((state) => state.login)
   const { companyId } = useParams<{ companyId: string }>()
   const [values, setValues] = useState<ClientInviteFormValues>(emptyClientInviteFormValues)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [bannerError, setBannerError] = useState<string | null>(null)
+  // Registration succeeded but the follow-up auto-login call failed — rare
+  // (same credentials just used to register), but the account does exist,
+  // so we still show the success screen with a manual link to /portal/login
+  // instead of a dead end.
+  const [registeredButLoginFailed, setRegisteredButLoginFailed] = useState(false)
 
   const profileQuery = useQuery({
     queryKey: ['company-public-profile', companyId],
@@ -41,16 +50,32 @@ export function ClientInvitePage() {
   })
 
   const mutation = useMutation({
-    mutationFn: (payload: ClientInviteFormValues) =>
-      registerPublicClient({
+    mutationFn: async (payload: ClientInviteFormValues) => {
+      await registerPublicClient({
         companyId: companyId!,
         name: payload.name,
         email: payload.email,
         phone: payload.phone,
         type: payload.type,
         password: payload.password,
-      }),
+      })
+      // Self-registration already collects a password (see clientInviteSchema),
+      // so log the client straight into the portal instead of leaving them
+      // at a "cadastro enviado" screen they'd have to log in from manually.
+      return clientLogin({ email: payload.email, password: payload.password })
+    },
+    onSuccess: (response) => {
+      clientLoginToStore(response.client, response.accessToken)
+      navigate('/portal')
+    },
     onError: (error) => {
+      // The registration POST only ever fails with 400 (validation) or 409
+      // (duplicate email); a 401/403 here can only come from the login call
+      // that runs after it, meaning the account was created successfully.
+      if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+        setRegisteredButLoginFailed(true)
+        return
+      }
       setBannerError(
         error instanceof ApiError ? error.message : t('clientInvite.genericError'),
       )
@@ -141,7 +166,7 @@ export function ClientInvitePage() {
           )}
         </div>
 
-        {mutation.isSuccess ? (
+        {registeredButLoginFailed ? (
           <div className="flex flex-col items-center gap-3 rounded-xl border border-(--th-border) bg-(--th-bg-card) px-6 py-10 text-center">
             <div className="flex size-11 items-center justify-center rounded-full bg-green-500/10 text-green-500">
               <Check className="size-5" />
@@ -150,8 +175,17 @@ export function ClientInvitePage() {
               {t('clientInvite.successTitle')}
             </h2>
             <p className="text-sm text-(--th-text-muted)">
-              {t('clientInvite.successSubtitle', { company: company.name })}
+              {t('clientInvite.successLoginFallback')}
             </p>
+            <Button
+              type="button"
+              variant="primary"
+              size="md"
+              className="mt-2 w-full"
+              onClick={() => navigate('/portal/login')}
+            >
+              {t('clientInvite.goToLogin')}
+            </Button>
           </div>
         ) : (
           <>
