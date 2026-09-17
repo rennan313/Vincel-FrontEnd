@@ -1,13 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useQueryState, parseAsStringLiteral } from 'nuqs'
+import { toast } from 'sonner'
 import { PageTitle } from '@/components/ui/PageTitle'
 import { PageSubtitle } from '@/components/ui/PageSubtitle'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { TabBar } from '@/components/ui/TabBar'
-import { fetchProjects } from '@/features/projects/projectsApi'
+import { ApiError } from '@/lib/apiClient'
+import { fetchProjects, updateProject } from '@/features/projects/projectsApi'
+import { fetchAssignableUsers } from '@/features/users/usersApi'
 import { getProjectTimelineBar } from '@/features/agenda/agendaDerivations'
 import { ProjectTimeline } from '@/features/agenda/ProjectTimeline'
 import { CalendarView } from '@/features/agenda/CalendarView'
@@ -26,6 +29,7 @@ const LEFT_COL_WIDTH = 220
 
 export function AgendaPage() {
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [view, setView] = useQueryState('view', parseAsStringLiteral(VIEW_OPTIONS).withDefault('timeline'))
   const [zoom, setZoom] = useQueryState(
@@ -46,6 +50,13 @@ export function AgendaPage() {
     queryFn: fetchScheduleStatusCategories,
   })
 
+  // Colors each task's "Responsável" dot below — same lightweight list the
+  // Cronograma tab's own task modal/timeline use.
+  const { data: assignableUsers = [] } = useQuery({
+    queryKey: ['assignable-users'],
+    queryFn: fetchAssignableUsers,
+  })
+
   const bars = useMemo(() => {
     const colorById = new Map(statusCategories.map((category) => [category.id, category.color]))
     return (data?.data ?? []).flatMap((project) => {
@@ -62,25 +73,53 @@ export function AgendaPage() {
     })
   }, [data, statusCategories])
 
-  // When set, the timeline shows only this project's Cronograma phases
-  // instead of every project.
-  const [focusedProjectId, setFocusedProjectId] = useState<string | null>(null)
-  const focusedBar = useMemo(
-    () => bars.find((bar) => bar.id === focusedProjectId) ?? null,
-    [bars, focusedProjectId],
-  )
+  // The only edit the Agenda page allows on a task — marking it finished.
+  // Everything else (add/edit/remove a task, edit an etapa) stays
+  // Cronograma-only (Project Details); no onAddTask/onEditTask/onRemoveTask
+  // passed to ProjectTimeline below. Every project's etapas render stacked
+  // one under another with no drill-down step to see them — each etapa's
+  // own tasks still sit behind its own click-to-expand chevron.
+  const toggleTaskMutation = useMutation({
+    mutationFn: ({
+      projectId,
+      phaseKey,
+      taskId,
+    }: {
+      projectId: string
+      phaseKey: string
+      taskId: string
+    }) => {
+      const project = data?.data.find((item) => item.id === projectId)
+      const nextPhases = (project?.planningPhases ?? []).map((phase) =>
+        phase.key === phaseKey
+          ? {
+              ...phase,
+              tasks: (phase.tasks ?? []).map((task) =>
+                task.id === taskId ? { ...task, done: !task.done } : task,
+              ),
+            }
+          : phase,
+      )
+      return updateProject(projectId, { planningPhases: nextPhases })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects', 'agenda'] })
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof ApiError ? error.message : 'Não foi possível atualizar a task.',
+      )
+    },
+  })
+
+  function handleToggleTask(phaseKey: string, taskId: string, projectId: string) {
+    toggleTaskMutation.mutate({ projectId, phaseKey, taskId })
+  }
 
   function scrollToToday() {
     const container = scrollRef.current
     if (!container) return
-    const dates = focusedBar
-      ? [
-          focusedBar.start,
-          focusedBar.end,
-          ...focusedBar.phases.map((p) => p.start),
-          ...focusedBar.phases.map((p) => p.end),
-        ]
-      : [...bars.map((b) => b.start), ...bars.map((b) => b.end)]
+    const dates = [...bars.map((b) => b.start), ...bars.map((b) => b.end)]
     if (dates.length === 0) return
     const range = computeVisibleRange(dates, zoom)
     const todayOffsetPx = daysBetweenISO(range.start, todayISO()) * ZOOM_PX_PER_DAY[zoom]
@@ -90,7 +129,7 @@ export function AgendaPage() {
   useEffect(() => {
     if (view === 'timeline') scrollToToday()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zoom, view, bars.length, focusedProjectId])
+  }, [zoom, view, bars.length])
 
   return (
     <div className="p-6">
@@ -143,8 +182,9 @@ export function AgendaPage() {
                 ref={scrollRef}
                 bars={bars}
                 zoom={zoom}
-                focusedBar={focusedBar}
-                onFocusProject={setFocusedProjectId}
+                focusedBar={null}
+                onToggleTask={handleToggleTask}
+                assignableUsers={assignableUsers}
               />
             )}
           </div>
