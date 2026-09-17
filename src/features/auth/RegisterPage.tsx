@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { ArrowLeft, Check, Circle } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { formatCNPJ, formatCPF } from '@/lib/masks'
-import { API_URL, ApiError } from '@/lib/apiClient'
+import { API_URL, ApiError, LANDING_URL } from '@/lib/apiClient'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
 import { GoogleIcon } from '@/components/ui/GoogleIcon'
@@ -160,7 +160,7 @@ export function RegisterPage() {
 
           <div className="mb-6 flex items-center justify-between">
             <a
-              href="/"
+              href={LANDING_URL}
               className="flex items-center gap-1.5 text-sm text-(--th-text-muted) transition-colors hover:text-(--th-text)"
             >
               <ArrowLeft className="size-4" />

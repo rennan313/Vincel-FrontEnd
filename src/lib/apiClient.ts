@@ -3,14 +3,21 @@ import { useAuthStore } from '@/store/authStore'
 declare global {
   interface Window {
     // Injected at container startup by docker-entrypoint.d/40-generate-env.sh
-    // — Vite bakes import.meta.env.VITE_API_URL in at `vite build` time, so a
-    // Cloud Run env var set on the running service can't reach it otherwise.
-    __ENV__?: { VITE_API_URL?: string }
+    // — Vite bakes import.meta.env.VITE_API_URL/VITE_LANDING_URL in at
+    // `vite build` time, so a Cloud Run env var set on the running service
+    // can't reach it otherwise.
+    __ENV__?: { VITE_API_URL?: string; VITE_LANDING_URL?: string }
   }
 }
 
 export const API_URL =
   window.__ENV__?.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3333'
+
+// The marketing site (landing/) — a separate app/origin entirely, not a
+// route of this one. Used by "Voltar para o site" on the login/register
+// pages.
+export const LANDING_URL =
+  window.__ENV__?.VITE_LANDING_URL || import.meta.env.VITE_LANDING_URL || 'http://localhost:3000'
 
 export class ApiError extends Error {
   status: number
