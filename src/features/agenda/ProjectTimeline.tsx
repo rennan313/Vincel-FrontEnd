@@ -6,6 +6,7 @@ import type { BadgeVariant } from '@/components/ui/Badge'
 import { formatDate } from '@/lib/formatDate'
 import { cn } from '@/lib/cn'
 import type { ProjectTimelineBar } from '@/features/agenda/agendaDerivations'
+import type { PhaseTask } from '@/features/projects/create/types'
 import {
   PROVIDER_STATUS_LABELS,
   PROVIDER_STATUS_VARIANT,
@@ -62,10 +63,16 @@ interface ProjectTimelineProps {
   /** Opens the "nova task" modal for this etapa (the "+" on its column and
    * inside its accordion). Showing the accordion toggle/tasks at all only
    * makes sense once the Cronograma tab wires this up, so it also gates
-   * onToggleTask/onRemoveTask below. */
+   * onToggleTask/onRemoveTask/onEditTask below. */
   onAddTask?: (phaseKey: string) => void
   onToggleTask?: (phaseKey: string, taskId: string) => void
   onRemoveTask?: (phaseKey: string, taskId: string) => void
+  /** Opens the task modal pre-filled for editing — clicking a task's title
+   * (in the left column or its bar in the timeline) fires this. */
+  onEditTask?: (phaseKey: string, task: PhaseTask) => void
+  /** Colors each task's "Responsável" dot below (looked up by
+   * PhaseTask.assigneeUserId) — only meaningful alongside onAddTask. */
+  assignableUsers?: { id: string; name: string; color: string | null }[]
 }
 
 export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
@@ -80,10 +87,13 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
       onAddTask,
       onToggleTask,
       onRemoveTask,
+      onEditTask,
+      assignableUsers = [],
     },
     scrollRef,
   ) {
     const { t } = useTranslation()
+    const usersById = new Map(assignableUsers.map((user) => [user.id, user]))
     const pxPerDay = ZOOM_PX_PER_DAY[zoom]
     const today = todayISO()
     const [expandedPhaseKey, setExpandedPhaseKey] = useState<string | null>(null)
@@ -266,42 +276,68 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
                     </div>
 
                     {expanded && (
-                      <div className="flex border-b border-(--th-border) bg-(--th-bg-elevated)/40 last:border-b-0">
-                        <div
-                          className="sticky left-0 z-10 shrink-0 border-r border-(--th-border) bg-(--th-bg-card) px-3 py-2.5"
-                          style={{ width: LEFT_COL_WIDTH }}
-                        >
-                          {phase.tasks.length === 0 ? (
-                            <p className="text-xs text-(--th-text-muted)">Nenhuma task ainda.</p>
-                          ) : (
-                            <ul className="space-y-1.5">
-                              {phase.tasks.map((task) => (
-                                <li key={task.id} className="flex items-start gap-1.5">
+                      <>
+                        {phase.tasks.length === 0 ? (
+                          <div
+                            className="flex border-b border-(--th-border) bg-(--th-bg-elevated)/40 last:border-b-0"
+                            style={{ height: ROW_HEIGHT }}
+                          >
+                            <div
+                              className="sticky left-0 z-10 flex shrink-0 items-center border-r border-(--th-border) bg-(--th-bg-card) px-3"
+                              style={{ width: LEFT_COL_WIDTH }}
+                            >
+                              <p className="text-xs text-(--th-text-muted)">Nenhuma task ainda.</p>
+                            </div>
+                            <div style={{ width: timelineWidth }} />
+                          </div>
+                        ) : (
+                          phase.tasks.map((task) => {
+                            const assignee = task.assigneeUserId
+                              ? usersById.get(task.assigneeUserId)
+                              : undefined
+                            const dotColor = assignee?.color ?? '#94a3b8'
+
+                            return (
+                              <div
+                                key={task.id}
+                                className="flex border-b border-(--th-border) bg-(--th-bg-elevated)/40 last:border-b-0"
+                                style={{ height: ROW_HEIGHT }}
+                              >
+                                <div
+                                  className="sticky left-0 z-10 flex shrink-0 items-center gap-1.5 border-r border-(--th-border) bg-(--th-bg-card) px-3"
+                                  style={{ width: LEFT_COL_WIDTH }}
+                                >
                                   <input
                                     type="checkbox"
                                     checked={task.done}
+                                    onClick={(event) => event.stopPropagation()}
                                     onChange={() => onToggleTask?.(phase.key, task.id)}
-                                    className="mt-0.5 size-3.5 shrink-0 accent-(--th-accent)"
+                                    className="size-3.5 shrink-0 accent-(--th-accent)"
                                   />
-                                  <div className="min-w-0 flex-1">
-                                    <p
-                                      className={cn(
-                                        'truncate text-xs text-(--th-text)',
-                                        task.done && 'text-(--th-text-muted) line-through',
-                                      )}
-                                      title={task.title}
+                                  {task.assigneeUserId && (
+                                    <span
+                                      title={assignee?.name ?? 'Responsável removido'}
+                                      className="size-2 shrink-0 rounded-full"
+                                      style={{ backgroundColor: dotColor }}
+                                    />
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => onEditTask?.(phase.key, task)}
+                                    className="min-w-0 flex-1 truncate text-left text-xs text-(--th-text) hover:text-(--th-accent) hover:underline"
+                                    title={task.description || task.title}
+                                  >
+                                    <span
+                                      className={cn(task.done && 'text-(--th-text-muted) line-through')}
                                     >
                                       {task.title}
-                                    </p>
-                                    {task.description && (
-                                      <p
-                                        className="truncate text-[11px] text-(--th-text-muted)"
-                                        title={task.description}
-                                      >
-                                        {task.description}
-                                      </p>
-                                    )}
-                                  </div>
+                                    </span>
+                                  </button>
+                                  {task.estimatedHours != null && (
+                                    <span className="shrink-0 rounded-full bg-(--th-bg-elevated) px-1.5 py-0.5 text-[10px] font-medium text-(--th-text-muted)">
+                                      {task.estimatedHours}h
+                                    </span>
+                                  )}
                                   <button
                                     type="button"
                                     onClick={() => onRemoveTask?.(phase.key, task.id)}
@@ -310,23 +346,57 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
                                   >
                                     <Trash2 className="size-3.5" />
                                   </button>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                          {onAddTask && (
-                            <button
-                              type="button"
-                              onClick={() => onAddTask(phase.key)}
-                              className="mt-2 flex items-center gap-1 text-xs font-medium text-(--th-accent) hover:underline"
-                            >
-                              <Plus className="size-3.5" />
-                              Adicionar task
-                            </button>
-                          )}
+                                </div>
+                                {/* The task has no dates of its own — its bar
+                                    just mirrors the etapa's own left/width,
+                                    directly under the etapa's bar above. */}
+                                <div className="relative" style={{ width: timelineWidth }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => onEditTask?.(phase.key, task)}
+                                    title={
+                                      task.estimatedHours != null
+                                        ? `${task.title} — ${task.estimatedHours}h`
+                                        : task.title
+                                    }
+                                    className={cn(
+                                      'absolute top-1/2 flex h-4 -translate-y-1/2 items-center justify-center rounded-full px-1.5 text-[10px] font-medium whitespace-nowrap text-white transition-opacity hover:opacity-100',
+                                      task.done ? 'opacity-40' : 'opacity-90',
+                                    )}
+                                    style={{ left, width, backgroundColor: dotColor }}
+                                  >
+                                    {task.estimatedHours != null && width > 26 && (
+                                      <span className="truncate">{task.estimatedHours}h</span>
+                                    )}
+                                  </button>
+                                </div>
+                              </div>
+                            )
+                          })
+                        )}
+
+                        <div
+                          className="flex border-b border-(--th-border) bg-(--th-bg-elevated)/40 last:border-b-0"
+                          style={{ height: 32 }}
+                        >
+                          <div
+                            className="sticky left-0 z-10 flex shrink-0 items-center border-r border-(--th-border) bg-(--th-bg-card) px-3"
+                            style={{ width: LEFT_COL_WIDTH }}
+                          >
+                            {onAddTask && (
+                              <button
+                                type="button"
+                                onClick={() => onAddTask(phase.key)}
+                                className="flex items-center gap-1 text-xs font-medium text-(--th-accent) hover:underline"
+                              >
+                                <Plus className="size-3.5" />
+                                Adicionar task
+                              </button>
+                            )}
+                          </div>
+                          <div style={{ width: timelineWidth }} />
                         </div>
-                        <div className="flex-1" />
-                      </div>
+                      </>
                     )}
                   </div>
                 )
@@ -402,8 +472,8 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
               })}
 
           {/* Today marker — top/bottom (not a computed height) so it still
-              spans the full column when an etapa's accordion is open and
-              grows that row past ROW_HEIGHT. */}
+              spans the full column, however many rows an expanded etapa's
+              tasks add below it. */}
           {todayOffset >= 0 && todayOffset <= timelineWidth && (
             <div
               className="pointer-events-none absolute top-0 bottom-0 z-10 w-px bg-red-400"

@@ -75,7 +75,14 @@ export function UsersPage() {
       key: 'name',
       header: t('users.columns.name'),
       render: (user) => (
-        <span className="font-medium text-(--th-text)">{user.name}</span>
+        <span className="flex items-center gap-2">
+          <span
+            aria-hidden="true"
+            className="size-2.5 shrink-0 rounded-full"
+            style={{ backgroundColor: user.color ?? '#94a3b8' }}
+          />
+          <span className="font-medium text-(--th-text)">{user.name}</span>
+        </span>
       ),
     },
     {

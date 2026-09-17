@@ -32,3 +32,21 @@ export interface ProjectBriefing {
   answers: BriefingAnswer[]
   submittedAt: string | null
 }
+
+/** Groups an already-ordered question list by section, preserving the
+ * order questions come in (the office controls that order from
+ * Configurações) — shared by every briefing form/read view. */
+export function groupBriefingQuestionsBySection(
+  questions: BriefingQuestion[],
+): Array<{ section: string; questions: BriefingQuestion[] }> {
+  const groups: Array<{ section: string; questions: BriefingQuestion[] }> = []
+  for (const question of questions) {
+    const last = groups[groups.length - 1]
+    if (last && last.section === question.section) {
+      last.questions.push(question)
+    } else {
+      groups.push({ section: question.section, questions: [question] })
+    }
+  }
+  return groups
+}

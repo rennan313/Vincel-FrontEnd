@@ -60,7 +60,9 @@ export interface CreateProjectRequestPayload {
 // session (useAuthStore) and its 15-min-access/refresh-token dance. The
 // client portal token has no refresh token at all (see client-auth.service
 // .ts): a 401 here just means it's gone, so straight to logout.
-async function clientApiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+// Exported for sibling client-portal API modules (e.g. the project
+// briefing) that also call client-auth routes but live in their own file.
+export async function clientApiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = useClientAuthStore.getState().accessToken
 
   const response = await fetch(`${API_URL}${path}`, {

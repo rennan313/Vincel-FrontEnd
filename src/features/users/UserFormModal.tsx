@@ -34,10 +34,16 @@ interface UserFormModalProps {
 
 function toFormValues(user?: User): UserFormValues {
   if (!user) return emptyUserFormValues
-  return { ...emptyUserFormValues, name: user.name, email: user.email, role: user.role }
+  return {
+    ...emptyUserFormValues,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    color: user.color ?? emptyUserFormValues.color,
+  }
 }
 
-type FieldErrors = Partial<Record<'name' | 'email' | 'role' | 'password', string>>
+type FieldErrors = Partial<Record<'name' | 'email' | 'role' | 'password' | 'color', string>>
 
 export function UserFormModal({ open, onClose, user }: UserFormModalProps) {
   const { t } = useTranslation()
@@ -58,12 +64,18 @@ export function UserFormModal({ open, onClose, user }: UserFormModalProps) {
   const mutation = useMutation({
     mutationFn: (values: UserFormValues) =>
       user
-        ? updateUser(user.id, { name: values.name, email: values.email, role: values.role })
+        ? updateUser(user.id, {
+            name: values.name,
+            email: values.email,
+            role: values.role,
+            color: values.color,
+          })
         : createUser({
             name: values.name,
             email: values.email,
             role: values.role,
             password: values.password,
+            color: values.color,
           }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
@@ -95,6 +107,7 @@ export function UserFormModal({ open, onClose, user }: UserFormModalProps) {
           name: fieldErrors.name?.[0],
           email: fieldErrors.email?.[0],
           role: fieldErrors.role?.[0],
+          color: fieldErrors.color?.[0],
         })
         return
       }
@@ -107,6 +120,7 @@ export function UserFormModal({ open, onClose, user }: UserFormModalProps) {
           email: fieldErrors.email?.[0],
           role: fieldErrors.role?.[0],
           password: fieldErrors.password?.[0],
+          color: fieldErrors.color?.[0],
         })
         return
       }
@@ -168,6 +182,23 @@ export function UserFormModal({ open, onClose, user }: UserFormModalProps) {
             ))}
           </select>
           {errors.role && <p className="mt-1 text-xs text-red-600">{errors.role}</p>}
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-(--th-text)">
+            {t('users.form.color')}
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              aria-label={t('users.form.color')}
+              value={values.color}
+              onChange={(event) => updateField('color', event.target.value)}
+              className="size-9 shrink-0 cursor-pointer rounded-md border border-(--th-border) bg-transparent p-0.5"
+            />
+            <p className="text-xs text-(--th-text-muted)">{t('users.form.colorHint')}</p>
+          </div>
+          {errors.color && <p className="mt-1 text-xs text-red-600">{errors.color}</p>}
         </div>
 
         {!isEdit && (

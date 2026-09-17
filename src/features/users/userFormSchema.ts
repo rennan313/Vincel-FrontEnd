@@ -6,6 +6,7 @@ const userBaseSchema = z.object({
   name: z.string().min(2, 'Informe o nome completo.'),
   email: z.email('Informe um e-mail válido.'),
   role: z.enum(ASSIGNABLE_ROLES, { message: 'Selecione um perfil.' }),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Cor inválida.'),
 })
 
 export const createUserFormSchema = userBaseSchema.extend({
@@ -23,4 +24,5 @@ export const emptyUserFormValues: UserFormValues = {
   email: '',
   role: 'ARCHITECT',
   password: '',
+  color: '#f59e0b',
 }

@@ -62,7 +62,7 @@ export function BriefingQuestionsCard() {
     onSuccess: (saved) => {
       queryClient.invalidateQueries({ queryKey: ['briefing-questions'] })
       setQuestions(saved.map(({ id, section, label, type }) => ({ id, section, label, type })))
-      toast.success('Formulário de brifing atualizado.')
+      toast.success('Formulário de briefing atualizado.')
     },
     onError: (error) => {
       toast.error(
@@ -105,10 +105,10 @@ export function BriefingQuestionsCard() {
   return (
     <Card>
       <div className="mb-1 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-(--th-text)">Formulário de brifing</h3>
+        <h3 className="text-sm font-semibold text-(--th-text)">Formulário de briefing</h3>
       </div>
       <p className="mb-4 text-xs text-(--th-text-muted)">
-        Perguntas mostradas ao cliente no link público de brifing de qualquer projeto — edite,
+        Perguntas mostradas ao cliente no link público de briefing de qualquer projeto — edite,
         adicione, remova ou reordene à vontade.
       </p>
 

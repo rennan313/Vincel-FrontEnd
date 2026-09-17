@@ -17,6 +17,15 @@ export interface User {
   email: string
   role: UserRole
   active: boolean
+  color: string | null
+}
+
+/** The lightweight shape GET /users/assignable returns — enough to
+ * populate a "Responsável" picker without the admin-only GET /users. */
+export interface AssignableUser {
+  id: string
+  name: string
+  color: string | null
 }
 
 export interface UsersPageResult {
@@ -31,12 +40,14 @@ export interface CreateUserPayload {
   email: string
   password: string
   role: UserRole
+  color: string
 }
 
 export interface UpdateUserPayload {
   name: string
   email: string
   role: UserRole
+  color: string
 }
 
 export function fetchUsers(
@@ -69,4 +80,10 @@ export function setUserActive(id: string, active: boolean): Promise<User> {
   return apiFetch<User>(`/users/${id}/${active ? 'activate' : 'deactivate'}`, {
     method: 'PATCH',
   })
+}
+
+/** Any authenticated staff member can call this (not just ADMIN) — it
+ * backs the Cronograma task's "Responsável" picker. */
+export function fetchAssignableUsers(): Promise<AssignableUser[]> {
+  return apiFetch<AssignableUser[]>('/users/assignable')
 }

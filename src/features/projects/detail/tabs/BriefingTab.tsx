@@ -8,20 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatDate } from '@/lib/formatDate'
 import { fetchProjectBriefing } from '@/features/projectBriefing/projectBriefingApi'
-import type { BriefingQuestion } from '@/features/projectBriefing/briefingTypes'
-
-function groupBySection(questions: BriefingQuestion[]) {
-  const groups: Array<{ section: string; questions: BriefingQuestion[] }> = []
-  for (const question of questions) {
-    const last = groups[groups.length - 1]
-    if (last && last.section === question.section) {
-      last.questions.push(question)
-    } else {
-      groups.push({ section: question.section, questions: [question] })
-    }
-  }
-  return groups
-}
+import { groupBriefingQuestionsBySection } from '@/features/projectBriefing/briefingTypes'
 
 export function BriefingTab() {
   const { projectId } = useParams()
@@ -32,10 +19,10 @@ export function BriefingTab() {
   })
 
   async function handleCopyLink() {
-    const url = `${window.location.origin}/brifing/${projectId}`
+    const url = `${window.location.origin}/briefing/${projectId}`
     try {
       await navigator.clipboard.writeText(url)
-      toast.success('Link de brifing copiado!')
+      toast.success('Link de briefing copiado!')
     } catch {
       toast.error('Não foi possível copiar o link.')
     }
@@ -54,15 +41,15 @@ export function BriefingTab() {
   const questions = data?.questions ?? []
   const briefing = data?.briefing ?? null
   const answersByQuestion = new Map(briefing?.answers.map((answer) => [answer.questionId, answer]))
-  const sections = groupBySection(questions)
+  const sections = groupBriefingQuestionsBySection(questions)
 
   if (!briefing) {
     return (
       <EmptyState
         icon="ClipboardList"
-        title="Brifing ainda não preenchido"
-        description="Copie o link abaixo e envie para o cliente preencher o brifing deste projeto."
-        actionLabel="Copiar link do brifing"
+        title="Briefing ainda não preenchido"
+        description="Copie o link abaixo e envie para o cliente preencher o briefing deste projeto."
+        actionLabel="Copiar link do briefing"
         actionIcon="Copy"
         onAction={handleCopyLink}
       />
@@ -84,7 +71,7 @@ export function BriefingTab() {
           icon="Copy"
           onClick={handleCopyLink}
         >
-          Copiar link do brifing
+          Copiar link do briefing
         </Button>
       </div>
 

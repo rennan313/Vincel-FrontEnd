@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { PageTitle } from '@/components/ui/PageTitle'
 import { PageSubtitle } from '@/components/ui/PageSubtitle'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatDate } from '@/lib/formatDate'
@@ -26,6 +28,7 @@ function totalDays(project: ClientPortalProject): number {
 }
 
 function ProjectCard({ project }: { project: ClientPortalProject }) {
+  const navigate = useNavigate()
   const type = project.type === 'outro' ? project.customType || 'Outro' : project.type
   const phaseCount = project.planningPhases?.length ?? 0
   const doneDays = totalDays(project)
@@ -86,6 +89,18 @@ function ProjectCard({ project }: { project: ClientPortalProject }) {
           </ul>
         </div>
       )}
+
+      <div className="mt-4 border-t border-(--th-border) pt-3">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          icon="ClipboardList"
+          onClick={() => navigate(`/portal/projetos/${project.id}/briefing`)}
+        >
+          Preencher briefing
+        </Button>
+      </div>
     </Card>
   )
 }
