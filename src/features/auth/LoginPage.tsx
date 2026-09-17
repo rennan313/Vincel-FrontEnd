@@ -13,7 +13,7 @@ import { PasswordInput } from '@/components/ui/PasswordInput'
 import { loginSchema } from '@/features/auth/loginSchema'
 import { loginAccount } from '@/features/auth/authApi'
 import { useAuthStore } from '@/store/authStore'
-import { API_URL, ApiError } from '@/lib/apiClient'
+import { API_URL, ApiError, LANDING_URL } from '@/lib/apiClient'
 
 interface FieldErrors {
   email?: string
@@ -138,7 +138,7 @@ export function LoginPage() {
 
           <div className="mb-6 flex items-center justify-between">
             <a
-              href="/"
+              href={LANDING_URL}
               className="flex items-center gap-1.5 text-sm text-(--th-text-muted) transition-colors hover:text-(--th-text)"
             >
               <ArrowLeft className="size-4" />
