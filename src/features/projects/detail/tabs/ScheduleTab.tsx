@@ -25,6 +25,7 @@ import {
   type PhaseTaskInput,
 } from '@/features/projects/detail/tabs/PhaseTaskFormModal'
 import { fetchScheduleStatusCategories } from '@/features/scheduleStatus/scheduleStatusApi'
+import { fetchAssignableUsers } from '@/features/users/usersApi'
 import {
   computeVisibleRange,
   daysBetweenISO,
@@ -62,8 +63,13 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
   // and edited through this modal — clicking a bar on the Gantt below
   // opens it pre-filled with that etapa's data.
   const [phaseModalTarget, setPhaseModalTarget] = useState<number | 'new' | null>(null)
-  // Which etapa the "nova task" modal is adding to — null while closed.
-  const [taskModalPhaseKey, setTaskModalPhaseKey] = useState<string | null>(null)
+  // The task modal's target: which etapa it's adding into, and — when
+  // editing an existing task (opened from the Gantt's expanded etapa
+  // accordion) — which task. null while closed.
+  const [taskModalTarget, setTaskModalTarget] = useState<{
+    phaseKey: string
+    task?: PhaseTask
+  } | null>(null)
   const timelineScrollRef = useRef<HTMLDivElement>(null)
 
   const totalDays = phases.reduce((sum, phase) => sum + phase.estimatedDays, 0)
@@ -166,6 +172,14 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
     queryFn: fetchScheduleStatusCategories,
   })
 
+  // Colors each task's dot in the etapa checklist below (see
+  // AgendaTimeline's `assignableUsers` prop) — same lightweight,
+  // non-admin-gated list the task modal's "Responsável" select uses.
+  const { data: assignableUsers = [] } = useQuery({
+    queryKey: ['assignable-users'],
+    queryFn: fetchAssignableUsers,
+  })
+
   // Manual-only for now — no automatic (delay-based) fallback. Kept as a
   // one-line change to flip back on: `?? (delay-based resolveScheduleStatus)`.
   const scheduleStatus = scheduleStatusCategories.find(
@@ -243,15 +257,36 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
   }
 
   function handleSaveTask(input: PhaseTaskInput) {
-    if (!taskModalPhaseKey) return
+    if (!taskModalTarget) return
+    const { phaseKey, task: editingTask } = taskModalTarget
+
+    if (editingTask) {
+      updatePhaseTasks(phaseKey, (tasks) =>
+        tasks.map((task) =>
+          task.id === editingTask.id
+            ? {
+                ...task,
+                title: input.title,
+                description: input.description || null,
+                assigneeUserId: input.assigneeUserId,
+                estimatedHours: input.estimatedHours,
+              }
+            : task,
+        ),
+      )
+      return
+    }
+
     const task: PhaseTask = {
       id: generateTaskId(),
       title: input.title,
       description: input.description || null,
       done: false,
+      assigneeUserId: input.assigneeUserId,
+      estimatedHours: input.estimatedHours,
       createdAt: new Date().toISOString(),
     }
-    updatePhaseTasks(taskModalPhaseKey, (tasks) => [...tasks, task])
+    updatePhaseTasks(phaseKey, (tasks) => [...tasks, task])
   }
 
   function handleToggleTask(phaseKey: string, taskId: string) {
@@ -265,7 +300,7 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
   }
 
   const editingPhase = typeof phaseModalTarget === 'number' ? phases[phaseModalTarget] : undefined
-  const taskModalPhase = phases.find((phase) => phase.key === taskModalPhaseKey)
+  const taskModalPhase = phases.find((phase) => phase.key === taskModalTarget?.phaseKey)
 
   return (
     <>
@@ -380,9 +415,11 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
             focusedBar={timelineBar}
             onFocusProject={() => {}}
             onSelectPhase={handleSelectTimelinePhase}
-            onAddTask={setTaskModalPhaseKey}
+            onAddTask={(phaseKey) => setTaskModalTarget({ phaseKey })}
             onToggleTask={handleToggleTask}
             onRemoveTask={handleRemoveTask}
+            onEditTask={(phaseKey, task) => setTaskModalTarget({ phaseKey, task })}
+            assignableUsers={assignableUsers}
             embedded
           />
         ) : (
@@ -404,10 +441,16 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
       />
 
       <PhaseTaskFormModal
-        open={taskModalPhaseKey != null}
-        onClose={() => setTaskModalPhaseKey(null)}
+        open={taskModalTarget != null}
+        onClose={() => setTaskModalTarget(null)}
         onSave={handleSaveTask}
         phaseName={taskModalPhase?.name}
+        task={taskModalTarget?.task}
+        onRemove={
+          taskModalTarget?.task
+            ? () => handleRemoveTask(taskModalTarget.phaseKey, taskModalTarget.task!.id)
+            : undefined
+        }
       />
     </>
   )

@@ -149,6 +149,8 @@
       "editTitle": "Editar usuário",
       "email": "E-mail",
       "role": "Perfil",
+      "color": "Cor",
+      "colorHint": "Identifica este usuário nas tasks do Cronograma.",
       "password": "Senha",
       "cancel": "Cancelar",
       "save": "Salvar",

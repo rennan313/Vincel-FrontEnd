@@ -78,6 +78,11 @@ export interface PhaseTask {
   title: string
   description?: string | null
   done: boolean
+  /** User.id responsável por esta task — mostrado como um ponto colorido
+   * (ver User.color). */
+  assigneeUserId?: string | null
+  /** Horas estimadas para esta task específica (não a etapa inteira). */
+  estimatedHours?: number | null
   /** ISO datetime. */
   createdAt: string
 }
