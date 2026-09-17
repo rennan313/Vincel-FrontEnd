@@ -10,6 +10,7 @@ import { ClientLoginPage } from '@/features/clientPortal/ClientLoginPage'
 import { ClientPortalLayout } from '@/features/clientPortal/ClientPortalLayout'
 import { ClientProjectsPage } from '@/features/clientPortal/ClientProjectsPage'
 import { ClientAccountPage } from '@/features/clientPortal/ClientAccountPage'
+import { ClientProjectBriefingPage } from '@/features/clientPortal/ClientProjectBriefingPage'
 import { ProjectBriefingPage } from '@/features/projectBriefing/ProjectBriefingPage'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
@@ -33,13 +34,14 @@ export const router = createBrowserRouter([
       { path: '/auth/callback', element: <AuthCallbackPage /> },
       { path: '/register/complete', element: <CompleteGoogleRegistrationPage /> },
       { path: '/convite/:companyId', element: <ClientInvitePage /> },
-      { path: '/brifing/:projectId', element: <ProjectBriefingPage /> },
+      { path: '/briefing/:projectId', element: <ProjectBriefingPage /> },
       { path: '/portal/login', element: <ClientLoginPage /> },
       {
         element: <ClientPortalLayout />,
         children: [
           { path: '/portal', element: <ClientProjectsPage /> },
           { path: '/portal/conta', element: <ClientAccountPage /> },
+          { path: '/portal/projetos/:projectId/briefing', element: <ClientProjectBriefingPage /> },
         ],
       },
       {
