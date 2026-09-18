@@ -20,7 +20,7 @@ import {
   type UpdateCompanyPayload,
 } from '@/features/company/companyApi'
 import { ScheduleStatusSettingsCard } from '@/features/scheduleStatus/ScheduleStatusSettingsCard'
-import { BriefingQuestionsCard } from '@/features/company/BriefingQuestionsCard'
+import { BriefingTemplatesCard } from '@/features/company/BriefingTemplatesCard'
 
 const LOGO_MAX_BYTES = 5 * 1024 * 1024
 const ALLOWED_LOGO_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp'])
@@ -390,7 +390,7 @@ export function CompanyPage() {
       </div>
 
       <div className="mt-6">
-        <BriefingQuestionsCard />
+        <BriefingTemplatesCard />
       </div>
     </div>
   )
