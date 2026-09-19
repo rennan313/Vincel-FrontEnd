@@ -218,7 +218,7 @@ export function CompanyPage() {
     company?.documentType === 'CPF' ? formatCPF(company.document) : formatCNPJ(company?.document ?? '')
 
   return (
-    <div className="mx-auto max-w-3xl p-6">
+    <div className="p-6">
       <PageTitle>Configurações do escritório</PageTitle>
       <PageSubtitle>Nome, contato, logo e endereço usados em toda a plataforma.</PageSubtitle>
 
