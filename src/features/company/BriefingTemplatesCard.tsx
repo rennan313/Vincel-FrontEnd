@@ -53,12 +53,6 @@ function toInput(template: BriefingTemplate): BriefingTemplateInput {
   }
 }
 
-const BLANK_TEMPLATE: BriefingTemplateInput = {
-  name: '',
-  projectTypes: [],
-  questions: [{ ...EMPTY_QUESTION }],
-}
-
 interface QuestionEditorProps {
   questions: BriefingQuestionInput[]
   onChange: (questions: BriefingQuestionInput[]) => void
@@ -163,8 +157,10 @@ function QuestionEditor({ questions, onChange }: QuestionEditorProps) {
 }
 
 interface TemplateEditorProps {
-  /** undefined while creating a new template. */
-  template?: BriefingTemplate
+  /** The template already exists by the time this renders — see
+   * BriefingTemplatesCard's "Criar formulário" step, which creates an
+   * empty-shell template first so this editor only ever edits a real one. */
+  template: BriefingTemplate
   /** Every project type another template already claims, mapped to that
    * template's name — used to warn "isso vai tirar de X" before it happens,
    * never to block the choice (the backend just moves it, per product
@@ -184,10 +180,8 @@ function TemplateEditor({
   onSave,
   onCancel,
 }: TemplateEditorProps) {
-  const [draft, setDraft] = useState<BriefingTemplateInput>(
-    template ? toInput(template) : BLANK_TEMPLATE,
-  )
-  const isDefault = template?.isDefault ?? false
+  const [draft, setDraft] = useState<BriefingTemplateInput>(toInput(template))
+  const isDefault = template.isDefault
 
   function toggleType(type: string) {
     setDraft((current) => ({
@@ -278,6 +272,10 @@ export function BriefingTemplatesCard() {
   const queryClient = useQueryClient()
   const [openId, setOpenId] = useState<string | 'new' | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  // Name typed into the "Novo template" mini-form, before the template
+  // actually exists (see createMutation) — separate from any TemplateEditor
+  // draft, since that only mounts once there's a real template to edit.
+  const [newTemplateName, setNewTemplateName] = useState('')
 
   const { data: templates, isLoading } = useQuery({
     queryKey: ['briefing-templates'],
@@ -301,9 +299,27 @@ export function BriefingTemplatesCard() {
     return queryClient.invalidateQueries({ queryKey: ['briefing-templates'] })
   }
 
+  // Step 1 of creating a template: "Criar formulário" makes the empty
+  // shell (name only, no types/questions yet) exist for real — the editor
+  // that opens right after (step 2) edits that real template, same as any
+  // other, instead of a template also having to hold a whole draft
+  // perguntas list before it can be created at all.
+  const createMutation = useMutation({
+    mutationFn: (name: string) =>
+      createBriefingTemplate({ name, projectTypes: [], questions: [] }),
+    onSuccess: async (created) => {
+      await invalidate()
+      setNewTemplateName('')
+      setOpenId(created.id)
+    },
+    onError: (error) => {
+      toast.error(error instanceof ApiError ? error.message : 'Não foi possível criar o template.')
+    },
+  })
+
   const saveMutation = useMutation({
-    mutationFn: ({ id, payload }: { id?: string; payload: BriefingTemplateInput }) =>
-      id ? updateBriefingTemplate(id, payload) : createBriefingTemplate(payload),
+    mutationFn: ({ id, payload }: { id: string; payload: BriefingTemplateInput }) =>
+      updateBriefingTemplate(id, payload),
     onSuccess: async () => {
       await invalidate()
       setOpenId(null)
@@ -313,6 +329,14 @@ export function BriefingTemplatesCard() {
       toast.error(error instanceof ApiError ? error.message : 'Não foi possível salvar o template.')
     },
   })
+
+  function handleCreateForm() {
+    if (!newTemplateName.trim()) {
+      toast.error('Dê um nome ao template.')
+      return
+    }
+    createMutation.mutate(newTemplateName.trim())
+  }
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteBriefingTemplate(id),
@@ -432,20 +456,39 @@ export function BriefingTemplatesCard() {
 
           {openId === 'new' && (
             <div className="rounded-lg border border-(--th-border) p-3">
-              <p className="text-sm font-medium text-(--th-text)">Novo template</p>
-              <TemplateEditor
-                claimedElsewhere={(() => {
-                  const map = new Map<string, string>()
-                  for (const other of templates ?? []) {
-                    for (const type of other.projectTypes) map.set(type, other.name)
-                  }
-                  return map
-                })()}
-                projectTypeNames={projectTypeNames}
-                saving={saveMutation.isPending}
-                onSave={(payload) => saveMutation.mutate({ payload })}
-                onCancel={() => setOpenId(null)}
+              <p className="mb-3 text-sm font-medium text-(--th-text)">Novo template</p>
+              <Input
+                label="Nome do template"
+                placeholder="Ex.: Residencial"
+                value={newTemplateName}
+                onChange={(event) => setNewTemplateName(event.target.value)}
               />
+              <p className="mt-2 text-xs text-(--th-text-muted)">
+                Crie o formulário primeiro — os tipos de projeto atendidos e as perguntas são
+                adicionados na sequência.
+              </p>
+              <div className="mt-3 flex items-center justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setOpenId(null)
+                    setNewTemplateName('')
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  loading={createMutation.isPending}
+                  onClick={handleCreateForm}
+                >
+                  Criar formulário
+                </Button>
+              </div>
             </div>
           )}
         </div>
