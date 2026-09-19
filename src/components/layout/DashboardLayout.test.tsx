@@ -1,20 +1,27 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it } from 'vitest'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { useAuthStore } from '@/store/authStore'
 import '@/lib/i18n'
 
+// The authenticated branch renders Sidebar → TimerWidget, which reads
+// useQueryClient() — needs a provider in scope even though this suite
+// never asserts on its data.
 function renderDashboard() {
+  const queryClient = new QueryClient()
   return render(
-    <MemoryRouter initialEntries={['/dashboard']}>
-      <Routes>
-        <Route path="/" element={<p>Login mock</p>} />
-        <Route element={<DashboardLayout />}>
-          <Route path="/dashboard" element={<p>Dashboard content</p>} />
-        </Route>
-      </Routes>
-    </MemoryRouter>,
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <Routes>
+          <Route path="/" element={<p>Login mock</p>} />
+          <Route element={<DashboardLayout />}>
+            <Route path="/dashboard" element={<p>Dashboard content</p>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
   )
 }
 

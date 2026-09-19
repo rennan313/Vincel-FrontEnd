@@ -71,7 +71,10 @@ describe('buildTimelineSegments', () => {
     const segments = buildTimelineSegments(range, 'weeks')
 
     expect(segments.every((s) => s.days === 7)).toBe(true)
-    expect(segments[0].label).toMatch(/\d+ – \d+/)
+    // "31 – 6 Set" within one month, or "31 Ago – 6 Set" when the week
+    // crosses a month boundary (segmentLabel repeats the month abbreviation
+    // on both ends in that case) — both are valid, depending on today's date.
+    expect(segments[0].label).toMatch(/^\d+(?: \S+)? – \d+ \S+$/)
   })
 
   it('labels each day segment with a weekday and day number', () => {
