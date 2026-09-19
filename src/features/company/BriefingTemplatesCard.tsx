@@ -249,7 +249,14 @@ function TemplateEditor({
       )}
 
       <div>
-        <p className="mb-2 text-sm font-medium text-(--th-text)">Perguntas</p>
+        <p className="mb-1 text-sm font-medium text-(--th-text)">Perguntas</p>
+        <p className="mb-2 text-xs text-(--th-text-muted)">
+          Cada linha é uma pergunta: <strong>Seção</strong> agrupa perguntas relacionadas sob o
+          mesmo título para o cliente (repita o mesmo nome de seção nas perguntas que devem ficar
+          juntas), <strong>Pergunta</strong> é o texto que ele vê, e o tipo de resposta define como
+          ele responde (texto, número, data, links ou fotos). Use "Adicionar pergunta" para cada
+          nova linha e as setas ▲▼ para reordenar.
+        </p>
         <QuestionEditor
           questions={draft.questions}
           onChange={(questions) => setDraft((current) => ({ ...current, questions }))}
