@@ -32,6 +32,16 @@ const TYPE_LABELS: Record<BriefingQuestionType, string> = {
 
 const EMPTY_QUESTION: BriefingQuestionInput = { section: '', label: '', type: 'TEXT' }
 
+// Seeded into a freshly-created template's first render instead of a wall
+// of instructions — editing/removing this one row teaches the shape
+// (Seção agrupa, Pergunta é o texto, tipo define a resposta) faster than
+// explaining it up front.
+const EXAMPLE_QUESTION: BriefingQuestionInput = {
+  section: 'Sobre o projeto',
+  label: 'Escreva aqui a pergunta que o cliente vai responder',
+  type: 'TEXT',
+}
+
 function moveItem<T>(list: T[], from: number, to: number): T[] {
   if (to < 0 || to >= list.length) return list
   const next = [...list]
@@ -180,7 +190,16 @@ function TemplateEditor({
   onSave,
   onCancel,
 }: TemplateEditorProps) {
-  const [draft, setDraft] = useState<BriefingTemplateInput>(toInput(template))
+  const [draft, setDraft] = useState<BriefingTemplateInput>(() => {
+    const input = toInput(template)
+    // A brand-new template (just created via "Criar formulário") has no
+    // questions yet — seed one editable example instead of an empty list,
+    // so it's obvious how a row is put together.
+    if (input.questions.length === 0) {
+      return { ...input, questions: [{ ...EXAMPLE_QUESTION }] }
+    }
+    return input
+  })
   const isDefault = template.isDefault
 
   function toggleType(type: string) {
@@ -249,14 +268,7 @@ function TemplateEditor({
       )}
 
       <div>
-        <p className="mb-1 text-sm font-medium text-(--th-text)">Perguntas</p>
-        <p className="mb-2 text-xs text-(--th-text-muted)">
-          Cada linha é uma pergunta: <strong>Seção</strong> agrupa perguntas relacionadas sob o
-          mesmo título para o cliente (repita o mesmo nome de seção nas perguntas que devem ficar
-          juntas), <strong>Pergunta</strong> é o texto que ele vê, e o tipo de resposta define como
-          ele responde (texto, número, data, links ou fotos). Use "Adicionar pergunta" para cada
-          nova linha e as setas ▲▼ para reordenar.
-        </p>
+        <p className="mb-2 text-sm font-medium text-(--th-text)">Perguntas</p>
         <QuestionEditor
           questions={draft.questions}
           onChange={(questions) => setDraft((current) => ({ ...current, questions }))}
