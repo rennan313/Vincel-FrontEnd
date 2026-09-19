@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatDate } from '@/lib/formatDate'
 import { PROJECT_STATUS_VARIANT } from '@/features/projects/projectStatusStyles'
+import { getCronogramaProgress } from '@/features/agenda/agendaDerivations'
 import {
   fetchClientProjects,
   type ClientPortalProject,
@@ -32,6 +33,7 @@ function ProjectCard({ project }: { project: ClientPortalProject }) {
   const type = project.type === 'outro' ? project.customType || 'Outro' : project.type
   const phaseCount = project.planningPhases?.length ?? 0
   const doneDays = totalDays(project)
+  const progress = getCronogramaProgress(project.planningPhases ?? [])
 
   return (
     <Card>
@@ -74,18 +76,42 @@ function ProjectCard({ project }: { project: ClientPortalProject }) {
 
       {phaseCount > 0 && (
         <div className="mt-4 border-t border-(--th-border) pt-3">
-          <p className="mb-2 text-xs font-medium tracking-wide text-(--th-text-muted) uppercase">
-            Cronograma
-          </p>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="text-xs font-medium tracking-wide text-(--th-text-muted) uppercase">
+              Cronograma
+            </p>
+            {progress !== null && (
+              <span className="shrink-0 text-xs font-medium text-(--th-accent)">
+                {progress}% concluído
+              </span>
+            )}
+          </div>
+          {progress !== null && (
+            <div className="mb-3 h-1 w-full overflow-hidden rounded-full bg-(--th-bg-elevated)">
+              <div
+                className="h-full rounded-full bg-(--th-accent) transition-all duration-300 ease-out"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          )}
           <ul className="space-y-1.5">
-            {project.planningPhases!.map((phase) => (
-              <li key={phase.key} className="flex items-center justify-between gap-3 text-sm">
-                <span className="truncate text-(--th-text-sub)">{phase.name}</span>
-                <span className="shrink-0 text-xs text-(--th-text-muted)">
-                  {phase.estimatedDays} dias
-                </span>
-              </li>
-            ))}
+            {project.planningPhases!.map((phase) => {
+              const phaseTasks = phase.tasks ?? []
+              const phaseDone = phaseTasks.filter((task) => task.done).length
+              return (
+                <li key={phase.key} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="truncate text-(--th-text-sub)">{phase.name}</span>
+                  <span className="flex shrink-0 items-center gap-2 text-xs text-(--th-text-muted)">
+                    {phaseTasks.length > 0 && (
+                      <span className="rounded-full bg-(--th-bg-elevated) px-1.5 py-0.5 text-(--th-text-sub)">
+                        {phaseDone}/{phaseTasks.length}
+                      </span>
+                    )}
+                    {phase.estimatedDays} dias
+                  </span>
+                </li>
+              )
+            })}
           </ul>
         </div>
       )}

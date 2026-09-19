@@ -1,15 +1,21 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { useSidebarStore } from '@/store/sidebarStore'
 import '@/lib/i18n'
 
+// Sidebar renders TimerWidget, which reads useQueryClient() — needs a
+// provider in scope even though this suite never asserts on its data.
 function renderSidebar() {
+  const queryClient = new QueryClient()
   return render(
-    <MemoryRouter initialEntries={['/dashboard']}>
-      <Sidebar />
-    </MemoryRouter>,
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <Sidebar />
+      </MemoryRouter>
+    </QueryClientProvider>,
   )
 }
 

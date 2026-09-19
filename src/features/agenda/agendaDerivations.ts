@@ -67,6 +67,22 @@ export function getProjectPhaseBars(phases: PlanningPhase[], rangeStart: string)
 }
 
 /**
+ * Percentage of the Cronograma's tasks marked done, across every etapa —
+ * how many PhaseTask checklist items are `done` out of every task on every
+ * phase. This is what the client portal shows as "quanto já foi concluído":
+ * a plain count, not a fabricated score — a phase contributes nothing
+ * either way until it actually has tasks. Null when the project has no
+ * tasks anywhere yet (nothing to compute a percentage from — render that
+ * as "—", never as 0%).
+ */
+export function getCronogramaProgress(phases: PlanningPhase[]): number | null {
+  const tasks = phases.flatMap((phase) => phase.tasks ?? [])
+  if (tasks.length === 0) return null
+  const done = tasks.filter((task) => task.done).length
+  return Math.round((done / tasks.length) * 100)
+}
+
+/**
  * A project's bar range for the Agenda timeline — término previsto when set,
  * otherwise início + the sum of planning-phase estimates (the same "prazo
  * estimado" figure shown elsewhere). Projects with no início at all have
