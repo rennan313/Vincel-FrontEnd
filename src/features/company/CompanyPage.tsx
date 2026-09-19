@@ -20,7 +20,7 @@ import {
   type UpdateCompanyPayload,
 } from '@/features/company/companyApi'
 import { ScheduleStatusSettingsCard } from '@/features/scheduleStatus/ScheduleStatusSettingsCard'
-import { BriefingQuestionsCard } from '@/features/company/BriefingQuestionsCard'
+import { BriefingTemplatesCard } from '@/features/company/BriefingTemplatesCard'
 
 const LOGO_MAX_BYTES = 5 * 1024 * 1024
 const ALLOWED_LOGO_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp'])
@@ -218,7 +218,7 @@ export function CompanyPage() {
     company?.documentType === 'CPF' ? formatCPF(company.document) : formatCNPJ(company?.document ?? '')
 
   return (
-    <div className="mx-auto max-w-3xl p-6">
+    <div className="p-6">
       <PageTitle>Configurações do escritório</PageTitle>
       <PageSubtitle>Nome, contato, logo e endereço usados em toda a plataforma.</PageSubtitle>
 
@@ -390,7 +390,7 @@ export function CompanyPage() {
       </div>
 
       <div className="mt-6">
-        <BriefingQuestionsCard />
+        <BriefingTemplatesCard />
       </div>
     </div>
   )

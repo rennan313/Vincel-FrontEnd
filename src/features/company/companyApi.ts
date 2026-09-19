@@ -1,6 +1,6 @@
 import { API_URL, ApiError, apiFetch } from '@/lib/apiClient'
 import { useAuthStore } from '@/store/authStore'
-import type { BriefingQuestion, BriefingQuestionInput } from '@/features/projectBriefing/briefingTypes'
+import type { BriefingQuestionInput } from '@/features/projectBriefing/briefingTypes'
 
 export interface CompanyAddress {
   zip?: string | null
@@ -71,15 +71,51 @@ export function removeCompanyLogo(): Promise<Company> {
   return apiFetch<Company>('/companies/me/logo', { method: 'DELETE' })
 }
 
-export function fetchBriefingQuestions(): Promise<BriefingQuestion[]> {
-  return apiFetch<BriefingQuestion[]>('/companies/me/briefing-questions')
+/** One of the company's briefing forms — a name, the project types it
+ * governs (empty + isDefault for the fallback template), and its ordered
+ * question list. See BriefingTemplateInput for the PUT/POST body shape. */
+export interface BriefingTemplate {
+  id: string
+  name: string
+  projectTypes: string[]
+  isDefault: boolean
+  questions: Array<{
+    id: string
+    section: string
+    label: string
+    type: BriefingQuestionInput['type']
+  }>
 }
 
-export function replaceBriefingQuestions(
-  questions: BriefingQuestionInput[],
-): Promise<BriefingQuestion[]> {
-  return apiFetch<BriefingQuestion[]>('/companies/me/briefing-questions', {
-    method: 'PUT',
-    body: JSON.stringify({ questions }),
+export interface BriefingTemplateInput {
+  name: string
+  projectTypes: string[]
+  questions: BriefingQuestionInput[]
+}
+
+export function fetchBriefingTemplates(): Promise<BriefingTemplate[]> {
+  return apiFetch<BriefingTemplate[]>('/companies/me/briefing-templates')
+}
+
+export function createBriefingTemplate(
+  payload: BriefingTemplateInput,
+): Promise<BriefingTemplate> {
+  return apiFetch<BriefingTemplate>('/companies/me/briefing-templates', {
+    method: 'POST',
+    body: JSON.stringify(payload),
   })
+}
+
+export function updateBriefingTemplate(
+  id: string,
+  payload: BriefingTemplateInput,
+): Promise<BriefingTemplate> {
+  return apiFetch<BriefingTemplate>(`/companies/me/briefing-templates/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function deleteBriefingTemplate(id: string): Promise<void> {
+  return apiFetch<void>(`/companies/me/briefing-templates/${id}`, { method: 'DELETE' })
 }
