@@ -2,11 +2,17 @@ import { apiFetch } from '@/lib/apiClient'
 
 export type SubscriptionStatus = 'PENDING' | 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED'
 
+export type BillingInterval = 'MONTHLY' | 'QUARTERLY' | 'YEARLY'
+
 export interface SubscriptionPlan {
   id: string
   name: string
   description?: string | null
+  /** Amount charged per billing cycle, in BRL — see billingInterval for the
+   * cycle length (a YEARLY plan's price is the full yearly charge, not a
+   * monthly rate). */
   price: number
+  billingInterval: BillingInterval
   trialDays: number
 }
 

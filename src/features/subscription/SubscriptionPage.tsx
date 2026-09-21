@@ -3,7 +3,7 @@ import { Navigate } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Wallet, Sparkles, Layers, Briefcase, Check } from 'lucide-react'
+import { Wallet, CalendarDays, CalendarRange, CalendarCheck, Check } from 'lucide-react'
 import { PageTitle } from '@/components/ui/PageTitle'
 import { PageSubtitle } from '@/components/ui/PageSubtitle'
 import { Badge, type BadgeVariant } from '@/components/ui/Badge'
@@ -20,6 +20,7 @@ import {
   cancelSubscription,
   fetchPlans,
   subscribeToPlan,
+  type BillingInterval,
   type SubscriptionStatus,
 } from '@/features/subscription/subscriptionApi'
 
@@ -39,9 +40,30 @@ const STATUS_VARIANT: Record<SubscriptionStatus, BadgeVariant> = {
   CANCELED: 'danger',
 }
 
-// Purely cosmetic per-tier iconography — plans are ordered by price (asc)
-// from the API, so position doubles as a tier rank regardless of naming.
-const TIER_ICONS = [Sparkles, Layers, Briefcase]
+// Vincel is a single product now — these three plans are the same offer at
+// three billing cadences, not feature tiers (see the Plan.billingInterval
+// comment on the backend schema).
+const BILLING_INTERVAL_ICON = {
+  MONTHLY: CalendarDays,
+  QUARTERLY: CalendarRange,
+  YEARLY: CalendarCheck,
+} as const satisfies Record<BillingInterval, typeof CalendarDays>
+
+const BILLING_INTERVAL_SUFFIX: Record<BillingInterval, string> = {
+  MONTHLY: '/mês',
+  QUARTERLY: '/trimestre',
+  YEARLY: '/ano',
+}
+
+// How many months a billing cycle spans — used to compute each plan's
+// monthly-equivalent price and its savings vs. the mensal plan, both
+// derived straight from the real prices the API returns (never a
+// hardcoded percentage baked into the front).
+const BILLING_INTERVAL_MONTHS: Record<BillingInterval, number> = {
+  MONTHLY: 1,
+  QUARTERLY: 3,
+  YEARLY: 12,
+}
 
 function formatDate(value: string | null): string {
   if (!value) return '—'
@@ -174,7 +196,9 @@ export function SubscriptionPage() {
             <div className="text-right">
               <p className="text-lg font-semibold text-(--th-text)">
                 {formatBRLAmount(subscription.plan.price)}
-                <span className="text-sm font-normal text-(--th-text-muted)">/mês</span>
+                <span className="text-sm font-normal text-(--th-text-muted)">
+                  {BILLING_INTERVAL_SUFFIX[subscription.plan.billingInterval]}
+                </span>
               </p>
             </div>
           </div>
@@ -204,76 +228,106 @@ export function SubscriptionPage() {
       {canCancel && (
         <div className="mt-10">
           <p className="text-sm font-semibold text-(--th-text)">
-            {hasOngoingSubscription ? 'Fazer upgrade' : 'Planos disponíveis'}
+            {hasOngoingSubscription ? 'Forma de pagamento' : 'Escolha a forma de pagamento'}
           </p>
           <p className="mt-0.5 text-sm text-(--th-text-muted)">
             {hasOngoingSubscription
-              ? 'Troque de plano quando o escritório crescer.'
-              : 'Escolha um plano para assinar.'}
+              ? 'Mude a periodicidade da cobrança quando quiser economizar mais.'
+              : 'Mesmo plano Vincel, cobrado mensal, trimestral ou anual — quanto maior o período, maior o desconto.'}
           </p>
 
           <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
-            {activePlans.map((plan, index) => {
-              const isCurrentPlan =
-                hasOngoingSubscription && subscription?.plan.id === plan.id
-              const isSubscribing =
-                subscribeMutation.isPending && subscribeMutation.variables === plan.id
-              const isRecommended = !isCurrentPlan && activePlans.length === 3 && index === 1
-              const TierIcon = TIER_ICONS[index] ?? Wallet
+            {(() => {
+              // The mensal plan's price is the reference every discount is
+              // computed against — never a hardcoded percentage baked into
+              // the front, always derived from what the API returns.
+              const monthlyPlan = activePlans.find((plan) => plan.billingInterval === 'MONTHLY')
 
-              return (
-                <div
-                  key={plan.id}
-                  className={`relative flex flex-col overflow-hidden rounded-2xl border p-6 transition-all duration-200 ${
-                    isCurrentPlan
-                      ? 'border-(--th-accent)/50 bg-(--th-accent)/[0.04] shadow-[0_0_0_1px_color-mix(in_srgb,var(--th-accent)_35%,transparent)]'
-                      : isRecommended
-                        ? 'border-(--th-accent)/40 bg-(--th-bg-card) shadow-lg shadow-black/5 sm:-translate-y-1.5'
-                        : 'border-(--th-border) bg-(--th-bg-card) hover:border-(--th-accent)/30'
-                  }`}
-                >
-                  {isRecommended && (
-                    <span className="absolute top-0 right-0 rounded-bl-xl bg-(--th-accent) px-3 py-1 text-[10px] font-bold tracking-[0.08em] text-white uppercase">
-                      Mais popular
-                    </span>
-                  )}
+              return activePlans.map((plan) => {
+                const isCurrentPlan =
+                  hasOngoingSubscription && subscription?.plan.id === plan.id
+                const isSubscribing =
+                  subscribeMutation.isPending && subscribeMutation.variables === plan.id
+                // The anual plan always saves the most — highlighted as the
+                // best deal, not a positional/"most popular" guess.
+                const isBestValue = !isCurrentPlan && plan.billingInterval === 'YEARLY'
+                const IntervalIcon = BILLING_INTERVAL_ICON[plan.billingInterval] ?? Wallet
 
-                  <div className="relative flex size-11 shrink-0 items-center justify-center rounded-xl bg-(--th-accent)/10 text-(--th-accent)">
-                    <div className="absolute inset-0 -z-10 rounded-full bg-(--th-accent)/20 blur-2xl" />
-                    <TierIcon className="size-5" />
-                  </div>
+                const months = BILLING_INTERVAL_MONTHS[plan.billingInterval]
+                const monthlyEquivalent = plan.price / months
+                const savingsPercent =
+                  monthlyPlan && monthlyPlan.id !== plan.id
+                    ? Math.round((1 - monthlyEquivalent / monthlyPlan.price) * 100)
+                    : 0
 
-                  <p className="mt-4 text-base font-semibold text-(--th-text)">{plan.name}</p>
-                  <p className="mt-1 min-h-10 flex-1 text-sm text-(--th-text-muted)">
-                    {plan.description ?? '—'}
-                  </p>
+                return (
+                  <div
+                    key={plan.id}
+                    className={`relative flex flex-col overflow-hidden rounded-2xl border p-6 transition-all duration-200 ${
+                      isCurrentPlan
+                        ? 'border-(--th-accent)/50 bg-(--th-accent)/[0.04] shadow-[0_0_0_1px_color-mix(in_srgb,var(--th-accent)_35%,transparent)]'
+                        : isBestValue
+                          ? 'border-(--th-accent)/40 bg-(--th-bg-card) shadow-lg shadow-black/5 sm:-translate-y-1.5'
+                          : 'border-(--th-border) bg-(--th-bg-card) hover:border-(--th-accent)/30'
+                    }`}
+                  >
+                    {isBestValue && (
+                      <span className="absolute top-0 right-0 rounded-bl-xl bg-(--th-accent) px-3 py-1 text-[10px] font-bold tracking-[0.08em] text-white uppercase">
+                        Melhor oferta
+                      </span>
+                    )}
 
-                  <p className="mt-5 flex items-baseline gap-1 border-t border-(--th-border) pt-5">
-                    <span className="text-2xl font-bold text-(--th-text)">
-                      {formatBRLAmount(plan.price)}
-                    </span>
-                    <span className="text-sm font-normal text-(--th-text-muted)">/mês</span>
-                  </p>
-
-                  {isCurrentPlan ? (
-                    <div className="mt-4 flex items-center justify-center gap-1.5 rounded-lg border border-(--th-accent)/30 bg-(--th-accent)/10 py-2.5 text-sm font-medium text-(--th-accent)">
-                      <Check className="size-4" />
-                      Seu plano atual
+                    <div className="relative flex size-11 shrink-0 items-center justify-center rounded-xl bg-(--th-accent)/10 text-(--th-accent)">
+                      <div className="absolute inset-0 -z-10 rounded-full bg-(--th-accent)/20 blur-2xl" />
+                      <IntervalIcon className="size-5" />
                     </div>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant={isRecommended ? 'primary' : 'outline'}
-                      className="mt-4"
-                      loading={isSubscribing}
-                      onClick={() => subscribeMutation.mutate(plan.id)}
-                    >
-                      {hasOngoingSubscription ? 'Trocar para este plano' : 'Assinar'}
-                    </Button>
-                  )}
-                </div>
-              )
-            })}
+
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
+                      <p className="text-base font-semibold text-(--th-text)">{plan.name}</p>
+                      {savingsPercent > 0 && (
+                        <Badge variant="success">-{savingsPercent}%</Badge>
+                      )}
+                    </div>
+                    <p className="mt-1 min-h-10 flex-1 text-sm text-(--th-text-muted)">
+                      {plan.description ?? '—'}
+                    </p>
+
+                    <div className="mt-5 border-t border-(--th-border) pt-5">
+                      <p className="flex items-baseline gap-1">
+                        <span className="text-2xl font-bold text-(--th-text)">
+                          {formatBRLAmount(plan.price)}
+                        </span>
+                        <span className="text-sm font-normal text-(--th-text-muted)">
+                          {BILLING_INTERVAL_SUFFIX[plan.billingInterval]}
+                        </span>
+                      </p>
+                      {months > 1 && (
+                        <p className="mt-0.5 text-xs text-(--th-text-muted)">
+                          equivale a {formatBRLAmount(monthlyEquivalent)}/mês
+                        </p>
+                      )}
+                    </div>
+
+                    {isCurrentPlan ? (
+                      <div className="mt-4 flex items-center justify-center gap-1.5 rounded-lg border border-(--th-accent)/30 bg-(--th-accent)/10 py-2.5 text-sm font-medium text-(--th-accent)">
+                        <Check className="size-4" />
+                        Sua forma de pagamento atual
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant={isBestValue ? 'primary' : 'outline'}
+                        className="mt-4"
+                        loading={isSubscribing}
+                        onClick={() => subscribeMutation.mutate(plan.id)}
+                      >
+                        {hasOngoingSubscription ? 'Mudar para este plano' : 'Assinar'}
+                      </Button>
+                    )}
+                  </div>
+                )
+              })
+            })()}
           </div>
         </div>
       )}
