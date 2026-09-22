@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { Building2, ChevronDown, LogOut, UserPlus } from 'lucide-react'
+import { Building2, ChevronDown, LogOut, UserPlus, Wallet } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { canManageUsers } from '@/features/users/usersApi'
 import { logoutSession } from '@/features/auth/authApi'
@@ -40,6 +40,11 @@ export function UserMenu() {
   // VINCEL_ADMIN has no escritório of its own, so it's ADMIN-only, unlike
   // showUsers above.
   const showCompanySettings = user.role === 'ADMIN'
+  // Matches SubscriptionPage's own canManageUsers(role) redirect-if-not-
+  // authorized guard — kept as its own named flag even though it's
+  // currently the same check as showUsers, since the two mean different
+  // things and could diverge later.
+  const showSubscription = canManageUsers(user.role)
 
   function handleLogout() {
     // Revoke server-side so the refresh token can't be used again even if it
@@ -78,7 +83,7 @@ export function UserMenu() {
               {user.email}
             </p>
           </div>
-          {(showUsers || showCompanySettings) && (
+          {(showUsers || showCompanySettings || showSubscription) && (
             <div className="border-b border-(--th-border) py-1">
               {showCompanySettings && (
                 <NavLink
@@ -88,6 +93,16 @@ export function UserMenu() {
                 >
                   <Building2 className="size-3.5 text-(--th-text-muted)" />
                   Configurações do escritório
+                </NavLink>
+              )}
+              {showSubscription && (
+                <NavLink
+                  to="/assinatura"
+                  onClick={() => setOpen(false)}
+                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-(--th-text-sub) hover:bg-(--th-bg-elevated) hover:text-(--th-text)"
+                >
+                  <Wallet className="size-3.5 text-(--th-text-muted)" />
+                  {t('nav.subscription')}
                 </NavLink>
               )}
               {showUsers && (

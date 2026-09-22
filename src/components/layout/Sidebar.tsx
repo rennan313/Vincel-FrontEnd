@@ -5,9 +5,7 @@ import { ChevronLeft, X } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 import { ICONS, type IconName } from '@/components/ui/icons'
 import { useSidebarStore } from '@/store/sidebarStore'
-import { useAuthStore } from '@/store/authStore'
 import { useMediaQuery } from '@/lib/useMediaQuery'
-import { canManageUsers } from '@/features/users/usersApi'
 import { TimerWidget } from '@/features/timer/TimerWidget'
 
 interface NavItem {
@@ -16,15 +14,13 @@ interface NavItem {
   icon: IconName
 }
 
-const BASE_NAV_ITEMS: NavItem[] = [
+const NAV_ITEMS: NavItem[] = [
   { labelKey: 'nav.dashboard', to: '/dashboard', icon: 'LayoutDashboard' },
   { labelKey: 'nav.clients', to: '/clients', icon: 'Users' },
   { labelKey: 'nav.providers', to: '/providers', icon: 'Briefcase' },
   { labelKey: 'nav.projects', to: '/projects', icon: 'FolderOpen' },
   { labelKey: 'nav.agenda', to: '/agenda', icon: 'CalendarRange' },
 ]
-
-const SUBSCRIPTION_NAV_ITEM: NavItem = { labelKey: 'nav.subscription', to: '/assinatura', icon: 'Wallet' }
 
 interface SidebarNavItemProps {
   item: NavItem
@@ -88,12 +84,8 @@ export function Sidebar() {
   const close = useSidebarStore((state) => state.close)
   const collapsed = useSidebarStore((state) => state.collapsed)
   const toggleCollapsed = useSidebarStore((state) => state.toggleCollapsed)
-  const role = useAuthStore((state) => state.user?.role)
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const rail = collapsed && isDesktop
-  const navItems = canManageUsers(role)
-    ? [...BASE_NAV_ITEMS, SUBSCRIPTION_NAV_ITEM]
-    : BASE_NAV_ITEMS
 
   useEffect(() => {
     if (!open) return
@@ -163,7 +155,7 @@ export function Sidebar() {
               {t('nav.main')}
             </p>
           )}
-          {navItems.map((item) => (
+          {NAV_ITEMS.map((item) => (
             <SidebarNavItem
               key={item.to}
               item={item}
