@@ -18,3 +18,34 @@ export interface DashboardSummary {
 export function fetchDashboardSummary(): Promise<DashboardSummary> {
   return apiFetch<DashboardSummary>('/dashboard/summary')
 }
+
+export interface ProjectTypeCount {
+  type: string
+  count: number
+}
+
+export interface MonthlyCount {
+  /** 'YYYY-MM', oldest first — formatting the label is the front's job. */
+  month: string
+  count: number
+}
+
+export interface MonthlyAmount {
+  /** 'YYYY-MM', oldest first. */
+  month: string
+  /** BRL. */
+  amount: number
+}
+
+export interface DashboardCharts {
+  /** Sorted desc by count; past the top 5 types, the rest fold into one
+   * "Outros" row (see backend DashboardService) so a donut never has to
+   * render more than 6 slices. */
+  projectsByType: ProjectTypeCount[]
+  monthlyNewProjects: MonthlyCount[]
+  monthlyFeeAmount: MonthlyAmount[]
+}
+
+export function fetchDashboardCharts(): Promise<DashboardCharts> {
+  return apiFetch<DashboardCharts>('/dashboard/charts')
+}
