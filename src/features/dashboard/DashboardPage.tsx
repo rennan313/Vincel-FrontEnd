@@ -7,6 +7,8 @@ import { useAuthStore } from '@/store/authStore'
 import { fetchClients } from '@/features/clients/clientsApi'
 import { fetchProjects } from '@/features/projects/projectsApi'
 import { PROJECT_STATUS_VARIANT } from '@/features/projects/projectStatusStyles'
+import { DashboardKpiCards } from '@/features/dashboard/DashboardKpiCards'
+import { DashboardCharts } from '@/features/dashboard/DashboardCharts'
 
 const RECENT_LIMIT = 5
 
@@ -41,6 +43,14 @@ export function DashboardPage() {
       <p className="mt-1 text-sm text-(--th-text-muted)">
         {t('dashboard.subtitle')}
       </p>
+
+      <div className="mt-6">
+        <DashboardKpiCards />
+      </div>
+
+      <div className="mt-6">
+        <DashboardCharts />
+      </div>
 
       <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
         {QUICK_ACTIONS.map((action) => (
