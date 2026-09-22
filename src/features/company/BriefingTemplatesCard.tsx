@@ -32,10 +32,11 @@ const TYPE_LABELS: Record<BriefingQuestionType, string> = {
 
 const EMPTY_QUESTION: BriefingQuestionInput = { section: '', label: '', type: 'TEXT' }
 
-// Seeded into a freshly-created template's first render instead of a wall
-// of instructions — editing/removing this one row teaches the shape
-// (Seção agrupa, Pergunta é o texto, tipo define a resposta) faster than
-// explaining it up front.
+// Fallback for a freshly-created template's first render, only used when
+// there's no Padrão question list to clone from (e.g. the company's own
+// default template has been emptied out) — editing/removing this one row
+// still teaches the shape (Seção agrupa, Pergunta é o texto, tipo define a
+// resposta) faster than explaining it up front.
 const EXAMPLE_QUESTION: BriefingQuestionInput = {
   section: 'Sobre o projeto',
   label: 'Escreva aqui a pergunta que o cliente vai responder',
@@ -61,6 +62,16 @@ function toInput(template: BriefingTemplate): BriefingTemplateInput {
       type,
     })),
   }
+}
+
+/** Same shape as toInput's questions, minus `id` — for cloning the Padrão
+ * template's questions into a different (brand-new) template's draft,
+ * where those ids don't belong (see replaceTemplateQuestions on the
+ * backend: an id is only valid within its own template). */
+function cloneAsNewQuestions(
+  questions: BriefingTemplate['questions'],
+): BriefingQuestionInput[] {
+  return questions.map(({ section, label, type }) => ({ section, label, type }))
 }
 
 interface QuestionEditorProps {
@@ -171,6 +182,12 @@ interface TemplateEditorProps {
    * BriefingTemplatesCard's "Criar formulário" step, which creates an
    * empty-shell template first so this editor only ever edits a real one. */
   template: BriefingTemplate
+  /** The company's Padrão template's own questions, cloned (ids stripped —
+   * see cloneAsNewQuestions) into a brand-new template's first draft
+   * instead of one bare example row, so a new formulário starts from the
+   * office's usual set and gets edited/trimmed down, not built from
+   * scratch. Undefined while templates are still loading. */
+  defaultQuestions: BriefingQuestionInput[] | undefined
   /** Every project type another template already claims, mapped to that
    * template's name — used to warn "isso vai tirar de X" before it happens,
    * never to block the choice (the backend just moves it, per product
@@ -184,6 +201,7 @@ interface TemplateEditorProps {
 
 function TemplateEditor({
   template,
+  defaultQuestions,
   claimedElsewhere,
   projectTypeNames,
   saving,
@@ -193,10 +211,14 @@ function TemplateEditor({
   const [draft, setDraft] = useState<BriefingTemplateInput>(() => {
     const input = toInput(template)
     // A brand-new template (just created via "Criar formulário") has no
-    // questions yet — seed one editable example instead of an empty list,
-    // so it's obvious how a row is put together.
+    // questions yet — seed it with a clone of the Padrão template's own
+    // questions (each becomes its own row here, no id, so saving creates
+    // independent BriefingQuestion rows — editing one template's copy
+    // later never touches the other's). Falls back to one bare example
+    // row only if there's nothing to clone (Padrão itself has none).
     if (input.questions.length === 0) {
-      return { ...input, questions: [{ ...EXAMPLE_QUESTION }] }
+      const seed = defaultQuestions?.length ? defaultQuestions : [EXAMPLE_QUESTION]
+      return { ...input, questions: seed.map((question) => ({ ...question })) }
     }
     return input
   })
@@ -305,6 +327,10 @@ export function BriefingTemplatesCard() {
     queryFn: fetchProjectTypeCatalog,
   })
   const projectTypeNames = (projectTypeCatalog ?? []).map((item) => item.name)
+  const defaultTemplate = templates?.find((t) => t.isDefault)
+  const defaultQuestions = defaultTemplate
+    ? cloneAsNewQuestions(defaultTemplate.questions)
+    : undefined
 
   // Closing the edit panel when the list refreshes out from under it (e.g.
   // after a save elsewhere) avoids editing a template that no longer exists.
@@ -462,6 +488,7 @@ export function BriefingTemplatesCard() {
                 {expanded && (
                   <TemplateEditor
                     template={template}
+                    defaultQuestions={defaultQuestions}
                     claimedElsewhere={claimedElsewhere}
                     projectTypeNames={projectTypeNames}
                     saving={saveMutation.isPending}
