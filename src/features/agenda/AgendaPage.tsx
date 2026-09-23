@@ -13,7 +13,7 @@ import { fetchProjects, updateProject } from '@/features/projects/projectsApi'
 import { fetchAssignableUsers } from '@/features/users/usersApi'
 import { getProjectTimelineBar } from '@/features/agenda/agendaDerivations'
 import { ProjectTimeline } from '@/features/agenda/ProjectTimeline'
-import { CalendarView } from '@/features/agenda/CalendarView'
+import { AgendaCalendarTab, type AgendaCalendarTabHandle } from '@/features/agenda/AgendaCalendarTab'
 import { fetchScheduleStatusCategories } from '@/features/scheduleStatus/scheduleStatusApi'
 import {
   computeVisibleRange,
@@ -31,6 +31,7 @@ export function AgendaPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const scrollRef = useRef<HTMLDivElement>(null)
+  const calendarTabRef = useRef<AgendaCalendarTabHandle>(null)
   const [view, setView] = useQueryState('view', parseAsStringLiteral(VIEW_OPTIONS).withDefault('timeline'))
   const [zoom, setZoom] = useQueryState(
     'zoom',
@@ -126,6 +127,17 @@ export function AgendaPage() {
     container.scrollLeft = LEFT_COL_WIDTH + todayOffsetPx - container.clientWidth / 2
   }
 
+  // "Hoje" always switches to the day-level zoom too — that's the level
+  // where landing on today's exact position is actually useful; jumping to
+  // today while still zoomed out to weeks/months left the marker barely
+  // distinguishable from its neighbors. Calls scrollToToday directly (not
+  // just setZoom) so it still re-centers when the zoom was already 'days'
+  // — the effect below only re-runs scrollToToday when zoom itself changes.
+  function handleTodayClick() {
+    setZoom('days')
+    scrollToToday()
+  }
+
   useEffect(() => {
     if (view === 'timeline') scrollToToday()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -133,9 +145,21 @@ export function AgendaPage() {
 
   return (
     <div className="p-6">
-      <div>
-        <PageTitle>{t('nav.agenda')}</PageTitle>
-        <PageSubtitle>{t('agenda.subtitle')}</PageSubtitle>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <PageTitle>{t('nav.agenda')}</PageTitle>
+          <PageSubtitle>{t('agenda.subtitle')}</PageSubtitle>
+        </div>
+        {view === 'calendar' && (
+          <Button
+            type="button"
+            variant="primary"
+            icon="Plus"
+            onClick={() => calendarTabRef.current?.openNewAppointment()}
+          >
+            {t('agenda.newAppointment')}
+          </Button>
+        )}
       </div>
 
       <div className="mt-6">
@@ -150,7 +174,7 @@ export function AgendaPage() {
       {view === 'timeline' ? (
         <>
           <div className="mt-4 flex justify-end gap-2">
-            <Button type="button" variant="outline" size="sm" icon="CalendarClock" onClick={scrollToToday}>
+            <Button type="button" variant="outline" size="sm" icon="CalendarClock" onClick={handleTodayClick}>
               {t('agenda.today')}
             </Button>
             <div className="flex items-center gap-0.5 rounded-lg border border-(--th-border) p-0.5">
@@ -189,20 +213,13 @@ export function AgendaPage() {
             )}
           </div>
         </>
+      ) : isLoading ? (
+        <p className="mt-6 text-sm text-(--th-text-muted)">Carregando...</p>
       ) : (
-        <div className="mt-6">
-          {isLoading ? (
-            <p className="text-sm text-(--th-text-muted)">Carregando...</p>
-          ) : bars.length === 0 ? (
-            <EmptyState
-              icon="CalendarRange"
-              title={t('agenda.empty')}
-              description="Datas de início entram na Agenda assim que um projeto é criado ou editado."
-            />
-          ) : (
-            <CalendarView bars={bars} />
-          )}
-        </div>
+        // No bars.length===0 gate here (unlike the Timeline tab above): the
+        // calendar also shows compromissos/tarefas, which exist independently
+        // of any project having a data de início.
+        <AgendaCalendarTab ref={calendarTabRef} bars={bars} assignableUsers={assignableUsers} />
       )}
     </div>
   )
