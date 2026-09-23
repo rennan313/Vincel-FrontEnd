@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { formatDate } from '@/lib/formatDate'
@@ -16,6 +17,7 @@ const QUERY_KEY = ['project-requests']
  * pending ("new") ones.
  */
 export function ProjectRequestsCard() {
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { data: requests = [] } = useQuery({
     queryKey: QUERY_KEY,
@@ -56,16 +58,29 @@ export function ProjectRequestsCard() {
                 {formatDate(request.createdAt)}
               </p>
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="shrink-0"
-              loading={markReadMutation.isPending && markReadMutation.variables === request.id}
-              onClick={() => markReadMutation.mutate(request.id)}
-            >
-              Marcar como visto
-            </Button>
+            <div className="flex shrink-0 gap-2">
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={() =>
+                  navigate(
+                    `/proposals?new=1&projectRequestId=${request.id}&clientId=${request.client.id}&clientName=${encodeURIComponent(request.client.name)}`,
+                  )
+                }
+              >
+                Converter em proposta
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                loading={markReadMutation.isPending && markReadMutation.variables === request.id}
+                onClick={() => markReadMutation.mutate(request.id)}
+              >
+                Marcar como visto
+              </Button>
+            </div>
           </li>
         ))}
       </ul>

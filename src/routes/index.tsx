@@ -21,6 +21,7 @@ import { ProjectsPage } from '@/features/projects/ProjectsPage'
 import { AgendaPage } from '@/features/agenda/AgendaPage'
 import { ProjectDetailPage } from '@/features/projects/ProjectDetailPage'
 import { CreateProjectPage } from '@/features/projects/create/CreateProjectPage'
+import { ProposalsPage } from '@/features/proposals/ProposalsPage'
 import { UsersPage } from '@/features/users/UsersPage'
 import { SubscriptionPage } from '@/features/subscription/SubscriptionPage'
 import { CompanyPage } from '@/features/company/CompanyPage'
@@ -56,6 +57,7 @@ export const router = createBrowserRouter([
           { path: '/clients', element: <ClientsPage /> },
           { path: '/providers', element: <ProvidersPage /> },
           { path: '/projects', element: <ProjectsPage /> },
+          { path: '/proposals', element: <ProposalsPage /> },
           { path: '/agenda', element: <AgendaPage /> },
           { path: '/projects/new', element: <CreateProjectPage /> },
           { path: '/projects/:projectId/edit', element: <CreateProjectPage /> },
