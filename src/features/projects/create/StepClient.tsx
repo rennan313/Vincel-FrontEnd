@@ -4,9 +4,10 @@ import fetchCep from 'cep-promise'
 import { Button } from '@/components/ui/Button'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { Input } from '@/components/ui/Input'
-import { ClientPicker } from '@/features/clients/ClientPicker'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
+import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { formatCEP } from '@/lib/masks'
+import { fetchClients } from '@/features/clients/clientsApi'
 import type { AddressData } from '@/features/projects/create/types'
 
 interface StepClientProps {
@@ -21,9 +22,19 @@ export function StepClient({ onValidityChange }: StepClientProps) {
   const updateSchedule = useProjectWizardStore((state) => state.updateSchedule)
   const updateAddress = useProjectWizardStore((state) => state.updateAddress)
 
+  const [query, setQuery] = useState(client.name)
+  const [showResults, setShowResults] = useState(false)
+  const debouncedQuery = useDebouncedValue(query, 300)
+
   const [showAddress, setShowAddress] = useState(
     () => Object.values(address).some((value) => value.trim().length > 0),
   )
+
+  const { data } = useQuery({
+    queryKey: ['clients-picker', debouncedQuery],
+    queryFn: () => fetchClients(1, 5, debouncedQuery),
+    enabled: debouncedQuery.trim().length > 0,
+  })
 
   const zipDigits = address.zip.replace(/\D/g, '')
   const {
@@ -60,9 +71,24 @@ export function StepClient({ onValidityChange }: StepClientProps) {
     onValidityChange(isValid)
   }, [isValid, onValidityChange])
 
+  function handleQueryChange(value: string) {
+    setQuery(value)
+    setShowResults(true)
+    // Free-typed name until (and unless) an existing client is picked below.
+    updateClient({ id: null, name: value })
+  }
+
+  function selectClient(id: string, name: string) {
+    setQuery(name)
+    setShowResults(false)
+    updateClient({ id, name })
+  }
+
   function updateAddressField(field: keyof AddressData, value: string) {
     updateAddress({ [field]: value })
   }
+
+  const results = data?.data ?? []
 
   return (
     <div className="space-y-8">
@@ -75,7 +101,33 @@ export function StepClient({ onValidityChange }: StepClientProps) {
         </p>
       </div>
 
-      <ClientPicker value={client} onChange={updateClient} />
+      <div className="relative">
+        <Input
+          label="Cliente"
+          icon="Search"
+          placeholder="Buscar ou digitar o nome do cliente"
+          value={query}
+          onChange={(event) => handleQueryChange(event.target.value)}
+          onFocus={() => setShowResults(true)}
+          onBlur={() => setTimeout(() => setShowResults(false), 150)}
+        />
+        {showResults && debouncedQuery.trim() && results.length > 0 && (
+          <ul className="absolute z-20 mt-1 w-full divide-y divide-(--th-border) rounded-lg border border-(--th-border) bg-(--th-bg-card) shadow-lg">
+            {results.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => selectClient(item.id, item.name)}
+                  className="flex w-full flex-col items-start px-3 py-2 text-left hover:bg-(--th-bg-elevated)"
+                >
+                  <span className="text-sm text-(--th-text)">{item.name}</span>
+                  <span className="text-xs text-(--th-text-muted)">{item.email}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <DatePicker

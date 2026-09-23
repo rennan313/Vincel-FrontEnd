@@ -10,7 +10,6 @@
     "main": "Principal",
     "dashboard": "Dashboard",
     "clients": "Clientes",
-    "proposals": "Propostas",
     "providers": "Prestadores",
     "projects": "Projetos",
     "agenda": "Agenda",
@@ -184,29 +183,6 @@
       "completed": "Concluído",
       "paused": "Pausado",
       "canceled": "Cancelado"
-    }
-  },
-  "proposals": {
-    "subtitle": "Acompanhe o andamento das propostas comerciais do seu escritório.",
-    "empty": "Nenhuma proposta encontrada.",
-    "searchPlaceholder": "Buscar por proposta ou cliente",
-    "new": "Nova proposta",
-    "allStatuses": "Todos os status",
-    "columns": {
-      "name": "Proposta",
-      "client": "Cliente",
-      "value": "Valor",
-      "status": "Status",
-      "validUntil": "Validade",
-      "createdAt": "Criada"
-    },
-    "status": {
-      "DRAFT": "Rascunho",
-      "SENT": "Enviada",
-      "NEGOTIATING": "Em negociação",
-      "ACCEPTED": "Aceita",
-      "REJECTED": "Recusada",
-      "EXPIRED": "Expirada"
     }
   },
   "agenda": {
