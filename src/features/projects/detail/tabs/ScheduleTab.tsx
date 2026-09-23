@@ -152,6 +152,13 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
     container.scrollLeft = TIMELINE_LEFT_COL_WIDTH + todayOffsetPx - container.clientWidth / 2
   }
 
+  // "Hoje" always switches to the day-level zoom too — see the matching
+  // comment on AgendaPage's handleTodayClick.
+  function handleTodayClick() {
+    setZoom('days')
+    scrollTimelineToToday()
+  }
+
   useEffect(() => {
     scrollTimelineToToday()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -385,7 +392,7 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
                   variant="outline"
                   size="sm"
                   icon="CalendarClock"
-                  onClick={scrollTimelineToToday}
+                  onClick={handleTodayClick}
                 >
                   {t('agenda.today')}
                 </Button>

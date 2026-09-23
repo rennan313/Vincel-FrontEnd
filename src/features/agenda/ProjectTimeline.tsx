@@ -226,7 +226,7 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
                 onClick={() => onSelectPhase?.(phase.key)}
                 title={title}
                 className={cn(
-                  'absolute top-1/2 flex h-5 -translate-y-1/2 items-center rounded-full px-2 text-[11px] font-medium whitespace-nowrap transition-colors',
+                  'absolute top-1/2 z-[1] flex h-5 -translate-y-1/2 items-center rounded-full px-2 text-[11px] font-medium whitespace-nowrap transition-colors',
                   statusClass,
                   selectable ? 'cursor-pointer hover:brightness-110' : 'cursor-default',
                 )}
@@ -333,7 +333,7 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
                               ? `${task.title} — ${task.estimatedHours}h`
                               : task.title
                           const barClass = cn(
-                            'absolute top-1/2 flex h-4 -translate-y-1/2 items-center justify-center rounded-full px-1.5 text-[10px] font-medium whitespace-nowrap text-white transition-opacity',
+                            'absolute top-1/2 z-[1] flex h-4 -translate-y-1/2 items-center justify-center rounded-full px-1.5 text-[10px] font-medium whitespace-nowrap text-white transition-opacity',
                             task.done ? 'opacity-40' : 'opacity-90',
                             onEditTask && 'hover:opacity-100',
                           )
@@ -498,7 +498,7 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
                       <div
                         title={`${bar.name} — ${formatDate(bar.start)} a ${formatDate(bar.end)}`}
                         className={cn(
-                          'absolute top-1/2 flex h-5 -translate-y-1/2 items-center rounded-full px-2 text-[11px] font-medium whitespace-nowrap text-white opacity-90',
+                          'absolute top-1/2 z-[1] flex h-5 -translate-y-1/2 items-center rounded-full px-2 text-[11px] font-medium whitespace-nowrap text-white opacity-90',
                           STATUS_BAR_CLASS[bar.status],
                         )}
                         style={{ left, width }}
@@ -518,10 +518,14 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
 
           {/* Today marker — top/bottom (not a computed height) so it still
               spans the full column, however many etapa/task rows render
-              below it. */}
+              below it. z-0 (below the z-[1] phase/task/project bars above,
+              still below the sticky left column's z-10) so it runs behind
+              whichever bar it crosses instead of painting over its label —
+              only the "Hoje" tag stays fully visible, since that always
+              sits at the top of the column, clear of any bar. */}
           {todayOffset >= 0 && todayOffset <= timelineWidth && (
             <div
-              className="pointer-events-none absolute top-0 bottom-0 z-10 w-px bg-red-400"
+              className="pointer-events-none absolute top-0 bottom-0 z-0 w-px bg-red-400"
               style={{ left: LEFT_COL_WIDTH + todayOffset }}
             >
               <span className="absolute top-0 left-1 rounded bg-red-400 px-1 py-0.5 text-[10px] leading-none font-medium whitespace-nowrap text-white">
