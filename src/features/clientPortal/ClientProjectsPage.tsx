@@ -116,7 +116,7 @@ function ProjectCard({ project }: { project: ClientPortalProject }) {
         </div>
       )}
 
-      <div className="mt-4 border-t border-(--th-border) pt-3">
+      <div className="mt-4 flex flex-wrap gap-2 border-t border-(--th-border) pt-3">
         <Button
           type="button"
           variant="outline"
@@ -125,6 +125,15 @@ function ProjectCard({ project }: { project: ClientPortalProject }) {
           onClick={() => navigate(`/portal/projetos/${project.id}/briefing`)}
         >
           Preencher briefing
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          icon="Boxes"
+          onClick={() => navigate(`/portal/projetos/${project.id}/materiais`)}
+        >
+          Ver materiais
         </Button>
       </div>
     </Card>

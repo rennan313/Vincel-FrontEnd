@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { queryClient } from '@/lib/queryClient'
 import type { AuthUser } from '@/features/auth/authApi'
 
 interface AuthState {
@@ -22,7 +23,15 @@ export const useAuthStore = create<AuthState>()(
       login: (user, accessToken, refreshToken) =>
         set({ user, accessToken: accessToken ?? null, refreshToken: refreshToken ?? null }),
       setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
-      logout: () => set({ user: null, accessToken: null, refreshToken: null }),
+      // Clears every cached query too — same reasoning as
+      // clientAuthStore's logout: without this, switching accounts in the
+      // same tab (explicit logout, or a silent 401 one from apiClient)
+      // leaves the previous user's data sitting in react-query's cache
+      // until something forces a refetch.
+      logout: () => {
+        set({ user: null, accessToken: null, refreshToken: null })
+        queryClient.clear()
+      },
     }),
     {
       name: 'vincel-auth',

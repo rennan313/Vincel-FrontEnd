@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { queryClient } from '@/lib/queryClient'
 import type { ClientProfile } from '@/features/clientPortal/clientPortalApi'
 
 /** Separate from useAuthStore (equipe do escritório) on purpose — a client
@@ -19,7 +20,15 @@ export const useClientAuthStore = create<ClientAuthState>()(
       client: null,
       accessToken: null,
       login: (client, accessToken) => set({ client, accessToken }),
-      logout: () => set({ client: null, accessToken: null }),
+      // Clears every cached query too — without this, switching accounts
+      // in the same tab (explicit logout, or a silent 401 one from
+      // clientApiFetch) leaves the previous client's projects/materials/
+      // briefing sitting in react-query's cache until something forces a
+      // refetch, which can render as the wrong client's data for a moment.
+      logout: () => {
+        set({ client: null, accessToken: null })
+        queryClient.clear()
+      },
     }),
     {
       name: 'vincel-client-auth',

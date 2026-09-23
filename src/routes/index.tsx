@@ -11,6 +11,7 @@ import { ClientPortalLayout } from '@/features/clientPortal/ClientPortalLayout'
 import { ClientProjectsPage } from '@/features/clientPortal/ClientProjectsPage'
 import { ClientAccountPage } from '@/features/clientPortal/ClientAccountPage'
 import { ClientProjectBriefingPage } from '@/features/clientPortal/ClientProjectBriefingPage'
+import { ClientProjectMaterialsPage } from '@/features/clientPortal/ClientProjectMaterialsPage'
 import { ProjectBriefingPage } from '@/features/projectBriefing/ProjectBriefingPage'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
@@ -42,6 +43,7 @@ export const router = createBrowserRouter([
           { path: '/portal', element: <ClientProjectsPage /> },
           { path: '/portal/conta', element: <ClientAccountPage /> },
           { path: '/portal/projetos/:projectId/briefing', element: <ClientProjectBriefingPage /> },
+          { path: '/portal/projetos/:projectId/materiais', element: <ClientProjectMaterialsPage /> },
         ],
       },
       {
