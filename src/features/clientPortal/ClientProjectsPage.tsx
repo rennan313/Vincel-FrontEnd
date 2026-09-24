@@ -19,6 +19,10 @@ import { RequestProjectModal } from '@/features/clientPortal/RequestProjectModal
 
 const STATUS_LABEL: Record<ClientPortalProject['status'], string> = {
   in_progress: 'Em andamento',
+  // Segunda pessoa de propósito (diferente do rótulo interno "Aguardando
+  // revisão do cliente" em pt.json) — aqui é o próprio cliente lendo, e é
+  // ele quem precisa agir.
+  awaiting_client_review: 'Aguardando sua revisão',
   completed: 'Concluído',
   paused: 'Pausado',
   canceled: 'Cancelado',

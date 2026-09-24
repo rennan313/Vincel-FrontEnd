@@ -32,6 +32,7 @@ const INDENT_STEP = 14
 
 const STATUS_BAR_CLASS: Record<ProjectTimelineBar['status'], string> = {
   in_progress: 'bg-(--th-accent)',
+  awaiting_client_review: 'bg-slate-400',
   completed: 'bg-green-500',
   paused: 'bg-amber-500',
   canceled: 'bg-red-500',

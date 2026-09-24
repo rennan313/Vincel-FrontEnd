@@ -31,11 +31,18 @@ import { formatMonthLabel } from '@/features/dashboard/dashboardDerivations'
 // flips with the theme automatically.
 const STATUS_COLOR: Record<ProjectStatus, string> = {
   in_progress: 'var(--th-accent)',
+  awaiting_client_review: 'var(--color-slate-400)',
   paused: 'var(--color-amber-500)',
   completed: 'var(--color-green-500)',
   canceled: 'var(--color-red-500)',
 }
-const STATUS_ORDER: ProjectStatus[] = ['in_progress', 'paused', 'completed', 'canceled']
+const STATUS_ORDER: ProjectStatus[] = [
+  'in_progress',
+  'awaiting_client_review',
+  'paused',
+  'completed',
+  'canceled',
+]
 
 // Nominal categorical (type identity, not state) — the app's own validated
 // chart-N ramp, fixed slot order (never reassigned/cycled). "Outros" is a

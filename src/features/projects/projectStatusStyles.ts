@@ -3,6 +3,7 @@ import type { ProjectStatus } from '@/features/projects/projectsApi'
 
 export const PROJECT_STATUS_VARIANT: Record<ProjectStatus, BadgeVariant> = {
   in_progress: 'info',
+  awaiting_client_review: 'neutral',
   completed: 'success',
   paused: 'warning',
   canceled: 'danger',

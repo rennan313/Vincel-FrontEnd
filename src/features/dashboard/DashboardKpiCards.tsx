@@ -50,6 +50,9 @@ export function DashboardKpiCards() {
     summary
   const inProgress = projectsByStatus.in_progress
   const otherStatusCaption = [
+    projectsByStatus.awaiting_client_review > 0
+      ? `${projectsByStatus.awaiting_client_review} aguardando revisão`
+      : null,
     projectsByStatus.paused > 0 ? `${projectsByStatus.paused} pausados` : null,
     projectsByStatus.completed > 0 ? `${projectsByStatus.completed} concluídos` : null,
   ]
