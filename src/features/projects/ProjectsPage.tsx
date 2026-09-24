@@ -7,9 +7,9 @@ import { toast } from 'sonner'
 import { PageTitle } from '@/components/ui/PageTitle'
 import { PageSubtitle } from '@/components/ui/PageSubtitle'
 import { Table, type TableColumn } from '@/components/ui/Table'
-import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { StatusBadgeMenu } from '@/components/ui/StatusBadgeMenu'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { ApiError } from '@/lib/apiClient'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
@@ -21,7 +21,7 @@ import {
   type ProjectsPageResult,
   type ProjectStatus,
 } from '@/features/projects/projectsApi'
-import { PROJECT_STATUS_VARIANT } from '@/features/projects/projectStatusStyles'
+import { PROJECT_STATUS_ORDER, PROJECT_STATUS_VARIANT } from '@/features/projects/projectStatusStyles'
 import { ProjectsPipelineBoard } from '@/features/projects/ProjectsPipelineBoard'
 
 const PAGE_SIZE = 8
@@ -30,14 +30,7 @@ const PAGE_SIZE = 8
 // pede o teto permitido pra cobrir o board inteiro numa única página.
 const PIPELINE_PAGE_SIZE = 100
 
-const STATUS_OPTIONS = [
-  '',
-  'in_progress',
-  'awaiting_client_review',
-  'completed',
-  'paused',
-  'canceled',
-] as const
+const STATUS_OPTIONS = ['', ...PROJECT_STATUS_ORDER] as const
 const VIEW_OPTIONS = ['table', 'pipeline'] as const
 
 export function ProjectsPage() {
@@ -116,6 +109,10 @@ export function ProjectsPage() {
     },
   })
 
+  const statusLabels = Object.fromEntries(
+    PROJECT_STATUS_ORDER.map((option) => [option, t(`projects.status.${option}`)]),
+  ) as Record<ProjectStatus, string>
+
   const columns: TableColumn<Project>[] = [
     {
       key: 'name',
@@ -143,9 +140,13 @@ export function ProjectsPage() {
       key: 'status',
       header: t('projects.columns.status'),
       render: (project) => (
-        <Badge variant={PROJECT_STATUS_VARIANT[project.status]}>
-          {t(`projects.status.${project.status}`)}
-        </Badge>
+        <StatusBadgeMenu
+          status={project.status}
+          options={PROJECT_STATUS_ORDER}
+          labels={statusLabels}
+          variants={PROJECT_STATUS_VARIANT}
+          onChange={(nextStatus) => statusMutation.mutate({ id: project.id, nextStatus })}
+        />
       ),
     },
     {

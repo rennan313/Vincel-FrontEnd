@@ -232,4 +232,19 @@ describe('ProjectsPage', () => {
       expect(badges.length).toBeGreaterThan(0)
     })
   })
+
+  it('changes a project status from the table view via the status badge menu', async () => {
+    renderProjectsPage()
+    await waitFor(() =>
+      expect(screen.getByText('Escritório Souza & Cia')).toBeInTheDocument(),
+    )
+
+    // MOCK_PROJECTS[1] ("Escritório Souza & Cia") — segunda linha da tabela.
+    fireEvent.click(screen.getAllByLabelText('Alterar status')[1])
+    fireEvent.click(await screen.findByRole('button', { name: 'Pausado' }))
+
+    await waitFor(() =>
+      expect(updateProject).toHaveBeenCalledWith('2', { status: 'paused' }),
+    )
+  })
 })

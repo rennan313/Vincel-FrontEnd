@@ -8,3 +8,13 @@ export const PROJECT_STATUS_VARIANT: Record<ProjectStatus, BadgeVariant> = {
   paused: 'warning',
   canceled: 'danger',
 }
+
+// Ordem canônica — usada tanto pro filtro/dropdown de status quanto pelas
+// colunas do pipeline, pra não divergir entre os dois.
+export const PROJECT_STATUS_ORDER: ProjectStatus[] = [
+  'in_progress',
+  'awaiting_client_review',
+  'completed',
+  'paused',
+  'canceled',
+]

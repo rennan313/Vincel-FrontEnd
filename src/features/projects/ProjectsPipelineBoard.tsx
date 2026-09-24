@@ -6,17 +6,11 @@ import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { cn } from '@/lib/cn'
 import type { Project, ProjectStatus } from '@/features/projects/projectsApi'
-import { PROJECT_STATUS_VARIANT } from '@/features/projects/projectStatusStyles'
+import { PROJECT_STATUS_ORDER, PROJECT_STATUS_VARIANT } from '@/features/projects/projectStatusStyles'
 
-// Mesma ordem de STATUS_OPTIONS/PROJECT_STATUS_VARIANT — uma coluna por
-// status, da esquerda (início do fluxo) pra direita.
-const COLUMN_ORDER: ProjectStatus[] = [
-  'in_progress',
-  'awaiting_client_review',
-  'completed',
-  'paused',
-  'canceled',
-]
+// Uma coluna por status, da esquerda (início do fluxo) pra direita — mesma
+// ordem canônica que o filtro da tabela usa (PROJECT_STATUS_ORDER).
+const COLUMN_ORDER = PROJECT_STATUS_ORDER
 
 interface ProjectsPipelineBoardProps {
   data: Project[]
