@@ -25,9 +25,10 @@ import { PROJECT_STATUS_VARIANT } from '@/features/projects/projectStatusStyles'
 import { ProjectsPipelineBoard } from '@/features/projects/ProjectsPipelineBoard'
 
 const PAGE_SIZE = 8
-// pageSize alto o bastante pra cobrir o board inteiro numa única página —
-// o pipeline agrupa por status no front, não pagina por coluna.
-const PIPELINE_PAGE_SIZE = 500
+// O maior pageSize que a API aceita (ListProjectsDto.pageSize tem @Max(100))
+// — o pipeline agrupa por status no front, não pagina por coluna, então
+// pede o teto permitido pra cobrir o board inteiro numa única página.
+const PIPELINE_PAGE_SIZE = 100
 
 const STATUS_OPTIONS = [
   '',
@@ -63,13 +64,24 @@ export function ProjectsPage() {
   // No pipeline, o board mostra todo mundo agrupado por status (sem filtro
   // de status nem paginação de tabela) — só a busca continua valendo.
   const queryKey = ['projects', page, search, status, isPipeline] as const
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey,
     queryFn: () =>
       isPipeline
         ? fetchProjects(1, PIPELINE_PAGE_SIZE, search)
         : fetchProjects(page, PAGE_SIZE, search, status ? (status as ProjectStatus) : undefined),
   })
+
+  // Sem isso, uma falha na busca (ex.: parâmetro inválido) rende as duas
+  // visões como se simplesmente não houvesse projeto nenhum, indistinguível
+  // de "não há projetos" — já nos confundiu uma vez.
+  useEffect(() => {
+    if (isError) {
+      toast.error(
+        error instanceof ApiError ? error.message : 'Não foi possível carregar os projetos.',
+      )
+    }
+  }, [isError, error])
 
   // Arrastar um card pra outra coluna do pipeline muda o status na hora
   // (otimista) — sem isso, o card voltaria pra coluna antiga até o refetch

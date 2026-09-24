@@ -4,7 +4,7 @@ import { NuqsAdapter } from 'nuqs/adapters/react-router/v8'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ProjectsPage } from '@/features/projects/ProjectsPage'
-import { updateProject, type Project } from '@/features/projects/projectsApi'
+import { fetchProjects, updateProject, type Project } from '@/features/projects/projectsApi'
 import '@/lib/i18n'
 
 const MOCK_PROJECTS: Project[] = [
@@ -183,6 +183,24 @@ describe('ProjectsPage', () => {
     })
     expect(screen.getAllByText('Em andamento').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Cancelado').length).toBeGreaterThan(0)
+  })
+
+  it('never asks the API for a pipeline page bigger than its pageSize limit', async () => {
+    // Regressão: o pipeline já pediu pageSize=500, mas a API rejeita
+    // qualquer valor acima de 100 (ListProjectsDto) — a busca falhava
+    // silenciosamente e o board aparecia vazio, sem nenhum aviso.
+    renderProjectsPage()
+    await waitFor(() =>
+      expect(screen.getByText('Residência Alto da Serra')).toBeInTheDocument(),
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Visualizar em pipeline' }))
+
+    await waitFor(() =>
+      expect(screen.getAllByText('Residência Alto da Serra').length).toBeGreaterThan(0),
+    )
+    const pageSizesRequested = vi.mocked(fetchProjects).mock.calls.map(([, pageSize]) => pageSize)
+    expect(Math.max(...pageSizesRequested)).toBeLessThanOrEqual(100)
   })
 
   it('drags a card to another column to change its status', async () => {
