@@ -171,6 +171,13 @@
       "action": "Voltar para projetos"
     },
     "allStatuses": "Todos os status",
+    "view": {
+      "table": "Visualizar em tabela",
+      "pipeline": "Visualizar em pipeline"
+    },
+    "pipeline": {
+      "empty": "Nenhum projeto neste status."
+    },
     "columns": {
       "name": "Projeto",
       "client": "Cliente",
@@ -180,6 +187,7 @@
     },
     "status": {
       "in_progress": "Em andamento",
+      "awaiting_client_review": "Aguardando revisão do cliente",
       "completed": "Concluído",
       "paused": "Pausado",
       "canceled": "Cancelado"

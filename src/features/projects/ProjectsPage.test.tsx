@@ -1,10 +1,10 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { NuqsAdapter } from 'nuqs/adapters/react-router/v8'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ProjectsPage } from '@/features/projects/ProjectsPage'
-import type { Project } from '@/features/projects/projectsApi'
+import { fetchProjects, updateProject, type Project } from '@/features/projects/projectsApi'
 import '@/lib/i18n'
 
 const MOCK_PROJECTS: Project[] = [
@@ -43,8 +43,27 @@ vi.mock('@/features/projects/projectsApi', async () => {
         }
       },
     ),
+    // Muta o item de verdade (não só o valor de retorno) — do contrário o
+    // invalidateQueries que roda logo depois refaria o fetch a partir dos
+    // dados antigos e desfaria a atualização otimista.
+    updateProject: vi.fn(async (id: string, payload: Partial<Project>) => {
+      const project = MOCK_PROJECTS.find((item) => item.id === id)!
+      Object.assign(project, payload)
+      return project
+    }),
   }
 })
+
+// jsdom não implementa DataTransfer — um objeto mínimo com setData/getData
+// já basta pro fluxo de drag-and-drop do pipeline.
+function createDataTransfer() {
+  const store = new Map<string, string>()
+  return {
+    setData: (format: string, value: string) => store.set(format, value),
+    getData: (format: string) => store.get(format) ?? '',
+    effectAllowed: '',
+  }
+}
 
 // See ClientsPage.test.tsx — nuqs's react-router adapter reads/writes the
 // real jsdom URL, which leaks across tests unless reset.
@@ -145,5 +164,87 @@ describe('ProjectsPage', () => {
         screen.queryByText('Residência Alto da Serra'),
       ).not.toBeInTheDocument()
     })
+  })
+
+  it('switches to the pipeline view and groups cards by status', async () => {
+    renderProjectsPage()
+    await waitFor(() =>
+      expect(screen.getByText('Residência Alto da Serra')).toBeInTheDocument(),
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Visualizar em pipeline' }))
+
+    await waitFor(() => {
+      // A tabela some (junto com o filtro de status, que não faz sentido
+      // no pipeline — ele já agrupa por status) e os cards aparecem, um por
+      // coluna de status.
+      expect(screen.queryByLabelText('Status')).not.toBeInTheDocument()
+      expect(screen.getAllByText('Residência Alto da Serra').length).toBeGreaterThan(0)
+    })
+    expect(screen.getAllByText('Em andamento').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Cancelado').length).toBeGreaterThan(0)
+  })
+
+  it('never asks the API for a pipeline page bigger than its pageSize limit', async () => {
+    // Regressão: o pipeline já pediu pageSize=500, mas a API rejeita
+    // qualquer valor acima de 100 (ListProjectsDto) — a busca falhava
+    // silenciosamente e o board aparecia vazio, sem nenhum aviso.
+    renderProjectsPage()
+    await waitFor(() =>
+      expect(screen.getByText('Residência Alto da Serra')).toBeInTheDocument(),
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Visualizar em pipeline' }))
+
+    await waitFor(() =>
+      expect(screen.getAllByText('Residência Alto da Serra').length).toBeGreaterThan(0),
+    )
+    const pageSizesRequested = vi.mocked(fetchProjects).mock.calls.map(([, pageSize]) => pageSize)
+    expect(Math.max(...pageSizesRequested)).toBeLessThanOrEqual(100)
+  })
+
+  it('drags a card to another column to change its status', async () => {
+    renderProjectsPage()
+    await waitFor(() =>
+      expect(screen.getByText('Residência Alto da Serra')).toBeInTheDocument(),
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Visualizar em pipeline' }))
+    await waitFor(() =>
+      expect(screen.getAllByText('Residência Alto da Serra').length).toBeGreaterThan(0),
+    )
+
+    const card = screen.getByRole('link', { name: /Residência Alto da Serra/ })
+    const targetColumn = screen.getByTestId('pipeline-column-canceled')
+    const dataTransfer = createDataTransfer()
+
+    fireEvent.dragStart(card, { dataTransfer })
+    fireEvent.dragOver(targetColumn, { dataTransfer })
+    fireEvent.drop(targetColumn, { dataTransfer })
+
+    await waitFor(() =>
+      expect(updateProject).toHaveBeenCalledWith('1', { status: 'canceled' }),
+    )
+    // Update otimista: o card já reflete o novo status antes mesmo do
+    // refetch, sem precisar esperar a mutation "de verdade" resolver.
+    await waitFor(() => {
+      const badges = within(targetColumn).getAllByText('Residência Alto da Serra')
+      expect(badges.length).toBeGreaterThan(0)
+    })
+  })
+
+  it('changes a project status from the table view via the status badge menu', async () => {
+    renderProjectsPage()
+    await waitFor(() =>
+      expect(screen.getByText('Escritório Souza & Cia')).toBeInTheDocument(),
+    )
+
+    // MOCK_PROJECTS[1] ("Escritório Souza & Cia") — segunda linha da tabela.
+    fireEvent.click(screen.getAllByLabelText('Alterar status')[1])
+    fireEvent.click(await screen.findByRole('button', { name: 'Pausado' }))
+
+    await waitFor(() =>
+      expect(updateProject).toHaveBeenCalledWith('2', { status: 'paused' }),
+    )
   })
 })

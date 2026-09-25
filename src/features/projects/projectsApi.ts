@@ -9,7 +9,12 @@ import type {
   PlanningPhase,
 } from '@/features/projects/create/types'
 
-export type ProjectStatus = 'in_progress' | 'completed' | 'paused' | 'canceled'
+export type ProjectStatus =
+  | 'in_progress'
+  | 'awaiting_client_review'
+  | 'completed'
+  | 'paused'
+  | 'canceled'
 
 export interface Project {
   id: string
