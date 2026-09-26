@@ -13,6 +13,7 @@
     "providers": "Prestadores",
     "projects": "Projetos",
     "agenda": "Agenda",
+    "financial": "Financeiro",
     "users": "Usuários",
     "subscription": "Assinatura"
   },
@@ -220,6 +221,52 @@
       "more": "+{{count}} mais",
       "newTask": "Nova tarefa",
       "newTaskOn": "Agendar tarefa em {{date}}"
+    }
+  },
+  "financial": {
+    "subtitle": "Contas a receber (honorários) e a pagar (despesas) de todos os projetos.",
+    "empty": "Nada encontrado.",
+    "searchPlaceholder": "Buscar por projeto, cliente ou descrição",
+    "noDueDate": "Sem vencimento",
+    "markPaid": "Marcar como pago",
+    "markPending": "Marcar como pendente",
+    "companyExpense": "Despesa da empresa",
+    "recurringHint": "Repete mensalmente",
+    "newCompanyExpense": "Nova despesa",
+    "removeAction": "Remover {{name}}",
+    "removeTitle": "Excluir despesa",
+    "removeMessage": "Remover \"{{name}}\"? Essa ação não pode ser desfeita.",
+    "tabs": {
+      "receivables": "A Receber",
+      "payables": "A Pagar"
+    },
+    "columns": {
+      "project": "Projeto",
+      "description": "Descrição",
+      "amount": "Valor",
+      "dueDate": "Vencimento",
+      "status": "Status"
+    },
+    "status": {
+      "PENDING": "Pendente",
+      "OVERDUE": "Atrasado",
+      "PAID": "Pago"
+    },
+    "summary": {
+      "receivablePending": "A receber (pendente)",
+      "receivableOverdue": "A receber atrasado",
+      "payablePending": "A pagar (pendente)",
+      "payableOverdue": "A pagar atrasado"
+    },
+    "form": {
+      "name": "Nome",
+      "namePlaceholder": "Aluguel do escritório",
+      "amount": "Valor",
+      "dueDate": "Vencimento",
+      "dueDateHint": "Opcional",
+      "recurring": "Repete todo mês",
+      "cancel": "Cancelar",
+      "save": "Salvar"
     }
   },
   "table": {
