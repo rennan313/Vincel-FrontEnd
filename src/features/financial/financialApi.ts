@@ -98,10 +98,14 @@ export function fetchPayables(
   pageSize: number,
   search = '',
   status?: PaymentStatus,
+  /** true = só despesas recorrentes ("Contas Fixas") — não existe filtro
+   * pro caso contrário, omitir já mostra tudo. */
+  recurring?: boolean,
 ): Promise<FinancialPageResult<PayableRow>> {
   const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
   if (search.trim()) params.set('search', search.trim())
   if (status) params.set('status', status)
+  if (recurring) params.set('recurring', 'true')
   return apiFetch<FinancialPageResult<PayableRow>>(`/financial/payables?${params.toString()}`)
 }
 

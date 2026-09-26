@@ -46,7 +46,7 @@ import type { PaymentMethod } from '@/features/projects/create/types'
 import { CashFlowTab } from '@/features/financial/CashFlowTab'
 
 const PAGE_SIZE = 10
-const TAB_OPTIONS = ['receivables', 'payables', 'cashflow'] as const
+const TAB_OPTIONS = ['receivables', 'payables', 'bills', 'cashflow'] as const
 type Tab = (typeof TAB_OPTIONS)[number]
 
 // Uma única forma de linha pras duas abas (parcela de honorário / despesa
@@ -134,10 +134,14 @@ export function FinancialPage() {
     enabled: authorized && tab === 'receivables',
   })
 
+  // "Contas Fixas" é a mesma fonte de A Pagar, só com o filtro
+  // recurring=true — mesma query key/shape, então reaproveita toda a
+  // lógica de rows/columns abaixo sem precisar de um componente à parte.
+  const isPayablesLike = tab === 'payables' || tab === 'bills'
   const payablesQuery = useQuery({
-    queryKey: ['financial-payables', page, search],
-    queryFn: () => fetchPayables(page, PAGE_SIZE, search),
-    enabled: authorized && tab === 'payables',
+    queryKey: ['financial-payables', page, search, tab === 'bills'],
+    queryFn: () => fetchPayables(page, PAGE_SIZE, search, undefined, tab === 'bills'),
+    enabled: authorized && isPayablesLike,
   })
 
   function invalidateAll() {
@@ -341,7 +345,7 @@ export function FinancialPage() {
     },
     // Só faz sentido pra despesa (categoria é um conceito de custo, não de
     // honorário) — omitida na aba A Receber.
-    ...(tab === 'payables'
+    ...(isPayablesLike
       ? [
           {
             key: 'category',
@@ -463,8 +467,19 @@ export function FinancialPage() {
           <PageTitle>{t('nav.financial')}</PageTitle>
           <PageSubtitle>{t('financial.subtitle')}</PageSubtitle>
         </div>
-        {tab === 'payables' && (
-          <Button type="button" variant="primary" icon="Plus" onClick={() => setNewExpenseOpen(true)}>
+        {isPayablesLike && (
+          <Button
+            type="button"
+            variant="primary"
+            icon="Plus"
+            onClick={() => {
+              // Abrindo a partir de Contas Fixas, a despesa já nasce
+              // recorrente — o usuário só está ali pra cadastrar exatamente
+              // esse tipo de custo.
+              setNewExpense({ ...EMPTY_NEW_EXPENSE, recurring: tab === 'bills' })
+              setNewExpenseOpen(true)
+            }}
+          >
             {t('financial.newCompanyExpense')}
           </Button>
         )}
@@ -532,7 +547,7 @@ export function FinancialPage() {
             getRowKey={(row) => row.key}
             loading={activeQuery.isLoading}
             skeletonRows={PAGE_SIZE}
-            emptyMessage={t('financial.empty')}
+            emptyMessage={tab === 'bills' ? t('financial.billsEmpty') : t('financial.empty')}
             page={page}
             pageSize={PAGE_SIZE}
             total={activeQuery.data?.total ?? 0}

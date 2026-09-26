@@ -226,6 +226,7 @@
   "financial": {
     "subtitle": "Contas a receber (honorários) e a pagar (despesas) de todos os projetos.",
     "empty": "Nada encontrado.",
+    "billsEmpty": "Nenhuma conta fixa cadastrada ainda.",
     "searchPlaceholder": "Buscar por projeto, cliente ou descrição",
     "noDueDate": "Sem vencimento",
     "markPaid": "Marcar como pago",
@@ -239,6 +240,7 @@
     "tabs": {
       "receivables": "A Receber",
       "payables": "A Pagar",
+      "bills": "Contas Fixas",
       "cashflow": "Fluxo de Caixa"
     },
     "columns": {

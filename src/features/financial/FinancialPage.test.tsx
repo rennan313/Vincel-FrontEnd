@@ -16,6 +16,7 @@ const {
   updateInstallmentMock,
   updateCompanyExpenseMock,
   createCompanyExpenseMock,
+  fetchPayablesMock,
 } = vi.hoisted(() => ({
   MOCK_RECEIVABLES: [
     {
@@ -82,7 +83,15 @@ const {
   updateInstallmentMock: vi.fn().mockResolvedValue({}),
   updateCompanyExpenseMock: vi.fn().mockResolvedValue({}),
   createCompanyExpenseMock: vi.fn().mockResolvedValue({}),
+  fetchPayablesMock: vi.fn(),
 }))
+
+fetchPayablesMock.mockResolvedValue({
+  data: MOCK_PAYABLES,
+  total: MOCK_PAYABLES.length,
+  page: 1,
+  pageSize: 10,
+})
 
 vi.mock('@/features/financial/financialApi', async () => {
   const actual = await vi.importActual('@/features/financial/financialApi')
@@ -100,12 +109,7 @@ vi.mock('@/features/financial/financialApi', async () => {
       page: 1,
       pageSize: 10,
     }),
-    fetchPayables: vi.fn().mockResolvedValue({
-      data: MOCK_PAYABLES,
-      total: MOCK_PAYABLES.length,
-      page: 1,
-      pageSize: 10,
-    }),
+    fetchPayables: fetchPayablesMock,
     fetchCashFlow: vi.fn().mockResolvedValue({
       months: [{ month: '2026-09', receivables: 5000, payables: 300 }],
       unscheduledReceivables: 0,
@@ -233,6 +237,29 @@ describe('FinancialPage', () => {
       screen.queryByPlaceholderText('Buscar por projeto, cliente ou descrição'),
     ).not.toBeInTheDocument()
     expect(screen.queryByText('Parcela 1')).not.toBeInTheDocument()
+  })
+
+  it('switches to the Contas Fixas tab and requests only recurring payables', async () => {
+    loginAs('ADMIN')
+    renderFinancialPage()
+    await waitFor(() => expect(screen.getByText('Parcela 1')).toBeInTheDocument())
+
+    fetchPayablesMock.mockClear()
+    fireEvent.click(screen.getByRole('button', { name: 'Contas Fixas' }))
+
+    await waitFor(() =>
+      expect(fetchPayablesMock).toHaveBeenCalledWith(1, 10, '', undefined, true),
+    )
+  })
+
+  it('pre-checks "Repete todo mês" when creating a new expense from Contas Fixas', async () => {
+    loginAs('ADMIN')
+    renderFinancialPage()
+    fireEvent.click(await screen.findByRole('button', { name: 'Contas Fixas' }))
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Nova despesa' }))
+
+    expect(screen.getByRole('checkbox')).toBeChecked()
   })
 
   it('marks a company expense as paid via updateCompanyExpense, not updateProjectExpense', async () => {
