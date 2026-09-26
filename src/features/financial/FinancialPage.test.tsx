@@ -106,6 +106,11 @@ vi.mock('@/features/financial/financialApi', async () => {
       page: 1,
       pageSize: 10,
     }),
+    fetchCashFlow: vi.fn().mockResolvedValue({
+      months: [{ month: '2026-09', receivables: 5000, payables: 300 }],
+      unscheduledReceivables: 0,
+      unscheduledPayables: 0,
+    }),
     updateInstallment: updateInstallmentMock,
   }
 })
@@ -214,6 +219,20 @@ describe('FinancialPage', () => {
     // Categoria de cada despesa (uma de projeto, uma da empresa).
     expect(screen.getByText('Impostos e taxas')).toBeInTheDocument()
     expect(screen.getByText('Aluguel')).toBeInTheDocument()
+  })
+
+  it('switches to the Fluxo de Caixa tab, hiding the search/table of the other tabs', async () => {
+    loginAs('ADMIN')
+    renderFinancialPage()
+    await waitFor(() => expect(screen.getByText('Parcela 1')).toBeInTheDocument())
+
+    fireEvent.click(screen.getByRole('button', { name: 'Fluxo de Caixa' }))
+
+    await waitFor(() => expect(screen.getByText('Set')).toBeInTheDocument())
+    expect(
+      screen.queryByPlaceholderText('Buscar por projeto, cliente ou descrição'),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText('Parcela 1')).not.toBeInTheDocument()
   })
 
   it('marks a company expense as paid via updateCompanyExpense, not updateProjectExpense', async () => {

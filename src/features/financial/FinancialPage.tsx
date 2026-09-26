@@ -43,9 +43,10 @@ import {
 } from '@/features/financial/expenseCategory'
 import { PAYMENT_METHOD_LABEL } from '@/features/projects/create/reviewFormatters'
 import type { PaymentMethod } from '@/features/projects/create/types'
+import { CashFlowTab } from '@/features/financial/CashFlowTab'
 
 const PAGE_SIZE = 10
-const TAB_OPTIONS = ['receivables', 'payables'] as const
+const TAB_OPTIONS = ['receivables', 'payables', 'cashflow'] as const
 type Tab = (typeof TAB_OPTIONS)[number]
 
 // Uma única forma de linha pras duas abas (parcela de honorário / despesa
@@ -508,29 +509,37 @@ export function FinancialPage() {
         />
       </div>
 
-      <div className="mt-4 mb-6">
-        <Input
-          icon="Search"
-          placeholder={t('financial.searchPlaceholder')}
-          aria-label={t('financial.searchPlaceholder')}
-          value={searchInput}
-          onChange={(event) => setSearchInput(event.target.value)}
-          className="w-96"
-        />
-      </div>
+      {tab === 'cashflow' ? (
+        <div className="mt-4">
+          <CashFlowTab />
+        </div>
+      ) : (
+        <>
+          <div className="mt-4 mb-6">
+            <Input
+              icon="Search"
+              placeholder={t('financial.searchPlaceholder')}
+              aria-label={t('financial.searchPlaceholder')}
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+              className="w-96"
+            />
+          </div>
 
-      <Table
-        columns={columns}
-        data={rows}
-        getRowKey={(row) => row.key}
-        loading={activeQuery.isLoading}
-        skeletonRows={PAGE_SIZE}
-        emptyMessage={t('financial.empty')}
-        page={page}
-        pageSize={PAGE_SIZE}
-        total={activeQuery.data?.total ?? 0}
-        onPageChange={(nextPage) => setQuery({ page: nextPage })}
-      />
+          <Table
+            columns={columns}
+            data={rows}
+            getRowKey={(row) => row.key}
+            loading={activeQuery.isLoading}
+            skeletonRows={PAGE_SIZE}
+            emptyMessage={t('financial.empty')}
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={activeQuery.data?.total ?? 0}
+            onPageChange={(nextPage) => setQuery({ page: nextPage })}
+          />
+        </>
+      )}
 
       <Modal
         open={newExpenseOpen}

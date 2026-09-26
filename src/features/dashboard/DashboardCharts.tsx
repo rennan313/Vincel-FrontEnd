@@ -12,9 +12,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import type { TooltipContentProps } from 'recharts'
-import { Card } from '@/components/ui/Card'
-import { Skeleton } from '@/components/ui/Skeleton'
+import { ChartCard, ChartCardSkeleton, ChartEmptyState, ChartTooltip } from '@/components/ui/Chart'
 import { formatBRLAmount } from '@/lib/masks'
 import type { ProjectStatus } from '@/features/projects/projectsApi'
 import {
@@ -58,53 +56,6 @@ const TYPE_COLORS = [
 ]
 const OTHER_TYPE_COLOR = 'var(--color-slate-400)'
 
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <Card className="p-5">
-      <p className="text-sm font-medium text-(--th-text)">{title}</p>
-      <div className="mt-4">{children}</div>
-    </Card>
-  )
-}
-
-function ChartCardSkeleton() {
-  return (
-    <Card className="p-5">
-      <Skeleton className="h-5 w-40" />
-      <Skeleton className="mt-6 h-52 w-full rounded-lg" />
-    </Card>
-  )
-}
-
-interface ChartTooltipProps extends Partial<TooltipContentProps<number, string>> {
-  /** Formats the raw value (e.g. BRL) — defaults to showing it as-is. */
-  valueFormatter?: (value: number) => string
-}
-
-/** Small tooltip matching the app's card chrome — value leads (bold,
- * primary text), category/series name follows (muted), never the raw
- * series color on the text itself. */
-function ChartTooltip({ active, payload, valueFormatter }: ChartTooltipProps) {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="rounded-lg border border-(--th-border) bg-(--th-bg-card) px-3 py-2 shadow-lg">
-      {payload.map((entry) => (
-        <div key={entry.name} className="flex items-center gap-2 text-sm">
-          <span
-            aria-hidden="true"
-            className="size-2 shrink-0 rounded-full"
-            style={{ backgroundColor: entry.color }}
-          />
-          <span className="font-semibold text-(--th-text)">
-            {valueFormatter ? valueFormatter(Number(entry.value)) : entry.value}
-          </span>
-          <span className="text-(--th-text-muted)">{entry.name}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 interface LegendRowProps {
   label: string
   value: string
@@ -127,13 +78,6 @@ function LegendRow({ label, value, color }: LegendRowProps) {
   )
 }
 
-function EmptyDonut() {
-  return (
-    <p className="flex h-52 items-center justify-center text-center text-sm text-(--th-text-muted)">
-      Nenhum projeto cadastrado ainda.
-    </p>
-  )
-}
 
 function StatusDonut() {
   const { t } = useTranslation()
@@ -155,7 +99,7 @@ function StatusDonut() {
   return (
     <ChartCard title="Projetos por status">
       {total === 0 ? (
-        <EmptyDonut />
+        <ChartEmptyState message="Nenhum projeto cadastrado ainda." />
       ) : (
         <div className="flex flex-col items-center gap-4 sm:flex-row">
           <div className="size-[180px] shrink-0">
@@ -214,7 +158,7 @@ function TypeDonut() {
   return (
     <ChartCard title="Projetos por tipo">
       {total === 0 ? (
-        <EmptyDonut />
+        <ChartEmptyState message="Nenhum projeto cadastrado ainda." />
       ) : (
         <div className="flex flex-col items-center gap-4 sm:flex-row">
           <div className="size-[180px] shrink-0">
@@ -284,7 +228,7 @@ function MonthlyBarChart<T extends { month: string }>({
   return (
     <ChartCard title={title}>
       {!hasData ? (
-        <EmptyDonut />
+        <ChartEmptyState message="Nenhum projeto cadastrado ainda." />
       ) : (
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={chartData} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>

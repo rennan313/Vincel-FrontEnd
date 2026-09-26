@@ -238,7 +238,8 @@
     "removeMessage": "Remover \"{{name}}\"? Essa ação não pode ser desfeita.",
     "tabs": {
       "receivables": "A Receber",
-      "payables": "A Pagar"
+      "payables": "A Pagar",
+      "cashflow": "Fluxo de Caixa"
     },
     "columns": {
       "project": "Projeto",
@@ -271,6 +272,22 @@
       "recurring": "Repete todo mês",
       "cancel": "Cancelar",
       "save": "Salvar"
+    },
+    "cashFlow": {
+      "chartTitle": "Entradas × saídas por mês",
+      "tableTitle": "Projeção mensal",
+      "balanceHint": "O saldo acumulado é relativo a partir de hoje (entradas − saídas previstas) — o sistema não modela um saldo bancário inicial.",
+      "receivables": "Entradas",
+      "payables": "Saídas",
+      "columns": {
+        "month": "Mês",
+        "receivables": "Entradas",
+        "payables": "Saídas",
+        "net": "Saldo do mês",
+        "cumulative": "Saldo acumulado"
+      },
+      "unscheduledReceivablesNote": "{{amount}} em honorários pendentes sem vencimento definido não entram nesta projeção.",
+      "unscheduledPayablesNote": "{{amount}} em despesas pendentes sem vencimento definido não entram nesta projeção."
     }
   },
   "table": {

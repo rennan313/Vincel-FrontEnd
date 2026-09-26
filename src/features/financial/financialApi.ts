@@ -60,6 +60,23 @@ export interface FinancialPageResult<T> {
   pageSize: number
 }
 
+export interface CashFlowMonth {
+  /** 'YYYY-MM', mês atual primeiro. */
+  month: string
+  receivables: number
+  payables: number
+}
+
+export interface CashFlowResult {
+  /** 6 itens: mês atual + os 5 seguintes. */
+  months: CashFlowMonth[]
+  /** Honorários/despesas pendentes sem vencimento — não entram em `months`
+   * (não dá pra posicionar na linha do tempo), mas também não somem: são
+   * mostrados à parte. */
+  unscheduledReceivables: number
+  unscheduledPayables: number
+}
+
 export function fetchFinancialSummary(): Promise<FinancialSummary> {
   return apiFetch<FinancialSummary>('/financial/summary')
 }
@@ -86,6 +103,10 @@ export function fetchPayables(
   if (search.trim()) params.set('search', search.trim())
   if (status) params.set('status', status)
   return apiFetch<FinancialPageResult<PayableRow>>(`/financial/payables?${params.toString()}`)
+}
+
+export function fetchCashFlow(): Promise<CashFlowResult> {
+  return apiFetch<CashFlowResult>('/financial/cash-flow')
 }
 
 /** Both fields optional — send just `status` to mark paid/pending, just
