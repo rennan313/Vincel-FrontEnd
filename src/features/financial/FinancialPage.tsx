@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useQueryStates, parseAsInteger, parseAsString, parseAsStringLiteral } from 'nuqs'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Badge, type BadgeVariant } from '@/components/ui/Badge'
+import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -35,26 +35,11 @@ import {
   updateInstallment,
   type PaymentStatus,
 } from '@/features/financial/financialApi'
+import { PAYMENT_STATUS_VARIANT, resolvePaymentDisplayStatus } from '@/features/financial/paymentStatus'
 
 const PAGE_SIZE = 10
 const TAB_OPTIONS = ['receivables', 'payables'] as const
 type Tab = (typeof TAB_OPTIONS)[number]
-
-type StatusDisplay = 'PENDING' | 'OVERDUE' | 'PAID'
-
-const STATUS_VARIANT: Record<StatusDisplay, BadgeVariant> = {
-  PENDING: 'neutral',
-  OVERDUE: 'warning',
-  PAID: 'success',
-}
-
-function resolveDisplayStatus(status: PaymentStatus, dueDate: string | null): StatusDisplay {
-  if (status === 'PAID') return 'PAID'
-  // "Atrasado" nunca é gravado — é sempre PENDING + vencimento no passado,
-  // calculado aqui na leitura (mesma regra do backend).
-  if (dueDate && dueDate < new Date().toISOString().slice(0, 10)) return 'OVERDUE'
-  return 'PENDING'
-}
 
 // Uma única forma de linha pras duas abas (parcela de honorário / despesa
 // de projeto / despesa da empresa) — todas mostram os mesmos campos
@@ -338,10 +323,10 @@ export function FinancialPage() {
       key: 'status',
       header: t('financial.columns.status'),
       render: (row) => {
-        const display = resolveDisplayStatus(row.status, row.dueDate)
+        const display = resolvePaymentDisplayStatus(row.status, row.dueDate)
         return (
           <div className="flex flex-col items-start gap-1.5">
-            <Badge variant={STATUS_VARIANT[display]}>{t(`financial.status.${display}`)}</Badge>
+            <Badge variant={PAYMENT_STATUS_VARIANT[display]}>{t(`financial.status.${display}`)}</Badge>
             <Button
               type="button"
               variant="link"

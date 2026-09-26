@@ -9,6 +9,13 @@ import { createEmptyDraft } from '@/features/projects/create/types'
 import type { Project } from '@/features/projects/projectsApi'
 import '@/lib/i18n'
 
+const updateInstallmentMock = vi.hoisted(() => vi.fn().mockResolvedValue({}))
+
+vi.mock('@/features/financial/financialApi', async () => {
+  const actual = await vi.importActual('@/features/financial/financialApi')
+  return { ...actual, updateInstallment: updateInstallmentMock }
+})
+
 // A realistic full API response — projectToDraft.ts no longer fabricates
 // anything, it just maps whatever the backend actually returns, so the
 // fixture needs the real shape (planejamento/financeiro) for the
@@ -35,8 +42,17 @@ const MOCK_PROJECTS: Project[] = [
     feeAmount: 20111,
     paymentMethod: 'installments',
     installments: [
-      { id: 'inst_1', label: 'Entrada', amount: 5027 },
-      { id: 'inst_2', label: 'Parcela 1', amount: 5027 },
+      // Full ISO datetime, like the API actually returns a DateTime field
+      // (same regression covered in FinancialPage.test.tsx — the DatePicker
+      // must not choke on this).
+      {
+        id: 'inst_1',
+        label: 'Entrada',
+        amount: 5027,
+        dueDate: '2026-03-01T00:00:00.000Z',
+        status: 'PENDING',
+      },
+      { id: 'inst_2', label: 'Parcela 1', amount: 5027, dueDate: null, status: 'PENDING' },
       { id: 'inst_3', label: 'Parcela 2', amount: 5027 },
       { id: 'inst_4', label: 'Parcela 3', amount: 5030 },
     ],
@@ -173,6 +189,29 @@ describe('ProjectDetailPage', () => {
     )
     expect(screen.getByText('Entrada')).toBeInTheDocument()
     expect(screen.getByText('Total: R$ 20.111,00')).toBeInTheDocument()
+    // Vencimento da parcela — a full-ISO dueDate renders as a plain date,
+    // not "Invalid Date" (same DatePicker-value regression as Financeiro).
+    expect(screen.getByText('01/03/2026')).toBeInTheDocument()
+    expect(screen.getAllByText('Pendente').length).toBeGreaterThan(0)
+  })
+
+  it('marks a project installment as paid via updateInstallment', async () => {
+    renderDetailPage('/projects/1')
+    await waitFor(() =>
+      expect(
+        screen.getByRole('heading', { name: 'Residência Alto da Serra' }),
+      ).toBeInTheDocument(),
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Financeiro' }))
+    await waitFor(() => expect(screen.getByText('Entrada')).toBeInTheDocument())
+
+    // "Entrada" (inst_1) é a primeira linha da tabela de Parcelas.
+    fireEvent.click(screen.getAllByRole('button', { name: 'Marcar como pago' })[0])
+
+    await waitFor(() =>
+      expect(updateInstallmentMock).toHaveBeenCalledWith('1', 'inst_1', { status: 'PAID' }),
+    )
   })
 
   it('navigates to the edit route when "Editar projeto" is clicked', async () => {

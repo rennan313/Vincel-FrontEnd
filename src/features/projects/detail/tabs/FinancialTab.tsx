@@ -1,7 +1,13 @@
 import { useParams } from 'react-router'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
+import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { DatePicker } from '@/components/ui/DatePicker'
 import { Table, type TableColumn } from '@/components/ui/Table'
+import { ApiError } from '@/lib/apiClient'
 import { InfoRow } from '@/features/projects/detail/ProjectInfoCard'
 import { formatBRLAmount } from '@/lib/masks'
 import { getInstallmentsTotal } from '@/features/projects/detail/projectDerivations'
@@ -10,6 +16,8 @@ import { fetchProjectProviders } from '@/features/projects/detail/projectProvide
 import { fetchProjectExpenses } from '@/features/projects/detail/projectExpensesApi'
 import { resolveProviderRoleLabels } from '@/features/projects/create/providerRoles'
 import { ProjectExpensesEditor } from '@/features/projects/detail/tabs/ProjectExpensesEditor'
+import { updateInstallment, type PaymentStatus } from '@/features/financial/financialApi'
+import { PAYMENT_STATUS_VARIANT, resolvePaymentDisplayStatus } from '@/features/financial/paymentStatus'
 import type { Installment, ProjectDraft } from '@/features/projects/create/types'
 
 const FEE_MODEL_LABEL = { per_sqm: 'Por m²', per_hour: 'Por hora' } as const
@@ -18,21 +26,12 @@ interface FinancialTabProps {
   draft: ProjectDraft
 }
 
-const columns: TableColumn<Installment>[] = [
-  {
-    key: 'label',
-    header: 'Descrição',
-    render: (installment) => (
-      <span className="font-medium text-(--th-text)">{installment.label}</span>
-    ),
-  },
-  {
-    key: 'amount',
-    header: 'Valor',
-    className: 'text-right',
-    render: (installment) => formatBRLAmount(installment.amount),
-  },
-]
+// yyyy-mm-dd — a API devolve DateTime como ISO completo (com hora), igual
+// todo outro campo de data do app; o DatePicker só aceita a parte da data
+// (mesmo padrão de FinancialPage.tsx/timelineMath.ts).
+function toDatePickerValue(dueDate: string | null | undefined): string | null {
+  return dueDate ? dueDate.slice(0, 10) : null
+}
 
 type CostGroup = { count: number; total: number; items: { name: string; amount: number }[] }
 
@@ -104,9 +103,95 @@ function groupByLabel<T>(
 }
 
 export function FinancialTab({ draft }: FinancialTabProps) {
+  const { t } = useTranslation()
   const { projectId } = useParams()
+  const queryClient = useQueryClient()
   const { financial } = draft
   const installmentsTotal = getInstallmentsTotal(draft)
+
+  const installmentMutation = useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string
+      payload: { status?: PaymentStatus; dueDate?: string | null }
+    }) => updateInstallment(projectId!, id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] })
+      // A Financeiro screen agrega parcelas de todos os projetos — mantém
+      // em sincronia se o usuário for lá em seguida.
+      queryClient.invalidateQueries({ queryKey: ['financial-summary'] })
+      queryClient.invalidateQueries({ queryKey: ['financial-receivables'] })
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof ApiError ? error.message : 'Não foi possível atualizar a parcela.',
+      )
+    },
+  })
+
+  const columns: TableColumn<Installment>[] = [
+    {
+      key: 'label',
+      header: 'Descrição',
+      render: (installment) => (
+        <span className="font-medium text-(--th-text)">{installment.label}</span>
+      ),
+    },
+    {
+      key: 'amount',
+      header: 'Valor',
+      className: 'text-right',
+      render: (installment) => formatBRLAmount(installment.amount),
+    },
+    {
+      key: 'dueDate',
+      header: t('financial.columns.dueDate'),
+      render: (installment) => (
+        <div className="w-36">
+          <DatePicker
+            value={toDatePickerValue(installment.dueDate)}
+            placeholder={t('financial.noDueDate')}
+            onChange={(date) =>
+              installmentMutation.mutate({ id: installment.id, payload: { dueDate: date } })
+            }
+          />
+        </div>
+      ),
+    },
+    {
+      key: 'status',
+      header: t('financial.columns.status'),
+      render: (installment) => {
+        const status = installment.status ?? 'PENDING'
+        const display = resolvePaymentDisplayStatus(status, toDatePickerValue(installment.dueDate))
+        const isPending =
+          installmentMutation.isPending && installmentMutation.variables?.id === installment.id
+        return (
+          <div className="flex flex-col items-start gap-1.5">
+            <Badge variant={PAYMENT_STATUS_VARIANT[display]}>
+              {t(`financial.status.${display}`)}
+            </Badge>
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              loading={isPending}
+              onClick={() =>
+                installmentMutation.mutate({
+                  id: installment.id,
+                  payload: { status: status === 'PAID' ? 'PENDING' : 'PAID' },
+                })
+              }
+            >
+              {status === 'PAID' ? t('financial.markPending') : t('financial.markPaid')}
+            </Button>
+          </div>
+        )
+      },
+    },
+  ]
 
   // Same query keys MaterialsTab/TeamTab/ProjectExpensesEditor use, so this
   // just reads their shared cache instead of firing its own requests.
