@@ -15,6 +15,7 @@ import { fetchProjectMaterials } from '@/features/projects/detail/projectMateria
 import { fetchProjectProviders } from '@/features/projects/detail/projectProvidersApi'
 import { fetchProjectExpenses } from '@/features/projects/detail/projectExpensesApi'
 import { resolveProviderRoleLabels } from '@/features/projects/create/providerRoles'
+import { paymentSummary } from '@/features/projects/create/reviewFormatters'
 import { ProjectExpensesEditor } from '@/features/projects/detail/tabs/ProjectExpensesEditor'
 import { updateInstallment, type PaymentStatus } from '@/features/financial/financialApi'
 import { PAYMENT_STATUS_VARIANT, resolvePaymentDisplayStatus } from '@/features/financial/paymentStatus'
@@ -264,6 +265,10 @@ export function FinancialTab({ draft }: FinancialTabProps) {
           <InfoRow
             label="Honorários totais"
             value={formatBRLAmount(financial.feeAmount ?? 0)}
+          />
+          <InfoRow
+            label="Forma de pagamento"
+            value={paymentSummary(financial.paymentMethod, financial.installments.length)}
           />
         </div>
       </Card>

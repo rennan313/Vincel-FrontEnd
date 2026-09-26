@@ -193,6 +193,8 @@ describe('ProjectDetailPage', () => {
     // not "Invalid Date" (same DatePicker-value regression as Financeiro).
     expect(screen.getByText('01/03/2026')).toBeInTheDocument()
     expect(screen.getAllByText('Pendente').length).toBeGreaterThan(0)
+    // Forma de pagamento escolhida (paymentMethod: 'installments', 4 parcelas).
+    expect(screen.getByText('Parcelado em 4 parcelas')).toBeInTheDocument()
   })
 
   it('marks a project installment as paid via updateInstallment', async () => {
