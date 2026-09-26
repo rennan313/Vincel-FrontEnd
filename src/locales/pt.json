@@ -244,6 +244,7 @@
       "project": "Projeto",
       "paymentMethod": "Forma de pagamento",
       "description": "Descrição",
+      "category": "Categoria",
       "amount": "Valor",
       "dueDate": "Vencimento",
       "status": "Status"
@@ -263,6 +264,8 @@
       "name": "Nome",
       "namePlaceholder": "Aluguel do escritório",
       "amount": "Valor",
+      "category": "Categoria",
+      "noCategory": "Sem categoria",
       "dueDate": "Vencimento",
       "dueDateHint": "Opcional",
       "recurring": "Repete todo mês",

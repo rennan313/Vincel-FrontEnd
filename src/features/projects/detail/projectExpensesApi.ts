@@ -1,5 +1,6 @@
 import { apiFetch } from '@/lib/apiClient'
 import type { PaymentStatus } from '@/features/financial/financialApi'
+import type { ExpenseCategory } from '@/features/financial/expenseCategory'
 
 /** A free-form cost the project incurs that isn't a material's totalCost
  * or a prestador's agreedAmount — taxas, licenças, transporte, imprevistos.
@@ -11,6 +12,7 @@ export interface ProjectExpense {
   name: string
   amount: number
   notes?: string | null
+  category?: ExpenseCategory | null
   dueDate?: string | null
   status: PaymentStatus
   paidAt?: string | null
@@ -20,6 +22,7 @@ export interface ExpensePayload {
   name: string
   amount: number
   notes?: string
+  category?: ExpenseCategory | null
   /** null explicitly clears it; undefined leaves it untouched. */
   dueDate?: string | null
   status?: PaymentStatus

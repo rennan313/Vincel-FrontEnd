@@ -36,6 +36,11 @@ import {
   type PaymentStatus,
 } from '@/features/financial/financialApi'
 import { PAYMENT_STATUS_VARIANT, resolvePaymentDisplayStatus } from '@/features/financial/paymentStatus'
+import {
+  EXPENSE_CATEGORY_LABEL,
+  EXPENSE_CATEGORY_OPTIONS,
+  type ExpenseCategory,
+} from '@/features/financial/expenseCategory'
 import { PAYMENT_METHOD_LABEL } from '@/features/projects/create/reviewFormatters'
 import type { PaymentMethod } from '@/features/projects/create/types'
 
@@ -65,6 +70,9 @@ interface FinancialRow {
   // Só existe na aba A Receber (forma de pagamento é um conceito do
   // honorário/projeto, não de uma despesa avulsa) — null na aba A Pagar.
   paymentMethod: PaymentMethod | null
+  // Só existe na aba A Pagar (categoria é um conceito de despesa, não de
+  // honorário) — null na aba A Receber.
+  category: ExpenseCategory | null
   description: string
   amount: number
   // yyyy-mm-dd — a API devolve DateTime como ISO completo (com hora),
@@ -78,6 +86,7 @@ interface FinancialRow {
 interface NewExpenseForm {
   name: string
   amount: number | null
+  category: ExpenseCategory | null
   dueDate: string | null
   recurring: boolean
 }
@@ -85,6 +94,7 @@ interface NewExpenseForm {
 const EMPTY_NEW_EXPENSE: NewExpenseForm = {
   name: '',
   amount: null,
+  category: null,
   dueDate: null,
   recurring: false,
 }
@@ -254,6 +264,7 @@ export function FinancialPage() {
           projectName: row.projectName,
           clientName: row.clientName,
           paymentMethod: row.paymentMethod,
+          category: null,
           description: row.label,
           amount: row.amount,
           dueDate: row.dueDate ? row.dueDate.slice(0, 10) : null,
@@ -268,6 +279,7 @@ export function FinancialPage() {
           projectName: row.projectName,
           clientName: row.clientName,
           paymentMethod: null,
+          category: row.category,
           description: row.name,
           amount: row.amount,
           dueDate: row.dueDate ? row.dueDate.slice(0, 10) : null,
@@ -326,6 +338,22 @@ export function FinancialPage() {
         </div>
       ),
     },
+    // Só faz sentido pra despesa (categoria é um conceito de custo, não de
+    // honorário) — omitida na aba A Receber.
+    ...(tab === 'payables'
+      ? [
+          {
+            key: 'category',
+            header: t('financial.columns.category'),
+            render: (row: FinancialRow) =>
+              row.category ? (
+                <Badge variant="neutral">{EXPENSE_CATEGORY_LABEL[row.category]}</Badge>
+              ) : (
+                <span className="text-(--th-text-muted)">—</span>
+              ),
+          },
+        ]
+      : []),
     {
       key: 'amount',
       header: t('financial.columns.amount'),
@@ -421,6 +449,7 @@ export function FinancialPage() {
     createCompanyExpenseMutation.mutate({
       name: newExpense.name.trim(),
       amount: newExpense.amount!,
+      category: newExpense.category,
       dueDate: newExpense.dueDate ?? undefined,
       recurring: newExpense.recurring,
     })
@@ -546,6 +575,29 @@ export function FinancialPage() {
             }
             placeholder="R$ 0,00"
           />
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-(--th-text)">
+              {t('financial.form.category')}
+            </label>
+            <select
+              aria-label={t('financial.form.category')}
+              value={newExpense.category ?? ''}
+              onChange={(event) =>
+                setNewExpense((current) => ({
+                  ...current,
+                  category: (event.target.value || null) as ExpenseCategory | null,
+                }))
+              }
+              className="h-10 w-full rounded-lg border border-(--th-border) bg-(--th-bg-card) px-3 text-sm text-(--th-text) outline-none transition-colors focus:ring-2 focus:ring-(--th-border-focus)"
+            >
+              <option value="">{t('financial.form.noCategory')}</option>
+              {EXPENSE_CATEGORY_OPTIONS.map(({ value, label }) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
           <DatePicker
             label={t('financial.form.dueDate')}
             value={newExpense.dueDate}

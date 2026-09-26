@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ApiError } from '@/lib/apiClient'
 import { formatBRLAmount, formatCurrencyBRL, parseCurrencyBRL } from '@/lib/masks'
+import { EXPENSE_CATEGORY_OPTIONS, type ExpenseCategory } from '@/features/financial/expenseCategory'
 import {
   createProjectExpense,
   fetchProjectExpenses,
@@ -52,8 +53,17 @@ export function ProjectExpensesEditor() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, name, amount }: { id: string; name: string; amount: number }) =>
-      updateProjectExpense(projectId!, id, { name, amount }),
+    mutationFn: ({
+      id,
+      name,
+      amount,
+      category,
+    }: {
+      id: string
+      name: string
+      amount: number
+      category?: ExpenseCategory | null
+    }) => updateProjectExpense(projectId!, id, { name, amount, category }),
     onError: handleError,
   })
 
@@ -67,7 +77,10 @@ export function ProjectExpensesEditor() {
     onError: handleError,
   })
 
-  function updateLocal(id: string, patch: Partial<Pick<ProjectExpense, 'name' | 'amount'>>) {
+  function updateLocal(
+    id: string,
+    patch: Partial<Pick<ProjectExpense, 'name' | 'amount' | 'category'>>,
+  ) {
     setExpenses((current) =>
       current.map((expense) => (expense.id === id ? { ...expense, ...patch } : expense)),
     )
@@ -76,7 +89,12 @@ export function ProjectExpensesEditor() {
   function commit(id: string) {
     const expense = expenses.find((item) => item.id === id)
     if (!expense) return
-    updateMutation.mutate({ id, name: expense.name, amount: expense.amount })
+    updateMutation.mutate({
+      id,
+      name: expense.name,
+      amount: expense.amount,
+      category: expense.category,
+    })
   }
 
   const total = expenses.reduce((sum, expense) => sum + expense.amount, 0)
@@ -107,6 +125,23 @@ export function ProjectExpensesEditor() {
                 onBlur={() => commit(expense.id)}
                 className="flex-1"
               />
+              <select
+                aria-label="Categoria do custo"
+                value={expense.category ?? ''}
+                onChange={(event) => {
+                  const category = (event.target.value || null) as ExpenseCategory | null
+                  updateLocal(expense.id, { category })
+                  updateMutation.mutate({ id: expense.id, name: expense.name, amount: expense.amount, category })
+                }}
+                className="h-10 w-44 shrink-0 rounded-lg border border-(--th-border) bg-(--th-bg-card) px-3 text-sm text-(--th-text) outline-none transition-colors focus:ring-2 focus:ring-(--th-border-focus)"
+              >
+                <option value="">Sem categoria</option>
+                {EXPENSE_CATEGORY_OPTIONS.map(({ value, label }) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
               <Input
                 aria-label="Valor do custo"
                 value={formatBRLAmount(expense.amount)}

@@ -58,6 +58,7 @@ const {
       clientName: 'Ana Beatriz Ferreira',
       name: 'Taxa da prefeitura',
       amount: 300,
+      category: 'taxes' as const,
       dueDate: null,
       status: 'PENDING' as const,
       paidAt: null,
@@ -71,6 +72,7 @@ const {
       clientName: null,
       name: 'Aluguel do escritório',
       amount: 4500,
+      category: 'rent' as const,
       dueDate: null,
       status: 'PENDING' as const,
       paidAt: null,
@@ -209,6 +211,9 @@ describe('FinancialPage', () => {
     // A despesa da empresa aparece sem projeto/cliente vinculado.
     expect(screen.getByText('Aluguel do escritório')).toBeInTheDocument()
     expect(screen.getByText('Despesa da empresa')).toBeInTheDocument()
+    // Categoria de cada despesa (uma de projeto, uma da empresa).
+    expect(screen.getByText('Impostos e taxas')).toBeInTheDocument()
+    expect(screen.getByText('Aluguel')).toBeInTheDocument()
   })
 
   it('marks a company expense as paid via updateCompanyExpense, not updateProjectExpense', async () => {
@@ -237,13 +242,18 @@ describe('FinancialPage', () => {
       target: { value: 'Assinatura de software' },
     })
     fireEvent.change(screen.getByLabelText('Valor'), { target: { value: '15000' } })
+    fireEvent.change(screen.getByLabelText('Categoria'), { target: { value: 'software' } })
     fireEvent.click(screen.getByRole('button', { name: 'Salvar' }))
 
     // TanStack Query's mutationFn is invoked with a 2nd (context) argument
     // in v5 — matched loosely here since we only care about the payload.
     await waitFor(() =>
       expect(createCompanyExpenseMock).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'Assinatura de software', amount: 150 }),
+        expect.objectContaining({
+          name: 'Assinatura de software',
+          amount: 150,
+          category: 'software',
+        }),
         expect.anything(),
       ),
     )

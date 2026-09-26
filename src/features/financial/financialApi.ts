@@ -1,5 +1,6 @@
 import { apiFetch } from '@/lib/apiClient'
 import type { PaymentMethod } from '@/features/projects/create/types'
+import type { ExpenseCategory } from '@/features/financial/expenseCategory'
 
 export type PaymentStatus = 'PENDING' | 'PAID'
 
@@ -45,6 +46,7 @@ export interface PayableRow {
   clientName: string | null
   name: string
   amount: number
+  category: ExpenseCategory | null
   dueDate: string | null
   status: PaymentStatus
   paidAt: string | null
