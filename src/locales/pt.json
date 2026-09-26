@@ -197,7 +197,9 @@
     "subtitle": "Acompanhe as datas dos projetos do seu escritório.",
     "empty": "Nenhum projeto com data de início cadastrada ainda.",
     "today": "Hoje",
+    "now": "Agora",
     "zoom": {
+      "hours": "Horas",
       "days": "Dias",
       "weeks": "Semanas",
       "months": "Meses"
