@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/Input'
 import { SelectableCard } from '@/components/ui/SelectableCard'
 import { PaymentPlanEditor } from '@/features/projects/create/PaymentPlanEditor'
 import { useProjectWizardStore } from '@/features/projects/create/projectWizardStore'
+import { PAYMENT_METHOD_LABEL } from '@/features/projects/create/reviewFormatters'
 import { formatBRLAmount, formatCurrencyBRL, parseCurrencyBRL } from '@/lib/masks'
 import type { FeeModel, FinancialData, PaymentMethod } from '@/features/projects/create/types'
 
@@ -10,13 +11,9 @@ interface StepFinancialProps {
   onValidityChange: (valid: boolean) => void
 }
 
-const PAYMENT_METHODS: { method: PaymentMethod; label: string }[] = [
-  { method: 'cash', label: 'À vista' },
-  { method: 'installments', label: 'Parcelado' },
-  { method: 'by_phase', label: 'Por etapa' },
-  { method: 'monthly', label: 'Mensal' },
-  { method: 'custom', label: 'Personalizado' },
-]
+const PAYMENT_METHODS: { method: PaymentMethod; label: string }[] = (
+  Object.keys(PAYMENT_METHOD_LABEL) as PaymentMethod[]
+).map((method) => ({ method, label: PAYMENT_METHOD_LABEL[method] }))
 
 const INSTALLMENT_LABEL_PREFIX: Record<PaymentMethod, string> = {
   cash: 'Pagamento',

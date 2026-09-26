@@ -13,6 +13,7 @@
     "providers": "Prestadores",
     "projects": "Projetos",
     "agenda": "Agenda",
+    "financial": "Financeiro",
     "users": "Usuários",
     "subscription": "Assinatura"
   },
@@ -197,7 +198,9 @@
     "subtitle": "Acompanhe as datas dos projetos do seu escritório.",
     "empty": "Nenhum projeto com data de início cadastrada ainda.",
     "today": "Hoje",
+    "now": "Agora",
     "zoom": {
+      "hours": "Horas",
       "days": "Dias",
       "weeks": "Semanas",
       "months": "Meses"
@@ -218,6 +221,76 @@
       "more": "+{{count}} mais",
       "newTask": "Nova tarefa",
       "newTaskOn": "Agendar tarefa em {{date}}"
+    }
+  },
+  "financial": {
+    "subtitle": "Contas a receber (honorários) e a pagar (despesas) de todos os projetos.",
+    "empty": "Nada encontrado.",
+    "billsEmpty": "Nenhuma conta fixa cadastrada ainda.",
+    "searchPlaceholder": "Buscar por projeto, cliente ou descrição",
+    "noDueDate": "Sem vencimento",
+    "markPaid": "Marcar como pago",
+    "markPending": "Marcar como pendente",
+    "companyExpense": "Despesa da empresa",
+    "recurringHint": "Repete: {{frequency}}",
+    "newCompanyExpense": "Nova despesa",
+    "removeAction": "Remover {{name}}",
+    "removeTitle": "Excluir despesa",
+    "removeMessage": "Remover \"{{name}}\"? Essa ação não pode ser desfeita.",
+    "tabs": {
+      "receivables": "A Receber",
+      "payables": "A Pagar",
+      "bills": "Contas Fixas",
+      "cashflow": "Fluxo de Caixa"
+    },
+    "columns": {
+      "project": "Projeto",
+      "paymentMethod": "Forma de pagamento",
+      "description": "Descrição",
+      "category": "Categoria",
+      "amount": "Valor",
+      "dueDate": "Vencimento",
+      "status": "Status"
+    },
+    "status": {
+      "PENDING": "Pendente",
+      "OVERDUE": "Atrasado",
+      "PAID": "Pago"
+    },
+    "summary": {
+      "receivablePending": "A receber (pendente)",
+      "receivableOverdue": "A receber atrasado",
+      "payablePending": "A pagar (pendente)",
+      "payableOverdue": "A pagar atrasado"
+    },
+    "form": {
+      "name": "Nome",
+      "namePlaceholder": "Aluguel do escritório",
+      "amount": "Valor",
+      "category": "Categoria",
+      "noCategory": "Sem categoria",
+      "dueDate": "Vencimento",
+      "dueDateHint": "Opcional",
+      "recurring": "É recorrente",
+      "frequency": "Frequência",
+      "cancel": "Cancelar",
+      "save": "Salvar"
+    },
+    "cashFlow": {
+      "chartTitle": "Entradas × saídas por mês",
+      "tableTitle": "Projeção mensal",
+      "balanceHint": "O saldo acumulado é relativo a partir de hoje (entradas − saídas previstas) — o sistema não modela um saldo bancário inicial.",
+      "receivables": "Entradas",
+      "payables": "Saídas",
+      "columns": {
+        "month": "Mês",
+        "receivables": "Entradas",
+        "payables": "Saídas",
+        "net": "Saldo do mês",
+        "cumulative": "Saldo acumulado"
+      },
+      "unscheduledReceivablesNote": "{{amount}} em honorários pendentes sem vencimento definido não entram nesta projeção.",
+      "unscheduledPayablesNote": "{{amount}} em despesas pendentes sem vencimento definido não entram nesta projeção."
     }
   },
   "table": {

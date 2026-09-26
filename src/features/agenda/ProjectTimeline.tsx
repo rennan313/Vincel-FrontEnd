@@ -15,6 +15,7 @@ import {
   buildTimelineSegments,
   computeVisibleRange,
   daysBetweenISO,
+  minutesNowSinceMidnight,
   todayISO,
   ZOOM_PX_PER_DAY,
   type TimelineZoom,
@@ -137,9 +138,38 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
     const segments = useMemo(() => buildTimelineSegments(range, zoom), [range, zoom])
     const totalDays = daysBetweenISO(range.start, range.end)
     const timelineWidth = totalDays * pxPerDay
-    const todayOffset = daysBetweenISO(range.start, today) * pxPerDay
+    // In 'hours', the marker is precise to the minute (today's whole range
+    // is exactly this one day, so a day-offset alone would always be 0) —
+    // everywhere else it's still just "which day", same as before.
+    const todayOffset =
+      zoom === 'hours'
+        ? (minutesNowSinceMidnight() / (24 * 60)) * pxPerDay
+        : daysBetweenISO(range.start, today) * pxPerDay
+    const todayMarkerLabel =
+      zoom === 'hours'
+        ? `${t('agenda.now')} ${new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date())}`
+        : t('agenda.today')
 
     const tasksEnabled = Boolean(onToggleTask)
+
+    // A phase/project bar's geometry — clamped to the visible day and
+    // hidden entirely when it doesn't even reach today, in 'hours' only.
+    // The other zooms always have every bar inside range by construction
+    // (computeVisibleRange pads to fit them), so they never need this;
+    // 'hours' deliberately fixes its range to just today (see
+    // computeVisibleRange), which real phases/projects often don't overlap.
+    function computeBarGeometry(
+      startISO: string,
+      endISO: string,
+    ): { left: number; width: number } | null {
+      if (zoom === 'hours' && (endISO < today || startISO > today)) return null
+      const rawLeft = daysBetweenISO(range.start, startISO) * pxPerDay
+      const rawWidth = Math.max(daysBetweenISO(startISO, endISO) * pxPerDay, MIN_BAR_WIDTH)
+      if (zoom !== 'hours') return { left: rawLeft, width: rawWidth }
+      const left = Math.max(0, rawLeft)
+      const right = Math.min(timelineWidth, rawLeft + rawWidth)
+      return { left, width: Math.max(right - left, MIN_BAR_WIDTH) }
+    }
 
     // Renders one etapa's own row, plus (when tasksEnabled) its tasks
     // underneath — shared by the single-project (Cronograma) and
@@ -149,10 +179,7 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
       phase: ProjectTimelineBar['phases'][number],
       { projectId, indentPx }: { projectId: string; indentPx: number },
     ): ReactNode {
-      const offsetDays = daysBetweenISO(range.start, phase.start)
-      const durationDays = Math.max(daysBetweenISO(phase.start, phase.end), 0)
-      const left = offsetDays * pxPerDay
-      const width = Math.max(durationDays * pxPerDay, MIN_BAR_WIDTH)
+      const geometry = computeBarGeometry(phase.start, phase.end)
 
       const selectable = Boolean(onSelectPhase)
       const statusClass =
@@ -221,20 +248,22 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
               )}
             </div>
             <div className="relative" style={{ width: timelineWidth }}>
-              <button
-                type="button"
-                disabled={!selectable}
-                onClick={() => onSelectPhase?.(phase.key)}
-                title={title}
-                className={cn(
-                  'absolute top-1/2 z-[1] flex h-5 -translate-y-1/2 items-center rounded-full px-2 text-[11px] font-medium whitespace-nowrap transition-colors',
-                  statusClass,
-                  selectable ? 'cursor-pointer hover:brightness-110' : 'cursor-default',
-                )}
-                style={{ left, width }}
-              >
-                <span className="truncate">{width > 60 ? phase.name : ''}</span>
-              </button>
+              {geometry && (
+                <button
+                  type="button"
+                  disabled={!selectable}
+                  onClick={() => onSelectPhase?.(phase.key)}
+                  title={title}
+                  className={cn(
+                    'absolute top-1/2 z-[1] flex h-5 -translate-y-1/2 items-center rounded-full px-2 text-[11px] font-medium whitespace-nowrap transition-colors',
+                    statusClass,
+                    selectable ? 'cursor-pointer hover:brightness-110' : 'cursor-default',
+                  )}
+                  style={{ left: geometry.left, width: geometry.width }}
+                >
+                  <span className="truncate">{geometry.width > 60 ? phase.name : ''}</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -328,40 +357,41 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
                           mirrors the etapa's own left/width, directly under
                           the etapa's bar above. */}
                       <div className="relative" style={{ width: timelineWidth }}>
-                        {(() => {
-                          const barTitle =
-                            task.estimatedHours != null
-                              ? `${task.title} — ${task.estimatedHours}h`
-                              : task.title
-                          const barClass = cn(
-                            'absolute top-1/2 z-[1] flex h-4 -translate-y-1/2 items-center justify-center rounded-full px-1.5 text-[10px] font-medium whitespace-nowrap text-white transition-opacity',
-                            task.done ? 'opacity-40' : 'opacity-90',
-                            onEditTask && 'hover:opacity-100',
-                          )
-                          const barContent = task.estimatedHours != null && width > 26 && (
-                            <span className="truncate">{task.estimatedHours}h</span>
-                          )
+                        {geometry &&
+                          (() => {
+                            const barTitle =
+                              task.estimatedHours != null
+                                ? `${task.title} — ${task.estimatedHours}h`
+                                : task.title
+                            const barClass = cn(
+                              'absolute top-1/2 z-[1] flex h-4 -translate-y-1/2 items-center justify-center rounded-full px-1.5 text-[10px] font-medium whitespace-nowrap text-white transition-opacity',
+                              task.done ? 'opacity-40' : 'opacity-90',
+                              onEditTask && 'hover:opacity-100',
+                            )
+                            const barContent = task.estimatedHours != null && geometry.width > 26 && (
+                              <span className="truncate">{task.estimatedHours}h</span>
+                            )
 
-                          return onEditTask ? (
-                            <button
-                              type="button"
-                              onClick={() => onEditTask(phase.key, task)}
-                              title={barTitle}
-                              className={barClass}
-                              style={{ left, width, backgroundColor: dotColor }}
-                            >
-                              {barContent}
-                            </button>
-                          ) : (
-                            <div
-                              title={barTitle}
-                              className={barClass}
-                              style={{ left, width, backgroundColor: dotColor }}
-                            >
-                              {barContent}
-                            </div>
-                          )
-                        })()}
+                            return onEditTask ? (
+                              <button
+                                type="button"
+                                onClick={() => onEditTask(phase.key, task)}
+                                title={barTitle}
+                                className={barClass}
+                                style={{ left: geometry.left, width: geometry.width, backgroundColor: dotColor }}
+                              >
+                                {barContent}
+                              </button>
+                            ) : (
+                              <div
+                                title={barTitle}
+                                className={barClass}
+                                style={{ left: geometry.left, width: geometry.width, backgroundColor: dotColor }}
+                              >
+                                {barContent}
+                              </div>
+                            )
+                          })()}
                       </div>
                     </div>
                   )
@@ -463,10 +493,7 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
                 renderPhase(phase, { projectId: focusedBar.id, indentPx: 0 }),
               )
             : bars.flatMap((bar) => {
-                const offsetDays = daysBetweenISO(range.start, bar.start)
-                const durationDays = Math.max(daysBetweenISO(bar.start, bar.end), 0)
-                const left = offsetDays * pxPerDay
-                const width = Math.max(durationDays * pxPerDay, MIN_BAR_WIDTH)
+                const geometry = computeBarGeometry(bar.start, bar.end)
 
                 const projectRow = (
                   <div
@@ -496,16 +523,18 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
                       </Link>
                     </div>
                     <div className="relative" style={{ width: timelineWidth }}>
+                      {geometry && (
                       <div
                         title={`${bar.name} — ${formatDate(bar.start)} a ${formatDate(bar.end)}`}
                         className={cn(
                           'absolute top-1/2 z-[1] flex h-5 -translate-y-1/2 items-center rounded-full px-2 text-[11px] font-medium whitespace-nowrap text-white opacity-90',
                           STATUS_BAR_CLASS[bar.status],
                         )}
-                        style={{ left, width }}
+                        style={{ left: geometry.left, width: geometry.width }}
                       >
-                        <span className="truncate">{width > 60 ? bar.name : ''}</span>
+                        <span className="truncate">{geometry.width > 60 ? bar.name : ''}</span>
                       </div>
+                      )}
                     </div>
                   </div>
                 )
@@ -530,7 +559,7 @@ export const ProjectTimeline = forwardRef<HTMLDivElement, ProjectTimelineProps>(
               style={{ left: LEFT_COL_WIDTH + todayOffset }}
             >
               <span className="absolute top-0 left-1 rounded bg-red-400 px-1 py-0.5 text-[10px] leading-none font-medium whitespace-nowrap text-white">
-                {t('agenda.today')}
+                {todayMarkerLabel}
               </span>
             </div>
           )}

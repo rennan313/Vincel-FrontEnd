@@ -5,13 +5,17 @@ import { ChevronLeft, X } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 import { ICONS, type IconName } from '@/components/ui/icons'
 import { useSidebarStore } from '@/store/sidebarStore'
+import { useAuthStore } from '@/store/authStore'
 import { useMediaQuery } from '@/lib/useMediaQuery'
 import { TimerWidget } from '@/features/timer/TimerWidget'
+import { CAN_ACCESS_FINANCIAL_ROLES } from '@/features/financial/financialApi'
 
 interface NavItem {
   labelKey: string
   to: string
   icon: IconName
+  /** Absent = visible to every role, same as every other item today. */
+  roles?: readonly string[]
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -20,6 +24,12 @@ const NAV_ITEMS: NavItem[] = [
   { labelKey: 'nav.providers', to: '/providers', icon: 'Briefcase' },
   { labelKey: 'nav.projects', to: '/projects', icon: 'FolderOpen' },
   { labelKey: 'nav.agenda', to: '/agenda', icon: 'CalendarRange' },
+  {
+    labelKey: 'nav.financial',
+    to: '/financeiro',
+    icon: 'Wallet',
+    roles: CAN_ACCESS_FINANCIAL_ROLES,
+  },
 ]
 
 interface SidebarNavItemProps {
@@ -86,6 +96,10 @@ export function Sidebar() {
   const toggleCollapsed = useSidebarStore((state) => state.toggleCollapsed)
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const rail = collapsed && isDesktop
+  const currentUserRole = useAuthStore((state) => state.user?.role)
+  const navItems = NAV_ITEMS.filter(
+    (item) => !item.roles || (currentUserRole && item.roles.includes(currentUserRole)),
+  )
 
   useEffect(() => {
     if (!open) return
@@ -155,7 +169,7 @@ export function Sidebar() {
               {t('nav.main')}
             </p>
           )}
-          {NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <SidebarNavItem
               key={item.to}
               item={item}

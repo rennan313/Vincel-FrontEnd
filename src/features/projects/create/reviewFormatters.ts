@@ -6,6 +6,20 @@ export const COMPLEXITY_LABEL: Record<Complexity, string> = {
   HIGH: 'alta',
 }
 
+/** Plain label for the payment method alone, with no installment count —
+ * used wherever a project's rows are shown one at a time (e.g. Financeiro's
+ * flattened receivables table) rather than summarized as a whole plan (see
+ * paymentSummary below for that case). Same wording as StepFinancial's own
+ * PAYMENT_METHODS options, so creation and after-the-fact views never say
+ * this differently. */
+export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
+  cash: 'À vista',
+  installments: 'Parcelado',
+  by_phase: 'Por etapa',
+  monthly: 'Mensal',
+  custom: 'Personalizado',
+}
+
 export function paymentSummary(method: PaymentMethod, count: number): string {
   switch (method) {
     case 'cash':

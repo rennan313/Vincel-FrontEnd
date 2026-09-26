@@ -122,10 +122,17 @@ export interface PlanningData {
 
 export type PaymentMethod = 'cash' | 'installments' | 'by_phase' | 'monthly' | 'custom'
 
+/** Vencimento/status only ever come from the server (never set by the
+ * creation wizard — a new project's installments start with none, set
+ * later from the Parcelas table or the Financeiro screen), so they're
+ * optional here rather than part of the wizard's own draft shape. */
 export interface Installment {
   id: string
   label: string
   amount: number
+  dueDate?: string | null
+  status?: 'PENDING' | 'PAID'
+  paidAt?: string | null
 }
 
 /** How honorários is calculated — the only two billing models this

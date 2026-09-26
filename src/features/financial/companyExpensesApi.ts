@@ -1,0 +1,77 @@
+import { apiFetch } from '@/lib/apiClient'
+import type { PaymentStatus } from '@/features/financial/financialApi'
+import type { ExpenseCategory } from '@/features/financial/expenseCategory'
+import type { RecurringFrequency } from '@/features/financial/recurringFrequency'
+
+/** A custo do próprio escritório que não pertence a nenhum projeto —
+ * aluguel, folha de pagamento, softwares, contas fixas. Mesmo shape de
+ * ProjectExpense (projectExpensesApi.ts), mais `recurring`: quando true,
+ * marcar esta ocorrência como paga já gera a próxima sozinha, deslocada
+ * por `recurringFrequency` (sem valor, tratado como "monthly"). */
+export interface CompanyExpense {
+  id: string
+  name: string
+  amount: number
+  notes?: string | null
+  category?: ExpenseCategory | null
+  dueDate?: string | null
+  status: PaymentStatus
+  paidAt?: string | null
+  recurring: boolean
+  recurringFrequency?: RecurringFrequency | null
+}
+
+export interface CompanyExpensesPageResult {
+  data: CompanyExpense[]
+  total: number
+  page: number
+  pageSize: number
+}
+
+export interface CompanyExpensePayload {
+  name: string
+  amount: number
+  notes?: string
+  category?: ExpenseCategory | null
+  /** null explicitly clears it; undefined leaves it untouched. */
+  dueDate?: string | null
+  status?: PaymentStatus
+  paidAt?: string
+  recurring?: boolean
+  recurringFrequency?: RecurringFrequency
+}
+
+export function fetchCompanyExpenses(
+  page: number,
+  pageSize: number,
+  search = '',
+  status?: PaymentStatus,
+): Promise<CompanyExpensesPageResult> {
+  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
+  if (search.trim()) params.set('search', search.trim())
+  if (status) params.set('status', status)
+  return apiFetch<CompanyExpensesPageResult>(`/company-expenses?${params.toString()}`)
+}
+
+export function createCompanyExpense(
+  payload: CompanyExpensePayload,
+): Promise<CompanyExpense> {
+  return apiFetch<CompanyExpense>('/company-expenses', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function updateCompanyExpense(
+  id: string,
+  payload: Partial<CompanyExpensePayload>,
+): Promise<CompanyExpense> {
+  return apiFetch<CompanyExpense>(`/company-expenses/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function removeCompanyExpense(id: string): Promise<void> {
+  return apiFetch<void>(`/company-expenses/${id}`, { method: 'DELETE' })
+}

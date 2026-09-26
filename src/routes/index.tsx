@@ -19,6 +19,7 @@ import { ClientsPage } from '@/features/clients/ClientsPage'
 import { ProvidersPage } from '@/features/providers/ProvidersPage'
 import { ProjectsPage } from '@/features/projects/ProjectsPage'
 import { AgendaPage } from '@/features/agenda/AgendaPage'
+import { FinancialPage } from '@/features/financial/FinancialPage'
 import { ProjectDetailPage } from '@/features/projects/ProjectDetailPage'
 import { CreateProjectPage } from '@/features/projects/create/CreateProjectPage'
 import { UsersPage } from '@/features/users/UsersPage'
@@ -57,6 +58,7 @@ export const router = createBrowserRouter([
           { path: '/providers', element: <ProvidersPage /> },
           { path: '/projects', element: <ProjectsPage /> },
           { path: '/agenda', element: <AgendaPage /> },
+          { path: '/financeiro', element: <FinancialPage /> },
           { path: '/projects/new', element: <CreateProjectPage /> },
           { path: '/projects/:projectId/edit', element: <CreateProjectPage /> },
           { path: '/projects/:projectId', element: <ProjectDetailPage /> },

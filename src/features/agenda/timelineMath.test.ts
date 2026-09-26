@@ -4,6 +4,8 @@ import {
   buildTimelineSegments,
   computeVisibleRange,
   daysBetweenISO,
+  minutesNowSinceMidnight,
+  todayISO,
   toISODate,
 } from '@/features/agenda/timelineMath'
 
@@ -83,5 +85,30 @@ describe('buildTimelineSegments', () => {
 
     expect(segments.every((s) => s.days === 1)).toBe(true)
     expect(segments[0].label).toMatch(/^\S+ \d+$/)
+  })
+
+  it('produces 24 one-hour segments spanning exactly today, ignoring any given dates', () => {
+    // 'hours' always means "today", regardless of what a project's own
+    // dates say — clicking "Hoje" should show today's 24h, not some other
+    // day derived from project data.
+    const range = computeVisibleRange(['2020-01-01', '2030-12-31'], 'hours')
+    expect(range.start).toBe(todayISO())
+    expect(range.end).toBe(addDaysISO(todayISO(), 1))
+
+    const segments = buildTimelineSegments(range, 'hours')
+    expect(segments).toHaveLength(24)
+    expect(segments.map((s) => s.label)).toEqual([
+      '00h', '01h', '02h', '03h', '04h', '05h', '06h', '07h', '08h', '09h', '10h', '11h',
+      '12h', '13h', '14h', '15h', '16h', '17h', '18h', '19h', '20h', '21h', '22h', '23h',
+    ])
+    expect(segments.reduce((sum, s) => sum + s.days, 0)).toBeCloseTo(1)
+  })
+})
+
+describe('minutesNowSinceMidnight', () => {
+  it('returns a value within a single day', () => {
+    const minutes = minutesNowSinceMidnight()
+    expect(minutes).toBeGreaterThanOrEqual(0)
+    expect(minutes).toBeLessThan(24 * 60)
   })
 })

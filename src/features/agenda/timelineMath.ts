@@ -1,4 +1,4 @@
-export type TimelineZoom = 'days' | 'weeks' | 'months'
+export type TimelineZoom = 'hours' | 'days' | 'weeks' | 'months'
 
 export interface TimelineRange {
   /** ISO date (yyyy-mm-dd), inclusive. */
@@ -47,6 +47,13 @@ export function todayISO(): string {
   const month = String(now.getMonth() + 1).padStart(2, '0')
   const day = String(now.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
+}
+
+/** Minutes since local midnight, right now — used to place the 'hours'
+ * zoom's "Agora" marker at the precise current time, not just "today". */
+export function minutesNowSinceMidnight(): number {
+  const now = new Date()
+  return now.getHours() * 60 + now.getMinutes()
 }
 
 export function addDaysISO(iso: string, days: number): string {
@@ -120,16 +127,24 @@ function segmentLabel(startISO: string, endExclusiveISO: string, zoom: TimelineZ
 
 /** Pixels-per-day for each zoom level — wide enough that bars/labels stay
  * legible, narrow enough that a multi-month range doesn't force excessive
- * horizontal scrolling. */
+ * horizontal scrolling. For 'hours', this is really "pixels for the one
+ * visible day" (48px × 24h = 1152px) — everything else here still treats a
+ * day as the base unit, so keeping the same Record shape (rather than a
+ * separate px-per-hour constant) lets totalDays/timelineWidth stay generic
+ * across every zoom, 'hours' included (its range is always exactly 1 day). */
 export const ZOOM_PX_PER_DAY: Record<TimelineZoom, number> = {
+  hours: 1152,
   days: 64,
   weeks: 26,
   months: 7,
 }
 
 /** How far to pad the visible range beyond the earliest/latest project date
- * (or today, if that's wider), per zoom level. */
+ * (or today, if that's wider), per zoom level. Unused for 'hours' — that
+ * zoom's range is always exactly today, never padded/widened by project
+ * dates (see computeVisibleRange). */
 const ZOOM_PAD_DAYS: Record<TimelineZoom, number> = {
+  hours: 0,
   days: 5,
   weeks: 14,
   months: 45,
@@ -137,9 +152,18 @@ const ZOOM_PAD_DAYS: Record<TimelineZoom, number> = {
 
 /**
  * The full visible date range for a zoom level, snapped to whole segment
- * boundaries so the header always starts/ends cleanly.
+ * boundaries so the header always starts/ends cleanly. 'hours' is a fixed
+ * special case — always exactly today, regardless of `dates` — since the
+ * whole point of that zoom is "show today, hour by hour", not "fit every
+ * project's dates at hour granularity" (which the underlying data doesn't
+ * have anyway: phases/tasks only carry a calendar day, never a time).
  */
 export function computeVisibleRange(dates: string[], zoom: TimelineZoom): TimelineRange {
+  if (zoom === 'hours') {
+    const today = todayISO()
+    return { start: today, end: addDaysISO(today, 1) }
+  }
+
   const today = todayISO()
   let start = today
   let end = today
@@ -158,6 +182,17 @@ export function computeVisibleRange(dates: string[], zoom: TimelineZoom): Timeli
 }
 
 export function buildTimelineSegments(range: TimelineRange, zoom: TimelineZoom): TimelineSegment[] {
+  if (zoom === 'hours') {
+    return Array.from({ length: 24 }, (_, hour) => ({
+      key: `h-${hour}`,
+      label: `${String(hour).padStart(2, '0')}h`,
+      start: range.start,
+      // A fraction of a day, not a whole one — 1/24 × ZOOM_PX_PER_DAY.hours
+      // (1152px) = 48px per hour column.
+      days: 1 / 24,
+    }))
+  }
+
   const segments: TimelineSegment[] = []
   let cursor = range.start
   let guard = 0

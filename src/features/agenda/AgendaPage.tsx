@@ -18,12 +18,13 @@ import { fetchScheduleStatusCategories } from '@/features/scheduleStatus/schedul
 import {
   computeVisibleRange,
   daysBetweenISO,
+  minutesNowSinceMidnight,
   todayISO,
   ZOOM_PX_PER_DAY,
   type TimelineZoom,
 } from '@/features/agenda/timelineMath'
 
-const ZOOM_OPTIONS: TimelineZoom[] = ['days', 'weeks', 'months']
+const ZOOM_OPTIONS: TimelineZoom[] = ['hours', 'days', 'weeks', 'months']
 const VIEW_OPTIONS = ['timeline', 'calendar'] as const
 const LEFT_COL_WIDTH = 220
 
@@ -120,6 +121,11 @@ export function AgendaPage() {
   function scrollToToday() {
     const container = scrollRef.current
     if (!container) return
+    if (zoom === 'hours') {
+      const todayOffsetPx = (minutesNowSinceMidnight() / (24 * 60)) * ZOOM_PX_PER_DAY.hours
+      container.scrollLeft = LEFT_COL_WIDTH + todayOffsetPx - container.clientWidth / 2
+      return
+    }
     const dates = [...bars.map((b) => b.start), ...bars.map((b) => b.end)]
     if (dates.length === 0) return
     const range = computeVisibleRange(dates, zoom)
@@ -127,14 +133,15 @@ export function AgendaPage() {
     container.scrollLeft = LEFT_COL_WIDTH + todayOffsetPx - container.clientWidth / 2
   }
 
-  // "Hoje" always switches to the day-level zoom too — that's the level
-  // where landing on today's exact position is actually useful; jumping to
-  // today while still zoomed out to weeks/months left the marker barely
-  // distinguishable from its neighbors. Calls scrollToToday directly (not
-  // just setZoom) so it still re-centers when the zoom was already 'days'
-  // — the effect below only re-runs scrollToToday when zoom itself changes.
+  // "Hoje" always switches to the 'hours' zoom too (the 24h view of today)
+  // — that's the level where landing on the exact current moment is
+  // actually useful; jumping to today while still zoomed out to
+  // days/weeks/months left the marker barely distinguishable from its
+  // neighbors. Calls scrollToToday directly (not just setZoom) so it still
+  // re-centers when the zoom was already 'hours' — the effect below only
+  // re-runs scrollToToday when zoom itself changes.
   function handleTodayClick() {
-    setZoom('days')
+    setZoom('hours')
     scrollToToday()
   }
 

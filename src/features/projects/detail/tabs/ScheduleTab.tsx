@@ -29,12 +29,13 @@ import { fetchAssignableUsers } from '@/features/users/usersApi'
 import {
   computeVisibleRange,
   daysBetweenISO,
+  minutesNowSinceMidnight,
   todayISO,
   ZOOM_PX_PER_DAY,
   type TimelineZoom,
 } from '@/features/agenda/timelineMath'
 
-const ZOOM_OPTIONS: TimelineZoom[] = ['days', 'weeks', 'months']
+const ZOOM_OPTIONS: TimelineZoom[] = ['hours', 'days', 'weeks', 'months']
 // Matches AgendaTimeline's own (unexported) left-column width — AgendaPage
 // duplicates the same constant locally for the same reason.
 const TIMELINE_LEFT_COL_WIDTH = 220
@@ -141,6 +142,11 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
   function scrollTimelineToToday() {
     const container = timelineScrollRef.current
     if (!container || !timelineBar) return
+    if (zoom === 'hours') {
+      const todayOffsetPx = (minutesNowSinceMidnight() / (24 * 60)) * ZOOM_PX_PER_DAY.hours
+      container.scrollLeft = TIMELINE_LEFT_COL_WIDTH + todayOffsetPx - container.clientWidth / 2
+      return
+    }
     const dates = [
       timelineBar.start,
       timelineBar.end,
@@ -152,10 +158,10 @@ export function ScheduleTab({ draft }: ScheduleTabProps) {
     container.scrollLeft = TIMELINE_LEFT_COL_WIDTH + todayOffsetPx - container.clientWidth / 2
   }
 
-  // "Hoje" always switches to the day-level zoom too — see the matching
+  // "Hoje" always switches to the 'hours' zoom too — see the matching
   // comment on AgendaPage's handleTodayClick.
   function handleTodayClick() {
-    setZoom('days')
+    setZoom('hours')
     scrollTimelineToToday()
   }
 
