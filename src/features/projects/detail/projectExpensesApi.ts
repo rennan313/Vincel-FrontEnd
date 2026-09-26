@@ -16,6 +16,8 @@ export interface ProjectExpense {
   dueDate?: string | null
   status: PaymentStatus
   paidAt?: string | null
+  /** Exclui da média mensal por categoria — pontual/fora do padrão. */
+  excludeFromAverage?: boolean
 }
 
 export interface ExpensePayload {
@@ -27,6 +29,7 @@ export interface ExpensePayload {
   dueDate?: string | null
   status?: PaymentStatus
   paidAt?: string
+  excludeFromAverage?: boolean
 }
 
 export function fetchProjectExpenses(projectId: string): Promise<ProjectExpense[]> {

@@ -233,6 +233,8 @@
     "markPending": "Marcar como pendente",
     "companyExpense": "Despesa da empresa",
     "recurringHint": "Repete: {{frequency}}",
+    "excludeFromAverageOn": "Não considerar na média por categoria",
+    "excludeFromAverageOff": "Considerar na média por categoria",
     "newCompanyExpense": "Nova despesa",
     "removeAction": "Remover {{name}}",
     "removeTitle": "Excluir despesa",
@@ -241,6 +243,7 @@
       "receivables": "A Receber",
       "payables": "A Pagar",
       "bills": "Contas Fixas",
+      "categorySpend": "Por Categoria",
       "cashflow": "Fluxo de Caixa"
     },
     "columns": {
@@ -291,6 +294,17 @@
       },
       "unscheduledReceivablesNote": "{{amount}} em honorários pendentes sem vencimento definido não entram nesta projeção.",
       "unscheduledPayablesNote": "{{amount}} em despesas pendentes sem vencimento definido não entram nesta projeção."
+    },
+    "categorySpend": {
+      "chartTitle": "Média mensal por categoria",
+      "tableTitle": "Gasto por categoria",
+      "hint": "Só considera despesas já pagas nos últimos 6 meses. Um lançamento marcado como \"não considerar na média\" não entra nessa conta.",
+      "columns": {
+        "category": "Categoria",
+        "total": "Total do período",
+        "average": "Média mensal",
+        "count": "Lançamentos"
+      }
     }
   },
   "table": {

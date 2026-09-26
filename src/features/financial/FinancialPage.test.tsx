@@ -17,6 +17,8 @@ const {
   updateCompanyExpenseMock,
   createCompanyExpenseMock,
   fetchPayablesMock,
+  fetchCategorySpendMock,
+  updateProjectExpenseMock,
 } = vi.hoisted(() => ({
   MOCK_RECEIVABLES: [
     {
@@ -64,6 +66,7 @@ const {
       status: 'PENDING' as const,
       paidAt: null,
       recurring: false,
+      excludeFromAverage: false,
     },
     {
       kind: 'company' as const,
@@ -79,12 +82,15 @@ const {
       paidAt: null,
       recurring: true,
       recurringFrequency: 'weekly' as const,
+      excludeFromAverage: false,
     },
   ],
   updateInstallmentMock: vi.fn().mockResolvedValue({}),
   updateCompanyExpenseMock: vi.fn().mockResolvedValue({}),
   createCompanyExpenseMock: vi.fn().mockResolvedValue({}),
   fetchPayablesMock: vi.fn(),
+  fetchCategorySpendMock: vi.fn().mockResolvedValue({ months: 6, rows: [] }),
+  updateProjectExpenseMock: vi.fn().mockResolvedValue({}),
 }))
 
 fetchPayablesMock.mockResolvedValue({
@@ -116,6 +122,7 @@ vi.mock('@/features/financial/financialApi', async () => {
       unscheduledReceivables: 0,
       unscheduledPayables: 0,
     }),
+    fetchCategorySpend: fetchCategorySpendMock,
     updateInstallment: updateInstallmentMock,
   }
 })
@@ -124,7 +131,7 @@ vi.mock('@/features/projects/detail/projectExpensesApi', async () => {
   const actual = await vi.importActual('@/features/projects/detail/projectExpensesApi')
   return {
     ...actual,
-    updateProjectExpense: vi.fn().mockResolvedValue({}),
+    updateProjectExpense: updateProjectExpenseMock,
   }
 })
 
@@ -241,6 +248,38 @@ describe('FinancialPage', () => {
       screen.queryByPlaceholderText('Buscar por projeto, cliente ou descrição'),
     ).not.toBeInTheDocument()
     expect(screen.queryByText('Parcela 1')).not.toBeInTheDocument()
+  })
+
+  it('switches to the Por Categoria tab and renders fetchCategorySpend data', async () => {
+    fetchCategorySpendMock.mockResolvedValue({
+      months: 6,
+      rows: [{ category: 'rent', total: 27000, average: 4500, count: 6 }],
+    })
+    loginAs('ADMIN')
+    renderFinancialPage()
+    await waitFor(() => expect(screen.getByText('Parcela 1')).toBeInTheDocument())
+
+    fireEvent.click(screen.getByRole('button', { name: 'Por Categoria' }))
+
+    await waitFor(() => expect(screen.getByText('Aluguel')).toBeInTheDocument())
+    expect(screen.getByText('R$ 27.000,00')).toBeInTheDocument()
+  })
+
+  it('toggles excludeFromAverage on a payable row via the eye icon', async () => {
+    loginAs('ADMIN')
+    renderFinancialPage()
+    fireEvent.click(await screen.findByRole('button', { name: 'A Pagar' }))
+    await waitFor(() => expect(screen.getByText('Taxa da prefeitura')).toBeInTheDocument())
+
+    // "Taxa da prefeitura" (e1, ProjectExpense) é a primeira linha —
+    // excludeFromAverage começa false, então o título do botão é "Considerar...".
+    fireEvent.click(screen.getAllByTitle('Considerar na média por categoria')[0])
+
+    await waitFor(() =>
+      expect(updateProjectExpenseMock).toHaveBeenCalledWith('p1', 'e1', {
+        excludeFromAverage: true,
+      }),
+    )
   })
 
   it('switches to the Contas Fixas tab and requests only recurring payables', async () => {

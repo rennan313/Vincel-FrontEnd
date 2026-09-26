@@ -58,12 +58,14 @@ export function ProjectExpensesEditor() {
       name,
       amount,
       category,
+      excludeFromAverage,
     }: {
       id: string
       name: string
       amount: number
       category?: ExpenseCategory | null
-    }) => updateProjectExpense(projectId!, id, { name, amount, category }),
+      excludeFromAverage?: boolean
+    }) => updateProjectExpense(projectId!, id, { name, amount, category, excludeFromAverage }),
     onError: handleError,
   })
 
@@ -79,7 +81,7 @@ export function ProjectExpensesEditor() {
 
   function updateLocal(
     id: string,
-    patch: Partial<Pick<ProjectExpense, 'name' | 'amount' | 'category'>>,
+    patch: Partial<Pick<ProjectExpense, 'name' | 'amount' | 'category' | 'excludeFromAverage'>>,
   ) {
     setExpenses((current) =>
       current.map((expense) => (expense.id === id ? { ...expense, ...patch } : expense)),
@@ -94,6 +96,7 @@ export function ProjectExpensesEditor() {
       name: expense.name,
       amount: expense.amount,
       category: expense.category,
+      excludeFromAverage: expense.excludeFromAverage,
     })
   }
 
@@ -152,6 +155,34 @@ export function ProjectExpensesEditor() {
                 }
                 onBlur={() => commit(expense.id)}
                 className="w-40 text-right"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                icon={expense.excludeFromAverage ? 'EyeOff' : 'Eye'}
+                aria-label={
+                  expense.excludeFromAverage
+                    ? 'Não considerar na média por categoria'
+                    : 'Considerar na média por categoria'
+                }
+                title={
+                  expense.excludeFromAverage
+                    ? 'Não considerar na média por categoria'
+                    : 'Considerar na média por categoria'
+                }
+                className={expense.excludeFromAverage ? 'text-(--th-accent)' : undefined}
+                onClick={() => {
+                  const excludeFromAverage = !expense.excludeFromAverage
+                  updateLocal(expense.id, { excludeFromAverage })
+                  updateMutation.mutate({
+                    id: expense.id,
+                    name: expense.name,
+                    amount: expense.amount,
+                    category: expense.category,
+                    excludeFromAverage,
+                  })
+                }}
               />
               <Button
                 type="button"
