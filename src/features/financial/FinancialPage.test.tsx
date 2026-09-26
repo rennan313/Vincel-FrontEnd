@@ -22,6 +22,7 @@ const {
       projectId: 'p1',
       projectName: 'Residência Alto da Serra',
       clientName: 'Ana Beatriz Ferreira',
+      paymentMethod: 'installments' as const,
       installmentId: 'i1',
       label: 'Parcela 1',
       amount: 5000,
@@ -39,6 +40,7 @@ const {
       projectId: 'p2',
       projectName: 'Escritório Vila Nova',
       clientName: 'Carlos Eduardo Souza',
+      paymentMethod: 'cash' as const,
       installmentId: 'cash',
       label: 'Pagamento único',
       amount: 8000,
@@ -181,6 +183,18 @@ describe('FinancialPage', () => {
     expect(screen.getByText('Pagamento único')).toBeInTheDocument()
     // The full-ISO dueDate rendered as a plain date, not "Invalid Date".
     expect(screen.getByText('01/12/2026')).toBeInTheDocument()
+    // Forma de pagamento escolhida por cada projeto — só na aba A Receber.
+    expect(screen.getByText('Parcelado')).toBeInTheDocument()
+    expect(screen.getByText('À vista')).toBeInTheDocument()
+  })
+
+  it('hides the payment-method column on the payables tab (not a project-level concept there)', async () => {
+    loginAs('ADMIN')
+    renderFinancialPage()
+    fireEvent.click(await screen.findByRole('button', { name: 'A Pagar' }))
+
+    await waitFor(() => expect(screen.getByText('Taxa da prefeitura')).toBeInTheDocument())
+    expect(screen.queryByText('Forma de pagamento')).not.toBeInTheDocument()
   })
 
   it('switches to the payables tab, showing both project and company expenses', async () => {

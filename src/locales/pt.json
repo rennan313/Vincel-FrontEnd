@@ -242,6 +242,7 @@
     },
     "columns": {
       "project": "Projeto",
+      "paymentMethod": "Forma de pagamento",
       "description": "Descrição",
       "amount": "Valor",
       "dueDate": "Vencimento",

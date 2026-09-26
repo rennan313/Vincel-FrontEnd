@@ -36,6 +36,8 @@ import {
   type PaymentStatus,
 } from '@/features/financial/financialApi'
 import { PAYMENT_STATUS_VARIANT, resolvePaymentDisplayStatus } from '@/features/financial/paymentStatus'
+import { PAYMENT_METHOD_LABEL } from '@/features/projects/create/reviewFormatters'
+import type { PaymentMethod } from '@/features/projects/create/types'
 
 const PAGE_SIZE = 10
 const TAB_OPTIONS = ['receivables', 'payables'] as const
@@ -60,6 +62,9 @@ interface FinancialRow {
   projectId: string | null
   projectName: string | null
   clientName: string | null
+  // Só existe na aba A Receber (forma de pagamento é um conceito do
+  // honorário/projeto, não de uma despesa avulsa) — null na aba A Pagar.
+  paymentMethod: PaymentMethod | null
   description: string
   amount: number
   // yyyy-mm-dd — a API devolve DateTime como ISO completo (com hora),
@@ -248,6 +253,7 @@ export function FinancialPage() {
           projectId: row.projectId,
           projectName: row.projectName,
           clientName: row.clientName,
+          paymentMethod: row.paymentMethod,
           description: row.label,
           amount: row.amount,
           dueDate: row.dueDate ? row.dueDate.slice(0, 10) : null,
@@ -261,6 +267,7 @@ export function FinancialPage() {
           projectId: row.projectId,
           projectName: row.projectName,
           clientName: row.clientName,
+          paymentMethod: null,
           description: row.name,
           amount: row.amount,
           dueDate: row.dueDate ? row.dueDate.slice(0, 10) : null,
@@ -287,6 +294,24 @@ export function FinancialPage() {
           <span className="text-(--th-text-muted)">{t('financial.companyExpense')}</span>
         ),
     },
+    // Só faz sentido pra honorário (forma de pagamento é um conceito do
+    // projeto/plano, não de uma despesa avulsa) — omitida na aba A Pagar.
+    ...(tab === 'receivables'
+      ? [
+          {
+            key: 'paymentMethod',
+            header: t('financial.columns.paymentMethod'),
+            render: (row: FinancialRow) =>
+              row.paymentMethod ? (
+                <span className="text-(--th-text-muted)">
+                  {PAYMENT_METHOD_LABEL[row.paymentMethod]}
+                </span>
+              ) : (
+                '—'
+              ),
+          },
+        ]
+      : []),
     {
       key: 'description',
       header: t('financial.columns.description'),

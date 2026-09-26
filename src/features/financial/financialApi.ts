@@ -1,4 +1,5 @@
 import { apiFetch } from '@/lib/apiClient'
+import type { PaymentMethod } from '@/features/projects/create/types'
 
 export type PaymentStatus = 'PENDING' | 'PAID'
 
@@ -21,6 +22,10 @@ export interface ReceivableRow {
   projectId: string
   projectName: string
   clientName: string
+  // Forma de pagamento escolhida pro projeto inteiro (à vista/parcelado/por
+  // etapa/mensal/personalizado) — igual em toda parcela de um mesmo
+  // projeto, nunca por parcela.
+  paymentMethod: PaymentMethod | null
   installmentId: string
   label: string
   amount: number
