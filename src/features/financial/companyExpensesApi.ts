@@ -1,11 +1,13 @@
 import { apiFetch } from '@/lib/apiClient'
 import type { PaymentStatus } from '@/features/financial/financialApi'
 import type { ExpenseCategory } from '@/features/financial/expenseCategory'
+import type { RecurringFrequency } from '@/features/financial/recurringFrequency'
 
 /** A custo do próprio escritório que não pertence a nenhum projeto —
  * aluguel, folha de pagamento, softwares, contas fixas. Mesmo shape de
  * ProjectExpense (projectExpensesApi.ts), mais `recurring`: quando true,
- * marcar esta ocorrência como paga já gera a do mês seguinte sozinha. */
+ * marcar esta ocorrência como paga já gera a próxima sozinha, deslocada
+ * por `recurringFrequency` (sem valor, tratado como "monthly"). */
 export interface CompanyExpense {
   id: string
   name: string
@@ -16,6 +18,7 @@ export interface CompanyExpense {
   status: PaymentStatus
   paidAt?: string | null
   recurring: boolean
+  recurringFrequency?: RecurringFrequency | null
 }
 
 export interface CompanyExpensesPageResult {
@@ -35,6 +38,7 @@ export interface CompanyExpensePayload {
   status?: PaymentStatus
   paidAt?: string
   recurring?: boolean
+  recurringFrequency?: RecurringFrequency
 }
 
 export function fetchCompanyExpenses(

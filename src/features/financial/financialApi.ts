@@ -1,6 +1,7 @@
 import { apiFetch } from '@/lib/apiClient'
 import type { PaymentMethod } from '@/features/projects/create/types'
 import type { ExpenseCategory } from '@/features/financial/expenseCategory'
+import type { RecurringFrequency } from '@/features/financial/recurringFrequency'
 
 export type PaymentStatus = 'PENDING' | 'PAID'
 
@@ -51,6 +52,10 @@ export interface PayableRow {
   status: PaymentStatus
   paidAt: string | null
   recurring: boolean
+  // Só relevante quando recurring é true — null pra ProjectExpense (nunca
+  // recorrente) e pra CompanyExpense recorrente sem frequência definida
+  // ainda (registro antigo, tratado como "monthly" na leitura).
+  recurringFrequency: RecurringFrequency | null
 }
 
 export interface FinancialPageResult<T> {

@@ -41,6 +41,11 @@ import {
   EXPENSE_CATEGORY_OPTIONS,
   type ExpenseCategory,
 } from '@/features/financial/expenseCategory'
+import {
+  RECURRING_FREQUENCY_LABEL,
+  RECURRING_FREQUENCY_OPTIONS,
+  type RecurringFrequency,
+} from '@/features/financial/recurringFrequency'
 import { PAYMENT_METHOD_LABEL } from '@/features/projects/create/reviewFormatters'
 import type { PaymentMethod } from '@/features/projects/create/types'
 import { CashFlowTab } from '@/features/financial/CashFlowTab'
@@ -82,6 +87,10 @@ interface FinancialRow {
   dueDate: string | null
   status: PaymentStatus
   recurring: boolean
+  // Só relevante quando recurring é true — null caso contrário (inclusive
+  // pra registro antigo sem frequência ainda definida, tratado como
+  // "monthly" na hora de exibir).
+  recurringFrequency: RecurringFrequency | null
 }
 
 interface NewExpenseForm {
@@ -90,6 +99,7 @@ interface NewExpenseForm {
   category: ExpenseCategory | null
   dueDate: string | null
   recurring: boolean
+  recurringFrequency: RecurringFrequency
 }
 
 const EMPTY_NEW_EXPENSE: NewExpenseForm = {
@@ -98,6 +108,7 @@ const EMPTY_NEW_EXPENSE: NewExpenseForm = {
   category: null,
   dueDate: null,
   recurring: false,
+  recurringFrequency: 'monthly',
 }
 
 export function FinancialPage() {
@@ -275,6 +286,7 @@ export function FinancialPage() {
           dueDate: row.dueDate ? row.dueDate.slice(0, 10) : null,
           status: row.status,
           recurring: false,
+          recurringFrequency: null,
         }))
       : (payablesQuery.data?.data ?? []).map((row) => ({
           key: row.kind === 'project' ? `${row.projectId}-${row.expenseId}` : `company-${row.expenseId}`,
@@ -290,6 +302,7 @@ export function FinancialPage() {
           dueDate: row.dueDate ? row.dueDate.slice(0, 10) : null,
           status: row.status,
           recurring: row.recurring,
+          recurringFrequency: row.recurringFrequency,
         }))
 
   const columns: TableColumn<FinancialRow>[] = [
@@ -336,7 +349,11 @@ export function FinancialPage() {
         <div className="flex items-center gap-1.5">
           <span>{row.description}</span>
           {row.recurring && (
-            <span title={t('financial.recurringHint')}>
+            <span
+              title={t('financial.recurringHint', {
+                frequency: RECURRING_FREQUENCY_LABEL[row.recurringFrequency ?? 'monthly'],
+              })}
+            >
               <ICONS.Repeat className="size-3.5 shrink-0 text-(--th-text-muted)" />
             </span>
           )}
@@ -457,6 +474,7 @@ export function FinancialPage() {
       category: newExpense.category,
       dueDate: newExpense.dueDate ?? undefined,
       recurring: newExpense.recurring,
+      recurringFrequency: newExpense.recurring ? newExpense.recurringFrequency : undefined,
     })
   }
 
@@ -628,17 +646,38 @@ export function FinancialPage() {
             onChange={(date) => setNewExpense((current) => ({ ...current, dueDate: date }))}
             hint={t('financial.form.dueDateHint')}
           />
-          <label className="flex items-center gap-2 text-sm text-(--th-text)">
-            <input
-              type="checkbox"
-              checked={newExpense.recurring}
-              onChange={(event) =>
-                setNewExpense((current) => ({ ...current, recurring: event.target.checked }))
-              }
-              className="size-4 accent-(--th-accent)"
-            />
-            {t('financial.form.recurring')}
-          </label>
+          <div>
+            <label className="flex items-center gap-2 text-sm text-(--th-text)">
+              <input
+                type="checkbox"
+                checked={newExpense.recurring}
+                onChange={(event) =>
+                  setNewExpense((current) => ({ ...current, recurring: event.target.checked }))
+                }
+                className="size-4 accent-(--th-accent)"
+              />
+              {t('financial.form.recurring')}
+            </label>
+            {newExpense.recurring && (
+              <select
+                aria-label={t('financial.form.frequency')}
+                value={newExpense.recurringFrequency}
+                onChange={(event) =>
+                  setNewExpense((current) => ({
+                    ...current,
+                    recurringFrequency: event.target.value as RecurringFrequency,
+                  }))
+                }
+                className="mt-2 h-10 w-full rounded-lg border border-(--th-border) bg-(--th-bg-card) px-3 text-sm text-(--th-text) outline-none transition-colors focus:ring-2 focus:ring-(--th-border-focus)"
+              >
+                {RECURRING_FREQUENCY_OPTIONS.map(({ value, label }) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
         </div>
       </Modal>
 

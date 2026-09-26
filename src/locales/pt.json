@@ -232,7 +232,7 @@
     "markPaid": "Marcar como pago",
     "markPending": "Marcar como pendente",
     "companyExpense": "Despesa da empresa",
-    "recurringHint": "Repete mensalmente",
+    "recurringHint": "Repete: {{frequency}}",
     "newCompanyExpense": "Nova despesa",
     "removeAction": "Remover {{name}}",
     "removeTitle": "Excluir despesa",
@@ -271,7 +271,8 @@
       "noCategory": "Sem categoria",
       "dueDate": "Vencimento",
       "dueDateHint": "Opcional",
-      "recurring": "Repete todo mês",
+      "recurring": "É recorrente",
+      "frequency": "Frequência",
       "cancel": "Cancelar",
       "save": "Salvar"
     },

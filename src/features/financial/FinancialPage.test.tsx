@@ -78,6 +78,7 @@ const {
       status: 'PENDING' as const,
       paidAt: null,
       recurring: true,
+      recurringFrequency: 'weekly' as const,
     },
   ],
   updateInstallmentMock: vi.fn().mockResolvedValue({}),
@@ -223,6 +224,9 @@ describe('FinancialPage', () => {
     // Categoria de cada despesa (uma de projeto, uma da empresa).
     expect(screen.getByText('Impostos e taxas')).toBeInTheDocument()
     expect(screen.getByText('Aluguel')).toBeInTheDocument()
+    // O ícone de recorrência reflete a frequência real da despesa (weekly),
+    // não um texto fixo de "mensalmente".
+    expect(screen.getByTitle('Repete: Toda semana')).toBeInTheDocument()
   })
 
   it('switches to the Fluxo de Caixa tab, hiding the search/table of the other tabs', async () => {
@@ -299,6 +303,31 @@ describe('FinancialPage', () => {
           name: 'Assinatura de software',
           amount: 150,
           category: 'software',
+        }),
+        expect.anything(),
+      ),
+    )
+  })
+
+  it('sends the chosen recurringFrequency when "É recorrente" is checked', async () => {
+    loginAs('ADMIN')
+    renderFinancialPage()
+    fireEvent.click(await screen.findByRole('button', { name: 'A Pagar' }))
+    await waitFor(() => expect(screen.getByText('Aluguel do escritório')).toBeInTheDocument())
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nova despesa' }))
+    fireEvent.change(screen.getByLabelText('Nome'), { target: { value: 'Seguro predial' } })
+    fireEvent.change(screen.getByLabelText('Valor'), { target: { value: '80000' } })
+    fireEvent.click(screen.getByLabelText('É recorrente'))
+    fireEvent.change(screen.getByLabelText('Frequência'), { target: { value: 'yearly' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }))
+
+    await waitFor(() =>
+      expect(createCompanyExpenseMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Seguro predial',
+          recurring: true,
+          recurringFrequency: 'yearly',
         }),
         expect.anything(),
       ),
