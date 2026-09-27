@@ -1,11 +1,47 @@
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { ChartCard, ChartCardSkeleton, ChartEmptyState, ChartTooltip } from '@/components/ui/Chart'
+import { ChartCard, ChartCardSkeleton, ChartEmptyState } from '@/components/ui/Chart'
+import { BarChart } from '@/components/ui/echarts/BarChart'
 import { Table, type TableColumn } from '@/components/ui/Table'
 import { formatBRLAmount } from '@/lib/masks'
 import { EXPENSE_CATEGORY_LABEL } from '@/features/financial/expenseCategory'
 import { fetchCategorySpend, type CategorySpendRow } from '@/features/financial/financialApi'
+
+function categoryLabel(t: (key: string) => string, category: CategorySpendRow['category']): string {
+  return category ? EXPENSE_CATEGORY_LABEL[category] : t('financial.form.noCategory')
+}
+
+interface CategorySpendChartProps {
+  rows: CategorySpendRow[]
+}
+
+/** Só o gráfico (média mensal por categoria), sem a tabela abaixo —
+ * extraído pra o Dashboard mostrar uma versão condensada ao lado da
+ * quebra completa que CategorySpendTab usa, ambos lendo a mesma query. */
+export function CategorySpendChart({ rows }: CategorySpendChartProps) {
+  const { t } = useTranslation()
+  // A chave usada em `categories` abaixo também é o nome de série que
+  // aparece no tooltip do BarChart (ver formatter em components/ui/echarts/
+  // BarChart.tsx) — por isso já nasce traduzida, em vez de um
+  // `average: number` com um label à parte.
+  const averageLabel = t('financial.categorySpend.columns.average')
+  const chartData = rows.map((row) => ({
+    category: categoryLabel(t, row.category),
+    [averageLabel]: row.average,
+  }))
+
+  if (rows.length === 0) return <ChartEmptyState message={t('financial.empty')} />
+
+  return (
+    <BarChart
+      data={chartData}
+      index="category"
+      categories={[averageLabel]}
+      valueFormatter={formatBRLAmount}
+      className="h-60"
+    />
+  )
+}
 
 /**
  * "Em que a empresa costuma gastar" — média mensal de gasto por categoria,
@@ -24,20 +60,13 @@ export function CategorySpendTab() {
 
   const rows = data?.rows ?? []
 
-  function categoryLabel(category: CategorySpendRow['category']): string {
-    return category ? EXPENSE_CATEGORY_LABEL[category] : t('financial.form.noCategory')
-  }
-
-  const chartData = rows.map((row) => ({
-    category: categoryLabel(row.category),
-    average: row.average,
-  }))
-
   const columns: TableColumn<CategorySpendRow>[] = [
     {
       key: 'category',
       header: t('financial.categorySpend.columns.category'),
-      render: (row) => <span className="font-medium text-(--th-text)">{categoryLabel(row.category)}</span>,
+      render: (row) => (
+        <span className="font-medium text-(--th-text)">{categoryLabel(t, row.category)}</span>
+      ),
     },
     {
       key: 'total',
@@ -65,39 +94,7 @@ export function CategorySpendTab() {
         <ChartCardSkeleton />
       ) : (
         <ChartCard title={t('financial.categorySpend.chartTitle')}>
-          {rows.length === 0 ? (
-            <ChartEmptyState message={t('financial.empty')} />
-          ) : (
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={chartData} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
-                <CartesianGrid vertical={false} stroke="var(--th-border)" strokeDasharray="0" />
-                <XAxis
-                  dataKey="category"
-                  axisLine={{ stroke: 'var(--th-border)' }}
-                  tickLine={false}
-                  tick={{ fill: 'var(--th-text-muted)', fontSize: 12 }}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  width={64}
-                  tick={{ fill: 'var(--th-text-muted)', fontSize: 12 }}
-                  tickFormatter={(value: number) => value.toLocaleString('pt-BR')}
-                />
-                <Tooltip
-                  cursor={{ fill: 'var(--th-bg-elevated)' }}
-                  content={<ChartTooltip valueFormatter={formatBRLAmount} />}
-                />
-                <Bar
-                  dataKey="average"
-                  name={t('financial.categorySpend.columns.average')}
-                  fill="var(--chart-1)"
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={36}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
+          <CategorySpendChart rows={rows} />
         </ChartCard>
       )}
 
