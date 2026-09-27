@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { ChartCard, ChartCardSkeleton, ChartEmptyState, ChartTooltip } from '@/components/ui/Chart'
+import { ChartCard, ChartCardSkeleton, ChartEmptyState } from '@/components/ui/Chart'
+import { BarChart } from '@/components/ui/tremor/BarChart'
 import { Table, type TableColumn } from '@/components/ui/Table'
 import { formatBRLAmount } from '@/lib/masks'
 import { EXPENSE_CATEGORY_LABEL } from '@/features/financial/expenseCategory'
@@ -20,43 +20,31 @@ interface CategorySpendChartProps {
  * quebra completa que CategorySpendTab usa, ambos lendo a mesma query. */
 export function CategorySpendChart({ rows }: CategorySpendChartProps) {
   const { t } = useTranslation()
+  // A chave usada em `categories` abaixo também é o que aparece no tooltip
+  // do BarChart do Tremor (ver ChartTooltip lá dentro) — por isso já nasce
+  // traduzida, em vez de um `average: number` com um label à parte.
+  const averageLabel = t('financial.categorySpend.columns.average')
   const chartData = rows.map((row) => ({
     category: categoryLabel(t, row.category),
-    average: row.average,
+    [averageLabel]: row.average,
   }))
 
   if (rows.length === 0) return <ChartEmptyState message={t('financial.empty')} />
 
   return (
-    <ResponsiveContainer width="100%" height={240}>
-      <BarChart data={chartData} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
-        <CartesianGrid vertical={false} stroke="var(--th-border)" strokeDasharray="0" />
-        <XAxis
-          dataKey="category"
-          axisLine={{ stroke: 'var(--th-border)' }}
-          tickLine={false}
-          tick={{ fill: 'var(--th-text-muted)', fontSize: 12 }}
-        />
-        <YAxis
-          axisLine={false}
-          tickLine={false}
-          width={64}
-          tick={{ fill: 'var(--th-text-muted)', fontSize: 12 }}
-          tickFormatter={(value: number) => value.toLocaleString('pt-BR')}
-        />
-        <Tooltip
-          cursor={{ fill: 'var(--th-bg-elevated)' }}
-          content={<ChartTooltip valueFormatter={formatBRLAmount} />}
-        />
-        <Bar
-          dataKey="average"
-          name={t('financial.categorySpend.columns.average')}
-          fill="var(--chart-1)"
-          radius={[4, 4, 0, 0]}
-          maxBarSize={36}
-        />
-      </BarChart>
-    </ResponsiveContainer>
+    <BarChart
+      data={chartData}
+      index="category"
+      categories={[averageLabel]}
+      colors={['blue']}
+      valueFormatter={formatBRLAmount}
+      showLegend={false}
+      // Default do Tremor (56px) foi pensado pra rótulos curtos tipo "$50" —
+      // "R$ 3.000,00" cortava à esquerda do eixo Y. 88px acomoda o formato
+      // BRL sem cortar (visto num teste manual com valores de até 5 dígitos).
+      yAxisWidth={88}
+      className="h-60"
+    />
   )
 }
 
