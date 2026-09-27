@@ -659,6 +659,13 @@ const BarChart = React.forwardRef<HTMLDivElement, BarChartProps>(
         <ResponsiveContainer>
           <RechartsBarChart
             data={data}
+            // Recharts v3 (nosso pin, vs v2 quando este componente foi escrito
+            // pelo Tremor) adiciona por padrão uma "accessibility layer" que
+            // captura foco de teclado ao clicar numa barra — sem nenhum
+            // estilo próprio pra esse foco aqui, isso só aparecia como o
+            // contorno azul nativo do navegador em volta do gráfico inteiro.
+            // Desligado até termos uma navegação por teclado real pra barras.
+            accessibilityLayer={false}
             onClick={
               hasOnValueChange && (activeLegend || activeBar)
                 ? () => {
