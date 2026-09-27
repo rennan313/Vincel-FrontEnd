@@ -1,18 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
-import { ChartCard, ChartCardSkeleton, ChartEmptyState, ChartTooltip } from '@/components/ui/Chart'
+import { BarChart } from '@/components/ui/echarts/BarChart'
+import { PieChart } from '@/components/ui/echarts/PieChart'
+import { ChartCard, ChartCardSkeleton, ChartEmptyState } from '@/components/ui/Chart'
+import { resolveCssColor } from '@/components/ui/echarts/shared'
 import { formatBRLAmount } from '@/lib/masks'
 import type { ProjectStatus } from '@/features/projects/projectsApi'
 import {
@@ -102,28 +93,15 @@ function StatusDonut() {
         <ChartEmptyState message="Nenhum projeto cadastrado ainda." />
       ) : (
         <div className="flex flex-col items-center gap-4 sm:flex-row">
-          <div className="size-[180px] shrink-0">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={slices}
-                  dataKey="value"
-                  nameKey="label"
-                  cx={90} cy={90} innerRadius={54}
-                  outerRadius={80}
-                  paddingAngle={2}
-                  isAnimationActive={false}
-                  stroke="var(--th-bg-card)"
-                  strokeWidth={2}
-                >
-                  {slices.map((slice) => (
-                    <Cell key={slice.status} fill={slice.color} />
-                  ))}
-                </Pie>
-                <Tooltip content={<ChartTooltip />} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          <PieChart
+            className="size-[180px] shrink-0"
+            slices={slices.map((slice) => ({
+              key: slice.status,
+              label: slice.label,
+              value: slice.value,
+              color: resolveCssColor(slice.color),
+            }))}
+          />
           <ul className="w-full flex-1 space-y-2">
             {slices.map((slice) => (
               <LegendRow
@@ -161,28 +139,15 @@ function TypeDonut() {
         <ChartEmptyState message="Nenhum projeto cadastrado ainda." />
       ) : (
         <div className="flex flex-col items-center gap-4 sm:flex-row">
-          <div className="size-[180px] shrink-0">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={slices}
-                  dataKey="value"
-                  nameKey="type"
-                  cx={90} cy={90} innerRadius={54}
-                  outerRadius={80}
-                  paddingAngle={2}
-                  isAnimationActive={false}
-                  stroke="var(--th-bg-card)"
-                  strokeWidth={2}
-                >
-                  {slices.map((slice) => (
-                    <Cell key={slice.type} fill={slice.color} />
-                  ))}
-                </Pie>
-                <Tooltip content={<ChartTooltip />} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          <PieChart
+            className="size-[180px] shrink-0"
+            slices={slices.map((slice) => ({
+              key: slice.type,
+              label: slice.type,
+              value: slice.value,
+              color: resolveCssColor(slice.color),
+            }))}
+          />
           <ul className="w-full flex-1 space-y-2">
             {slices.map((slice) => (
               <LegendRow
@@ -221,39 +186,24 @@ function MonthlyBarChart<T extends { month: string }>({
 }: MonthlyBarChartProps<T>) {
   const chartData = data.map((row) => ({
     month: formatMonthLabel(row.month),
-    value: getValue(row),
+    [title]: getValue(row),
   }))
-  const hasData = chartData.some((row) => row.value > 0)
+  const hasData = data.some((row) => getValue(row) > 0)
 
   return (
     <ChartCard title={title}>
       {!hasData ? (
         <ChartEmptyState message="Nenhum projeto cadastrado ainda." />
       ) : (
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={chartData} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
-            <CartesianGrid vertical={false} stroke="var(--th-border)" strokeDasharray="0" />
-            <XAxis
-              dataKey="month"
-              axisLine={{ stroke: 'var(--th-border)' }}
-              tickLine={false}
-              tick={{ fill: 'var(--th-text-muted)', fontSize: 12 }}
-            />
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              width={56}
-              allowDecimals={false}
-              tick={{ fill: 'var(--th-text-muted)', fontSize: 12 }}
-              tickFormatter={axisFormatter}
-            />
-            <Tooltip
-              cursor={{ fill: 'var(--th-bg-elevated)' }}
-              content={<ChartTooltip valueFormatter={formatValue} />}
-            />
-            <Bar dataKey="value" name={title} fill="var(--chart-1)" radius={[4, 4, 0, 0]} maxBarSize={24} />
-          </BarChart>
-        </ResponsiveContainer>
+        <BarChart
+          data={chartData}
+          index="month"
+          categories={[title]}
+          valueFormatter={formatValue}
+          axisFormatter={axisFormatter}
+          barMaxWidth={24}
+          className="h-55"
+        />
       )}
     </ChartCard>
   )
