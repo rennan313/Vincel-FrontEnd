@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import type { ComposeOption } from 'echarts/core'
 import type { BarSeriesOption } from 'echarts/charts'
 import type { GridComponentOption, TooltipComponentOption } from 'echarts/components'
+import { cn } from '@/lib/cn'
 import { useThemeStore } from '@/store/themeStore'
 import { chartTooltipHtml, DEFAULT_COLOR_VARS, readCssVar, useEChartsInstance } from './shared'
 
@@ -106,5 +107,10 @@ export function BarChart({
     chart.setOption(option, { notMerge: true })
   }, [chartRef, data, index, categories, colors, valueFormatter, axisFormatter, barMaxWidth, allowDecimals, theme])
 
-  return <div ref={containerRef} className={className} />
+  // overflow-hidden+outline-none: o Chrome trata uma região com overflow/
+  // scroll (mesmo 1px de arredondamento entre o canvas do ECharts e este
+  // container) como focável por clique nativamente, pra permitir rolagem
+  // por teclado — mostra o anel de foco padrão em volta do gráfico inteiro.
+  // Nada aqui é navegável por teclado de verdade, então suprime os dois.
+  return <div ref={containerRef} className={cn(className, 'overflow-hidden outline-none')} />
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import type { ComposeOption } from 'echarts/core'
 import type { PieSeriesOption } from 'echarts/charts'
 import type { TooltipComponentOption } from 'echarts/components'
+import { cn } from '@/lib/cn'
 import { chartTooltipHtml, readCssVar, useEChartsInstance } from './shared'
 
 type EChartsOption = ComposeOption<PieSeriesOption | TooltipComponentOption>
@@ -66,5 +67,10 @@ export function PieChart({ slices, valueFormatter, className }: PieChartProps) {
     chart.setOption(option, { notMerge: true })
   }, [chartRef, slices, valueFormatter])
 
-  return <div ref={containerRef} className={className} />
+  // overflow-hidden+outline-none: o Chrome trata uma região com overflow/
+  // scroll (mesmo 1px de arredondamento entre o canvas do ECharts e este
+  // container) como focável por clique nativamente, pra permitir rolagem
+  // por teclado — mostra o anel de foco padrão em volta do gráfico inteiro.
+  // Nada aqui é navegável por teclado de verdade, então suprime os dois.
+  return <div ref={containerRef} className={cn(className, 'overflow-hidden outline-none')} />
 }
