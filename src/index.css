@@ -2,13 +2,6 @@
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/space-grotesk";
 
-/* Faz a variante `dark:` do Tailwind seguir o NOSSO toggle de tema
-   ([data-theme="dark"] no <html>, ver themeStore.ts) em vez do padrão do
-   Tailwind v4 (media query prefers-color-scheme, que segue só o SO). Sem
-   isso, qualquer componente que use `dark:*` (ex.: os vendorizados em
-   components/ui/tremor/) ficaria dessincronizado do toggle manual do app. */
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
-
 @theme {
   --font-sans: "Inter Variable", "system-ui", sans-serif;
   --font-heading: "Space Grotesk Variable", "Inter Variable", sans-serif;

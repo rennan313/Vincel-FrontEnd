@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { ChartCard, ChartCardSkeleton, ChartEmptyState } from '@/components/ui/Chart'
-import { BarChart } from '@/components/ui/tremor/BarChart'
+import { BarChart } from '@/components/ui/echarts/BarChart'
 import { Table, type TableColumn } from '@/components/ui/Table'
 import { formatBRLAmount } from '@/lib/masks'
 import { EXPENSE_CATEGORY_LABEL } from '@/features/financial/expenseCategory'
@@ -20,9 +20,10 @@ interface CategorySpendChartProps {
  * quebra completa que CategorySpendTab usa, ambos lendo a mesma query. */
 export function CategorySpendChart({ rows }: CategorySpendChartProps) {
   const { t } = useTranslation()
-  // A chave usada em `categories` abaixo também é o que aparece no tooltip
-  // do BarChart do Tremor (ver ChartTooltip lá dentro) — por isso já nasce
-  // traduzida, em vez de um `average: number` com um label à parte.
+  // A chave usada em `categories` abaixo também é o nome de série que
+  // aparece no tooltip do BarChart (ver formatter em components/ui/echarts/
+  // BarChart.tsx) — por isso já nasce traduzida, em vez de um
+  // `average: number` com um label à parte.
   const averageLabel = t('financial.categorySpend.columns.average')
   const chartData = rows.map((row) => ({
     category: categoryLabel(t, row.category),
@@ -36,13 +37,7 @@ export function CategorySpendChart({ rows }: CategorySpendChartProps) {
       data={chartData}
       index="category"
       categories={[averageLabel]}
-      colors={['blue']}
       valueFormatter={formatBRLAmount}
-      showLegend={false}
-      // Default do Tremor (56px) foi pensado pra rótulos curtos tipo "$50" —
-      // "R$ 3.000,00" cortava à esquerda do eixo Y. 88px acomoda o formato
-      // BRL sem cortar (visto num teste manual com valores de até 5 dígitos).
-      yAxisWidth={88}
       className="h-60"
     />
   )
