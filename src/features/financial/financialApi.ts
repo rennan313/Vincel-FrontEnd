@@ -56,6 +56,9 @@ export interface PayableRow {
   // recorrente) e pra CompanyExpense recorrente sem frequência definida
   // ainda (registro antigo, tratado como "monthly" na leitura).
   recurringFrequency: RecurringFrequency | null
+  // Exclui esta linha da média mensal por categoria (fetchCategorySpend) —
+  // nunca afeta o valor em si, só essa agregação.
+  excludeFromAverage: boolean
 }
 
 export interface FinancialPageResult<T> {
@@ -80,6 +83,20 @@ export interface CashFlowResult {
    * mostrados à parte. */
   unscheduledReceivables: number
   unscheduledPayables: number
+}
+
+export interface CategorySpendRow {
+  category: ExpenseCategory | null
+  total: number
+  average: number
+  count: number
+}
+
+export interface CategorySpendResult {
+  months: number
+  /** Ordenadas desc por average — só categorias com pelo menos um
+   * lançamento no período. */
+  rows: CategorySpendRow[]
 }
 
 export function fetchFinancialSummary(): Promise<FinancialSummary> {
@@ -116,6 +133,10 @@ export function fetchPayables(
 
 export function fetchCashFlow(): Promise<CashFlowResult> {
   return apiFetch<CashFlowResult>('/financial/cash-flow')
+}
+
+export function fetchCategorySpend(): Promise<CategorySpendResult> {
+  return apiFetch<CategorySpendResult>('/financial/category-spend')
 }
 
 /** Both fields optional — send just `status` to mark paid/pending, just

@@ -19,6 +19,7 @@ export interface CompanyExpense {
   paidAt?: string | null
   recurring: boolean
   recurringFrequency?: RecurringFrequency | null
+  excludeFromAverage?: boolean
 }
 
 export interface CompanyExpensesPageResult {
@@ -39,6 +40,7 @@ export interface CompanyExpensePayload {
   paidAt?: string
   recurring?: boolean
   recurringFrequency?: RecurringFrequency
+  excludeFromAverage?: boolean
 }
 
 export function fetchCompanyExpenses(

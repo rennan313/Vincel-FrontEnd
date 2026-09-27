@@ -49,9 +49,10 @@ import {
 import { PAYMENT_METHOD_LABEL } from '@/features/projects/create/reviewFormatters'
 import type { PaymentMethod } from '@/features/projects/create/types'
 import { CashFlowTab } from '@/features/financial/CashFlowTab'
+import { CategorySpendTab } from '@/features/financial/CategorySpendTab'
 
 const PAGE_SIZE = 10
-const TAB_OPTIONS = ['receivables', 'payables', 'bills', 'cashflow'] as const
+const TAB_OPTIONS = ['receivables', 'payables', 'bills', 'categorySpend', 'cashflow'] as const
 type Tab = (typeof TAB_OPTIONS)[number]
 
 // Uma única forma de linha pras duas abas (parcela de honorário / despesa
@@ -91,6 +92,20 @@ interface FinancialRow {
   // pra registro antigo sem frequência ainda definida, tratado como
   // "monthly" na hora de exibir).
   recurringFrequency: RecurringFrequency | null
+  // Só existe na aba A Pagar/Contas Fixas — exclui a linha da média mensal
+  // por categoria (aba "Por Categoria"). Sempre false em A Receber (não é
+  // um conceito de honorário).
+  excludeFromAverage: boolean
+}
+
+// Formato "PATCH parcial" comum às três fontes de linha — updateInstallment
+// nunca recebe excludeFromAverage na prática (o toggle só aparece nas
+// linhas de despesa), mas as três mutations compartilham um único tipo de
+// payload pra mutateRow não precisar saber qual endpoint aceita o quê.
+interface RowMutationPayload {
+  status?: PaymentStatus
+  dueDate?: string | null
+  excludeFromAverage?: boolean
 }
 
 interface NewExpenseForm {
@@ -159,6 +174,11 @@ export function FinancialPage() {
     queryClient.invalidateQueries({ queryKey: ['financial-summary'] })
     queryClient.invalidateQueries({ queryKey: ['financial-receivables'] })
     queryClient.invalidateQueries({ queryKey: ['financial-payables'] })
+    // Ambas dependem de status/dueDate/excludeFromAverage — as mesmas
+    // mutations acima (marcar pago, editar vencimento, alternar "atípico")
+    // afetam essas duas visões também.
+    queryClient.invalidateQueries({ queryKey: ['financial-cashflow'] })
+    queryClient.invalidateQueries({ queryKey: ['financial-category-spend'] })
   }
 
   function handleMutationError(error: unknown) {
@@ -180,7 +200,7 @@ export function FinancialPage() {
     }: {
       projectId: string
       id: string
-      payload: { status?: PaymentStatus; dueDate?: string | null }
+      payload: RowMutationPayload
     }) => updateInstallment(projectId, id, payload),
     onSuccess: invalidateAll,
     onError: handleMutationError,
@@ -194,20 +214,15 @@ export function FinancialPage() {
     }: {
       projectId: string
       id: string
-      payload: { status?: PaymentStatus; dueDate?: string | null }
+      payload: RowMutationPayload
     }) => updateProjectExpense(projectId, id, payload),
     onSuccess: invalidateAll,
     onError: handleMutationError,
   })
 
   const companyExpenseMutation = useMutation({
-    mutationFn: ({
-      id,
-      payload,
-    }: {
-      id: string
-      payload: { status?: PaymentStatus; dueDate?: string | null }
-    }) => updateCompanyExpense(id, payload),
+    mutationFn: ({ id, payload }: { id: string; payload: RowMutationPayload }) =>
+      updateCompanyExpense(id, payload),
     onSuccess: invalidateAll,
     onError: handleMutationError,
   })
@@ -236,7 +251,7 @@ export function FinancialPage() {
     onError: handleMutationError,
   })
 
-  function mutateRow(row: FinancialRow, payload: { status?: PaymentStatus; dueDate?: string | null }) {
+  function mutateRow(row: FinancialRow, payload: RowMutationPayload) {
     if (row.kind === 'receivable') {
       receivableMutation.mutate({ projectId: row.projectId!, id: row.id, payload })
     } else if (row.kind === 'projectExpense') {
@@ -287,6 +302,7 @@ export function FinancialPage() {
           status: row.status,
           recurring: false,
           recurringFrequency: null,
+          excludeFromAverage: false,
         }))
       : (payablesQuery.data?.data ?? []).map((row) => ({
           key: row.kind === 'project' ? `${row.projectId}-${row.expenseId}` : `company-${row.expenseId}`,
@@ -303,6 +319,7 @@ export function FinancialPage() {
           status: row.status,
           recurring: row.recurring,
           recurringFrequency: row.recurringFrequency,
+          excludeFromAverage: row.excludeFromAverage,
         }))
 
   const columns: TableColumn<FinancialRow>[] = [
@@ -420,15 +437,37 @@ export function FinancialPage() {
       header: '',
       className: 'text-right',
       render: (row) =>
-        row.kind === 'companyExpense' ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            icon="Trash2"
-            aria-label={t('financial.removeAction', { name: row.description })}
-            onClick={() => setPendingDelete(row)}
-          />
+        row.kind === 'projectExpense' || row.kind === 'companyExpense' ? (
+          <div className="flex items-center justify-end gap-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              icon={row.excludeFromAverage ? 'EyeOff' : 'Eye'}
+              aria-label={
+                row.excludeFromAverage
+                  ? t('financial.excludeFromAverageOn')
+                  : t('financial.excludeFromAverageOff')
+              }
+              title={
+                row.excludeFromAverage
+                  ? t('financial.excludeFromAverageOn')
+                  : t('financial.excludeFromAverageOff')
+              }
+              className={row.excludeFromAverage ? 'text-(--th-accent)' : undefined}
+              onClick={() => mutateRow(row, { excludeFromAverage: !row.excludeFromAverage })}
+            />
+            {row.kind === 'companyExpense' && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                icon="Trash2"
+                aria-label={t('financial.removeAction', { name: row.description })}
+                onClick={() => setPendingDelete(row)}
+              />
+            )}
+          </div>
         ) : null,
     },
   ]
@@ -545,6 +584,10 @@ export function FinancialPage() {
       {tab === 'cashflow' ? (
         <div className="mt-4">
           <CashFlowTab />
+        </div>
+      ) : tab === 'categorySpend' ? (
+        <div className="mt-4">
+          <CategorySpendTab />
         </div>
       ) : (
         <>
