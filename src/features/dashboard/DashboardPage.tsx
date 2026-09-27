@@ -9,6 +9,7 @@ import { fetchProjects } from '@/features/projects/projectsApi'
 import { PROJECT_STATUS_VARIANT } from '@/features/projects/projectStatusStyles'
 import { DashboardKpiCards } from '@/features/dashboard/DashboardKpiCards'
 import { DashboardCharts } from '@/features/dashboard/DashboardCharts'
+import { DashboardFinancialCharts } from '@/features/dashboard/DashboardFinancialCharts'
 
 const RECENT_LIMIT = 5
 
@@ -50,6 +51,10 @@ export function DashboardPage() {
 
       <div className="mt-6">
         <DashboardCharts />
+      </div>
+
+      <div className="mt-6">
+        <DashboardFinancialCharts />
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">

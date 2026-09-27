@@ -12,6 +12,64 @@ interface CashFlowRow extends CashFlowMonth {
   cumulative: number
 }
 
+interface CashFlowChartProps {
+  months: CashFlowMonth[]
+}
+
+/** Só o gráfico (Entradas × Saídas por mês), sem a tabela/notas abaixo —
+ * extraído pra o Dashboard mostrar uma versão condensada ao lado da
+ * quebra completa que CashFlowTab usa, ambos lendo a mesma query. */
+export function CashFlowChart({ months }: CashFlowChartProps) {
+  const { t } = useTranslation()
+  const chartData = months.map((month) => ({
+    month: formatMonthLabel(month.month),
+    receivables: month.receivables,
+    payables: month.payables,
+  }))
+  const hasData = chartData.some((row) => row.receivables > 0 || row.payables > 0)
+
+  if (!hasData) return <ChartEmptyState message={t('financial.empty')} />
+
+  return (
+    <ResponsiveContainer width="100%" height={240}>
+      <BarChart data={chartData} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
+        <CartesianGrid vertical={false} stroke="var(--th-border)" strokeDasharray="0" />
+        <XAxis
+          dataKey="month"
+          axisLine={{ stroke: 'var(--th-border)' }}
+          tickLine={false}
+          tick={{ fill: 'var(--th-text-muted)', fontSize: 12 }}
+        />
+        <YAxis
+          axisLine={false}
+          tickLine={false}
+          width={64}
+          tick={{ fill: 'var(--th-text-muted)', fontSize: 12 }}
+          tickFormatter={(value: number) => value.toLocaleString('pt-BR')}
+        />
+        <Tooltip
+          cursor={{ fill: 'var(--th-bg-elevated)' }}
+          content={<ChartTooltip valueFormatter={formatBRLAmount} />}
+        />
+        <Bar
+          dataKey="receivables"
+          name={t('financial.cashFlow.receivables')}
+          fill="var(--chart-1)"
+          radius={[4, 4, 0, 0]}
+          maxBarSize={28}
+        />
+        <Bar
+          dataKey="payables"
+          name={t('financial.cashFlow.payables')}
+          fill="var(--chart-4)"
+          radius={[4, 4, 0, 0]}
+          maxBarSize={28}
+        />
+      </BarChart>
+    </ResponsiveContainer>
+  )
+}
+
 /**
  * "Pra onde o caixa está indo" — honorários e despesas PENDING com
  * vencimento, bucketizados por mês (mês atual + 5 seguintes) pelo backend
@@ -34,13 +92,6 @@ export function CashFlowTab() {
     cumulative += net
     rows.push({ ...month, net, cumulative })
   }
-
-  const chartData = rows.map((row) => ({
-    month: formatMonthLabel(row.month),
-    receivables: row.receivables,
-    payables: row.payables,
-  }))
-  const hasData = chartData.some((row) => row.receivables > 0 || row.payables > 0)
 
   const columns: TableColumn<CashFlowRow>[] = [
     {
@@ -84,46 +135,7 @@ export function CashFlowTab() {
         <ChartCardSkeleton />
       ) : (
         <ChartCard title={t('financial.cashFlow.chartTitle')}>
-          {!hasData ? (
-            <ChartEmptyState message={t('financial.empty')} />
-          ) : (
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={chartData} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
-                <CartesianGrid vertical={false} stroke="var(--th-border)" strokeDasharray="0" />
-                <XAxis
-                  dataKey="month"
-                  axisLine={{ stroke: 'var(--th-border)' }}
-                  tickLine={false}
-                  tick={{ fill: 'var(--th-text-muted)', fontSize: 12 }}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  width={64}
-                  tick={{ fill: 'var(--th-text-muted)', fontSize: 12 }}
-                  tickFormatter={(value: number) => value.toLocaleString('pt-BR')}
-                />
-                <Tooltip
-                  cursor={{ fill: 'var(--th-bg-elevated)' }}
-                  content={<ChartTooltip valueFormatter={formatBRLAmount} />}
-                />
-                <Bar
-                  dataKey="receivables"
-                  name={t('financial.cashFlow.receivables')}
-                  fill="var(--chart-1)"
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={28}
-                />
-                <Bar
-                  dataKey="payables"
-                  name={t('financial.cashFlow.payables')}
-                  fill="var(--chart-4)"
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={28}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
+          <CashFlowChart months={data?.months ?? []} />
         </ChartCard>
       )}
 
