@@ -334,7 +334,7 @@
       "leftBadge": "Plataforma para Escritórios de Arquitetura",
       "leftTitlePrefix": "Seu escritório, em ",
       "leftHighlight": "uma plataforma",
-      "leftSubtitle": "Projetos, clientes, propostas, reuniões e financeiro — tudo em uma plataforma para escritórios de arquitetura.",
+      "leftSubtitle": "Projetos, clientes, financeiro e portal do cliente — tudo em uma plataforma para escritórios de arquitetura.",
       "trustSignalCount": "340+",
       "trustSignalText": "escritórios de arquitetura no Brasil",
       "mockGoogleToast": "Mock: login com Google não implementado",
@@ -367,7 +367,7 @@
       "leftBadge": "Plataforma para Escritórios de Arquitetura",
       "leftTitlePrefix": "Seu escritório, em ",
       "leftHighlight": "uma plataforma",
-      "leftSubtitle": "Projetos, clientes, propostas, reuniões e financeiro — centralize a operação do seu escritório de arquitetura.",
+      "leftSubtitle": "Projetos, clientes, financeiro e portal do cliente — centralize a operação do seu escritório de arquitetura.",
       "errors": {
         "companyDocument": "Informe o documento do escritório."
       }
