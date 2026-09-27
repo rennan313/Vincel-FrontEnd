@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- App autenticado, nada aqui é conteúdo público indexável (o
+         crawler só vê o shell vazio antes do React montar) — a landing
+         em vincelstudio.com é quem deve aparecer nas buscas. Reforçado
+         por public/robots.txt (Disallow: /), que cobre este host. -->
+    <meta name="robots" content="noindex, nofollow" />
     <title>Vincel Studio</title>
   </head>
   <body>

@@ -1,0 +1,4 @@
+# App autenticado (app.vincelstudio.com) — nada aqui é conteúdo público.
+# A landing (vincelstudio.com) tem seu próprio robots.txt liberando tudo.
+User-agent: *
+Disallow: /
