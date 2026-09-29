@@ -134,9 +134,15 @@ export function ProjectsPipelineBoard({
                     )}
                   >
                     {imageUrl ? (
+                      // draggable={false}: toda <img> é arrastável por padrão do
+                      // navegador — dentro de um elemento draggable (o card),
+                      // ela "rouba" o drag do card inteiro (arrastava só a
+                      // imagem, ignorando o resto). Isso força o drag a sempre
+                      // ser tratado pelo <Link> pai, o card todo.
                       <img
                         src={imageUrl}
                         alt=""
+                        draggable={false}
                         className="h-24 w-full object-cover"
                       />
                     ) : (
