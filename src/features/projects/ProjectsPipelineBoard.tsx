@@ -61,6 +61,12 @@ export function ProjectsPipelineBoard({
   function handleDrop(status: ProjectStatus, event: DragEvent<HTMLDivElement>) {
     event.preventDefault()
     setDragOverStatus(null)
+    // Não dá pra confiar só no onDragEnd do card pra isso: quando o drop
+    // muda o status, o item "pula" pra outro <Link> — outro array/coluna,
+    // outro pai no React — então o nó antigo é desmontado antes do
+    // navegador disparar o dragend nele, e draggingId ficava preso pra
+    // sempre (só um reload da página limpava o card fantasma opaco).
+    setDraggingId(null)
     const projectId = event.dataTransfer.getData('text/plain')
     const project = data.find((item) => item.id === projectId)
     if (!project || project.status === status) return
